@@ -1,9 +1,9 @@
 # Panda-Apache
-## Panda-Apache is a C++ library for working with data in Apache Arrow format. It is built on top of the Apache Arrow library, and provides a convenient, ## high-level interface for working with data in memory.
+Panda-Apache is a C++ library for working with data in Apache Arrow format. It is built on top of the Apache Arrow library, and provides a convenient, high-level interface for working with data in memory.
 
-Features
-DataFrame: A DataFrame is a 2-dimensional table of data with rows and columns. It is similar to a pandas DataFrame or a R dataframe. It provides the following functionality:
-Indexing by label and by position
+### Features
+* DataFrame: A DataFrame is a 2-dimensional table of data with rows and columns. It is similar to a pandas DataFrame or a R dataframe. It provides the following functionality:
+    * Indexing by label and by position
 Slicing rows and columns
 Selecting rows and columns by conditions
 Handling of missing values
