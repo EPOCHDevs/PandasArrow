@@ -1,0 +1,12 @@
+# IDE files
+.idea
+.vscode
+
+# Local dev files
+.env
+
+# Generated files
+cmake-build-*
+build
+summary
+vcpkg_installed
