@@ -40,25 +40,31 @@ make
 Here is an example of how to use Panda-Apache to create a DataFrame and perform some operations on it:
 
 ```
-#include <panda_arrow/dataframe.h>
+#include <panda_arrow.h>
 #include <iostream>
 
 int main() {
-    // Create a DataFrame from a map of column names to column data
-    pd::DataFrame df = pd::DataFrame(std::map<std::string, std::vector<int>>{
-        {"a", {1, 2, 3}},
-        {"b", {4, 5, 6}}
-    });
+    // Create a DataFrame from a map of column names to vectors of data
+    auto df = pd::DataFrame(
+        std::map<std::string, std::vector<int32_t>>{{"a", {1, 2, 3}}, {"b", {4, 5, 6}}});
+
+    // Print the DataFrame
     std::cout << df << std::endl;
 
-    // Select a single column by label
-    pd::Series column_a = df["a"];
-    std::cout << column_a << std::endl;
+    // Get the value at a specific row and column
+    auto value = df.at(1, "a").value<int32_t>();
+    std::cout << "Value at (1, 'a'): " << value << std::endl;
 
-    // Select multiple columns by label
-      pd::DataFrame df = pd::DataFrame(
-          std::map<std::string, std::vector<int32_t>>{{"a", {1, 2, 3}}, {"b", {4, 5, 6}}, {"c", {7, 8, 9}}});
-      auto df_slice = df[{"a", "c"}];
+    // Get a slice of the DataFrame
+    auto df2 = df.slice(1);
+    std::cout << "DataFrame slice:" << std::endl << df2 << std::endl;
+
+    // Rename columns
+    df.rename({{"a", "x"}, {"b", "y"}});
+    std::cout << "DataFrame with renamed columns:" << std::endl << df << std::endl;
+
+    return 0;
+}
 
 ```
 
