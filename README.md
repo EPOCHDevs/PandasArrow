@@ -27,7 +27,7 @@ Panda-Apache is a C++ library for working with data in Apache Arrow format. It i
 Panda-Apache is available on GitHub and can be installed with CMake. It requires a C++11 compiler and the Apache Arrow library to be installed.
 
 ```
-git clone [https://github.com/pandas-dev/pandas-cpp](https://github.com/ava6969/panda-arrow.git)
+git clone https://github.com/ava6969/panda-arrow.git
 cd pandas-cpp
 mkdir build
 cd build
