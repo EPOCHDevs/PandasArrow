@@ -443,7 +443,7 @@ class GroupBy resample(
             opt.to_type = TimestampTypePtr;
             arr = ValidateHelper(arrow::compute::Cast(arr, opt)).m_array;
 
-            return pd::GroupBy{ arr, df.array() };
+            return pd::DataFrame(df.m_array->AddColumn(df.num_columns(), "idx", arr).MoveValueUnsafe()).group_by("idx");
         }
         else
         {

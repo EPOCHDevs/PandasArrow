@@ -216,10 +216,13 @@ std::shared_ptr<arrow::Array> NDArray<BaseT>::uint_range(int64_t n_rows)
 template<class BaseT>
 void NDArray<BaseT>::setIndexer()
 {
-    isIndex = true;
-    for (int i = 0; i < m_array->length(); i++)
+    if(m_array != nullptr)
     {
-        indexer[m_array->GetScalar(i).MoveValueUnsafe()] = i;
+        isIndex = true;
+        for (int i = 0; i < m_array->length(); i++)
+        {
+            indexer[m_array->GetScalar(i).MoveValueUnsafe()] = i;
+        }
     }
 }
 

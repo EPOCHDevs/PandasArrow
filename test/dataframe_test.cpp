@@ -328,3 +328,487 @@ TEST_CASE("Test DateTimeSlice", "[DataFrame]")
     REQUIRE(s3["year"].equals(std::vector{ 2014, 2013 }));
     REQUIRE(s3["sale"].equals(std::vector{ 40, 84 }));
 }
+
+using namespace std::string_literals;
+TEST_CASE("Test describe with empty DataFrame", "[describe]") {
+    pd::DataFrame df;
+    auto desc = df.describe();
+    REQUIRE(desc.shape() == pd::DataFrame::Shape{ 0, 0 });
+    REQUIRE(desc.columns().empty());
+    REQUIRE(desc.index().empty());
+}
+
+TEST_CASE("Test describe with all NA values", "[describe]")
+{
+    double NA = std::numeric_limits<double>::quiet_NaN();
+    pd::DataFrame df(
+        std::vector<std::vector<double>>{ std::vector{ NA, NA, NA },
+                                          std::vector{ NA, NA, NA },
+                                          std::vector{ NA, NA, NA } });
+    df.setColumns({ "a", "b", "c" });
+    df.setIndex(arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
+
+    auto desc = df.describe();
+    REQUIRE(desc.shape() == pd::DataFrame::Shape{ 3, 6 });
+    REQUIRE(
+        desc.columns() ==
+        std::vector<std::string>{ "count", "mean", "std", "min", "nunique", "max" });
+    REQUIRE(desc.index().equals(std::vector<std::string>{ "a", "b", "c" }));
+
+    for (int i = 0; i < 3; i++)
+    {
+        for (int j = 1; j < 3; j++)
+        {
+            REQUIRE(desc.at(i, j).as<double>() == 0);
+        }
+
+        for (int j : {0, 4})
+        {
+            REQUIRE(desc.at(i, j).as<::int64_t>() == 0);
+        }
+
+        for (int j : {3, 5})
+        {
+            REQUIRE_FALSE(desc.at(i, j).isValid());
+        }
+    }
+}
+
+TEST_CASE("Test describe with numeric columns", "[describe]")
+{
+    pd::DataFrame df(std::vector<std::vector<int>>{ std::vector{ 1, 2, 3 },
+                                                    std::vector{ 4, 5, 6 },
+                                                    std::vector{ 7, 8, 9 } });
+    df.setColumns({ "a", "b", "c" });
+    df.setIndex(arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
+
+    // Test default describe
+    auto desc = df.describe(true, true);
+    REQUIRE(desc.shape() == pd::DataFrame::Shape{ 3, 9 });
+    REQUIRE(
+        desc.columns() ==
+        std::vector<std::string>{ "count",
+                                  "mean",
+                                  "std",
+                                  "min",
+                                  "nunique",
+                                  "25%",
+                                  "50%",
+                                  "75%",
+                                  "max" });
+    REQUIRE(desc.index().equals(std::vector<std::string>{ "a", "b", "c" }));
+
+    REQUIRE(desc.at("a", "count") == 3L);
+    REQUIRE(desc.at("a", "mean") == 2.0);
+    REQUIRE(desc.at("a", "std").as<double>() == 1.0);
+    REQUIRE(desc.at("a", "min") == 1);
+    REQUIRE(desc.at("a", "25%") == 1.5);
+    REQUIRE(desc.at("a", "50%") == 2.0);
+    REQUIRE(desc.at("a", "75%") == 2.5);
+    REQUIRE(desc.at("a", "max") == 3);
+    REQUIRE(desc.at("a", "nunique") == 3L);
+}
+
+TEST_CASE("Test describe with non-numeric columns", "[describe]")
+{
+    pd::DataFrame df(
+        std::vector<std::vector<std::string>>{ std::vector<std::string>{ "a", "b", "c" },
+                                               std::vector<std::string>{ "d", "e", "f" },
+                                               std::vector<std::string>{ "g", "h", "i" } });
+    df.setColumns({ "x", "y", "z" });
+    df.setIndex(arrow::ArrayT<std::string>::Make({ "a"s, "b"s, "c"s }));
+
+    REQUIRE_THROWS(df.describe());
+    //    REQUIRE(desc.shape() == pd::DataFrame::Shape{ 3, 4 });
+    //    REQUIRE(
+    //        desc.columns() ==
+    //        std::vector<std::string>{ "count", "nunique", "top", "freq" });
+    //    REQUIRE(desc.index().equals(std::vector<std::string>{ "x", "y", "z" })); REQUIRE(desc.at("count", "x") == 3); REQUIRE(desc.at("nunique", "x") == 3); REQUIRE(desc.at("top", "x") == "a");
+    //    REQUIRE(desc.at("freq", "x") == 1);
+}
+
+TEST_CASE("Test all math operators for DataFrame", "[math_operators]")
+{
+    pd::DataFrame df1(std::vector<std::vector<int>>{ std::vector{ 1, 2, 3 },
+                                                     std::vector{ 4, 5, 6 },
+                                                     std::vector{ 7, 8, 9 } });
+    df1.setColumns({ "a", "b", "c" });
+    df1.setIndex(arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
+
+    pd::DataFrame df2(std::vector<std::vector<int>>{ std::vector{ 2, 4, 6 },
+                                                     std::vector{ 8, 10, 12 },
+                                                     std::vector{ 14, 16, 18 } });
+    df2.setColumns({ "a", "b", "c" });
+    df2.setIndex(arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
+
+    // Test addition operator
+    auto df3 = df1 + df2;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            REQUIRE(df3.at(i, j) == (df1.at(i, j).as<int>() + df2.at(i, j).as<int>()));
+        }
+    }
+
+    // Test subtraction operator
+    df3 = df1 - df2;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            REQUIRE(df3.at(i, j) == (df1.at(i, j).as<int>() - df2.at(i, j).as<int>()));
+        }
+    }
+
+    // Test multiplication operator
+    df3 = df1 * df2;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            REQUIRE(df3.at(i, j) == (df1.at(i, j).as<int>() * df2.at(i, j).as<int>()));
+        }
+    }
+
+    // Test division operator
+    df3 = df1 / df2;
+    for (int i = 0; i < 3; i++) {
+        for (int j = 0; j < 3; j++) {
+            REQUIRE(df3.at(i, j) == (df1.at(i, j).as<int>() / df2.at(i, j).as<int>()));
+        }
+    }
+}
+
+TEST_CASE("Test argsort", "[argsort]")
+{
+    // Create a test DataFrame with some sample data
+    pd::DataFrame df = std::vector<std::vector<int>>{ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } };
+    df.setColumns({ "a", "b", "c" });
+
+    // Test argsort with ascending = true
+    auto sorted = df.argsort({"a"}, true);
+    REQUIRE(sorted.count() == 3);
+    REQUIRE(sorted[0] == 0);
+    REQUIRE(sorted[1] == 1);
+    REQUIRE(sorted[2] == 2);
+
+    // Test argsort with ascending = false
+    sorted = df.argsort({"a"}, false);
+    REQUIRE(sorted.count() == 3);
+    REQUIRE(sorted[0] == 2);
+    REQUIRE(sorted[1] == 1);
+    REQUIRE(sorted[2] == 0);
+
+    // Test argsort with multiple fields
+    sorted = df.argsort({"a", "b"}, true);
+    REQUIRE(sorted.count() == 3);
+    REQUIRE(sorted[0] == 0);
+    REQUIRE(sorted[1] == 1);
+    REQUIRE(sorted[2] == 2);
+}
+
+TEST_CASE("Test sort_index with ascending=true and ignore_index=false", "[sort_index]")
+{
+    pd::DataFrame df(std::vector<std::vector<int>>{ { 1, 2, 3 },
+                                                    { 4, 5, 6 },
+                                                    { 7, 8, 9 } });
+    df.setColumns({ "a", "b", "c" });
+    df.setIndex(arrow::ArrayT<std::string>::Make({ "c"s, "b"s, "a"s }));
+
+    auto sorted = df.sort_index(true, false);
+
+    REQUIRE(sorted.index().equals(std::vector<std::string>{"a","b","c"}));
+
+    REQUIRE(sorted.at(0,0) == df.at(2,0));
+    REQUIRE(sorted.at(1,0) == df.at(1,0));
+    REQUIRE(sorted.at(2,0) == df.at(0,0));
+    REQUIRE(sorted.at(0,1) == df.at(2,1));
+    REQUIRE(sorted.at(1,1) == df.at(1,1));
+    REQUIRE(sorted.at(2,1) == df.at(0,1));
+    REQUIRE(sorted.at(0,2) == df.at(2,2));
+    REQUIRE(sorted.at(1,2) == df.at(1,2));
+    REQUIRE(sorted.at(2,2) == df.at(0,2));
+}
+
+TEST_CASE("Test sort_index with ascending=false and ignore_index=true", "[sort_index]")
+{
+    pd::DataFrame df(std::vector<std::vector<int>>{ { 1, 2, 3 },
+                                                    { 4, 5, 6 },
+                                                    { 7, 8, 9 } });
+    df.setColumns({ "a", "b", "c" });
+    df.setIndex(arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
+
+    auto sorted = df.sort_index(false, true);
+    REQUIRE(sorted.shape() == df.shape());
+    REQUIRE(sorted.columns() == df.columns());
+    REQUIRE(sorted.index().equals(std::vector<std::string>{ "z", "y", "x" }));
+    REQUIRE(sorted.at(2, 0) == 1);
+    REQUIRE(sorted.at(1, 1) == 5);
+    REQUIRE(sorted.at(0, 2) == 9);
+}
+
+TEST_CASE("Test sort_values with by and ascending=false and ignore_index=true", "[sort_values]")
+{
+    pd::DataFrame df(std::vector<std::vector<int>>{ { 1, 2, 3 },
+                                                    { 4, 5, 6 },
+                                                    { 7, 8, 9 } });
+    df.setColumns({ "a", "b", "c" });
+    df.setIndex(arrow::ArrayT<std::string>::Make({ "x", "y", "z" }));
+
+    auto sorted = df.sort_values({"a","b"},false, true);
+
+    REQUIRE(sorted.shape() == pd::DataFrame::Shape{ 3, 3 });
+    REQUIRE(sorted.columns() == std::vector<std::string>{"a","b","c"});
+
+    //check rows are in descending order of column "a"
+    REQUIRE(sorted.at(0, "a") == 3);
+    REQUIRE(sorted.at(1, "a") == 2);
+    REQUIRE(sorted.at(2, "a") == 1);
+
+    //check rows are in descending order of column "b"
+    REQUIRE(sorted.at(0, "b") == 6);
+    REQUIRE(sorted.at(1, "b") == 5);
+    REQUIRE(sorted.at(2, "b") == 4);
+
+    //check index is ignored
+    REQUIRE(sorted.index().equals(std::vector<::uint64_t>{ 0, 1, 2 }));
+}
+
+TEST_CASE("Test DataFrame coalesce", "[DataFrame]")
+{
+    pd::DataFrame df(std::vector<std::vector<int>>{ { 1, 2 },
+                                                    { 3, 4 },
+                                                    { 5, 6 } });
+    df.setColumns({ "a", "b" });
+
+    // Test coalesce() method
+    pd::Series series = df.coalesce();
+    REQUIRE(series.shape() == pd::Series::Shape{ 6 });
+    REQUIRE(series.indexArray()->Equals(
+        arrow::ArrayT<::uint64_t>::Make({ 0, 1, 2, 3, 4, 5 })));
+    REQUIRE(series.at(0) == 1);
+    REQUIRE(series.at(1) == 2);
+    REQUIRE(series.at(2) == 3);
+    REQUIRE(series.at(3) == 4);
+    REQUIRE(series.at(4) == 5);
+    REQUIRE(series.at(5) == 6);
+
+    // Test coalesce(std::vector<std::string> const& columns) method
+    pd::Series series2 = df.coalesce({"a"});
+    REQUIRE(series2.shape() == pd::Series::Shape{ 2 });
+    REQUIRE(series2.indexArray()->Equals(
+        arrow::ArrayT<::uint64_t>::Make({ 1, 2 })));
+    REQUIRE(series2.at(0) == 1);
+    REQUIRE(series2.at(1) == 3);
+    REQUIRE(series2.at(2) == 5);
+}
+
+TEST_CASE("makeGroups() works with a single column key", "[makeGroups]") {
+    // Create a DataFrame with a single column key
+    auto df = pd::DataFrame{
+        pd::range(0, 10),
+        std::pair{"id"s, std::vector{"allen"s, "victor"s, "hannah"s, "allen"s,
+                                       "victor"s, "hannah"s, "allen"s,
+                                       "victor"s, "hannah"s, "allen"s}},
+        std::pair{"age"s,  std::vector{16, 10,  10, 20,
+                                        30, 40, 15,
+                                        25, 35, 45}}
+    };
+    pd::GroupBy groupby("id", df);
+    // Verify that the groups are created correctly
+    REQUIRE(groupby.groupSize() == 3);
+    REQUIRE(groupby.group("allen").size() == 2);
+    REQUIRE(groupby.group("victor").size() == 2);
+    REQUIRE(groupby.group("hannah").size() == 2);
+
+    for(int i = 0; i < 2; i++)
+    {
+        REQUIRE(groupby.group("allen").at(0)->length() == 4);
+        REQUIRE(groupby.group("victor").at(i)->length()  == 3);
+        REQUIRE(groupby.group("hannah").at(i)->length()  == 3);
+    }
+
+    REQUIRE(groupby.unique()->length() == 3);
+    REQUIRE( pd::Scalar( groupby.unique()->GetScalar(0) ).as<std::string>() == "allen" );
+    REQUIRE( pd::Scalar( groupby.unique()->GetScalar(1) ).as<std::string>() == "victor" );
+    REQUIRE( pd::Scalar( groupby.unique()->GetScalar(2) ).as<std::string>() == "hannah" );
+
+    auto allen_group = groupby.group("allen");
+
+    REQUIRE( pd::Scalar( allen_group[0]->GetScalar(0) ).as<std::string>() == "allen");
+    REQUIRE( pd::Scalar( allen_group[0]->GetScalar(1) ).as<std::string>() == "allen");
+    REQUIRE( pd::Scalar( allen_group[0]->GetScalar(2) ).as<std::string>() == "allen");
+    REQUIRE( pd::Scalar( allen_group[0]->GetScalar(3) ).as<std::string>() == "allen");
+    REQUIRE( pd::Scalar( allen_group[1]->GetScalar(0) ).as<int>() == 16);
+    REQUIRE( pd::Scalar( allen_group[1]->GetScalar(1) ).as<int>() == 20);
+    REQUIRE( pd::Scalar( allen_group[1]->GetScalar(2) ).as<int>() == 15);
+    REQUIRE( pd::Scalar( allen_group[1]->GetScalar(3) ).as<int>() == 45);
+
+    auto hannah_group = groupby.group("hannah");
+    REQUIRE( pd::Scalar( hannah_group[0]->GetScalar(0) ).as<std::string>() == "hannah");
+    REQUIRE( pd::Scalar( hannah_group[0]->GetScalar(1) ).as<std::string>() == "hannah");
+    REQUIRE( pd::Scalar( hannah_group[0]->GetScalar(2) ).as<std::string>() == "hannah");
+    REQUIRE( pd::Scalar( hannah_group[1]->GetScalar(0) ).as<int>() == 10);
+    REQUIRE( pd::Scalar( hannah_group[1]->GetScalar(1) ).as<int>() == 40);
+    REQUIRE( pd::Scalar( hannah_group[1]->GetScalar(2) ).as<int>() == 35);
+
+    auto victor_group = groupby.group("victor");
+    REQUIRE( pd::Scalar( victor_group[0]->GetScalar(0) ).as<std::string>() == "victor");
+    REQUIRE( pd::Scalar( victor_group[0]->GetScalar(1) ).as<std::string>() == "victor");
+    REQUIRE( pd::Scalar( victor_group[0]->GetScalar(2) ).as<std::string>() == "victor");
+    REQUIRE( pd::Scalar( victor_group[1]->GetScalar(0) ).as<int>() == 10);
+    REQUIRE( pd::Scalar( victor_group[1]->GetScalar(1) ).as<int>() == 30);
+    REQUIRE( pd::Scalar( victor_group[1]->GetScalar(2) ).as<int>() == 25);
+
+}
+
+TEST_CASE("makeGroups() works on dataframe with more than two column keys", "[makeGroups]")
+{
+    // Create a DataFrame with multiple column keys
+    auto df = pd::DataFrame{
+        pd::range(0, 10),
+        std::pair{ "id"s,
+                   std::vector{ "allen"s,
+                                "victor"s,
+                                "hannah"s,
+                                "allen"s,
+                                "victor"s,
+                                "hannah"s,
+                                "allen"s,
+                                "victor"s,
+                                "hannah"s,
+                                "allen"s } },
+        std::pair{ "gender"s,
+                   std::vector{ "male"s,
+                                "female"s,
+                                "male"s,
+                                "male"s,
+                                "female"s,
+                                "male"s,
+                                "male"s,
+                                "female"s,
+                                "male"s,
+                                "male"s } },
+        std::pair{ "age"s,
+                   std::vector{ 16, 10, 10, 20, 30, 40, 15, 25, 35, 45 } }
+    };
+    pd::GroupBy groupby("gender", df);
+
+    SECTION("groupSize() is valid")
+    {
+        REQUIRE(groupby.groupSize() == 2);
+        REQUIRE(groupby.group("male").size() == 3);
+        REQUIRE(groupby.group("female").size() == 3);
+
+        for (int i = 0; i < 3; i++)
+        {
+            REQUIRE(groupby.group("male").at(i)->length() == 7);
+            REQUIRE(groupby.group("female").at(i)->length() == 3);
+        }
+
+        REQUIRE(groupby.unique()->length() == 2);
+    }
+
+    SECTION("grouper selected correct unique_keys")
+    {
+        REQUIRE(
+            pd::Scalar(groupby.unique()->GetScalar(0)).as<std::string>() ==
+            "male");
+        REQUIRE(
+            pd::Scalar(groupby.unique()->GetScalar(1)).as<std::string>() ==
+            "female");
+    }
+
+
+    SECTION("grouper created groups correctly")
+    {
+        auto male_group = groupby.group("male");
+
+        REQUIRE(
+            pd::Scalar(male_group[0]->GetScalar(0)).as<std::string>() ==
+            "allen");
+        REQUIRE(
+            pd::Scalar(male_group[0]->GetScalar(1)).as<std::string>() ==
+            "hannah");
+        REQUIRE(
+            pd::Scalar(male_group[0]->GetScalar(2)).as<std::string>() ==
+            "allen");
+        REQUIRE(
+            pd::Scalar(male_group[0]->GetScalar(3)).as<std::string>() ==
+            "hannah");
+        REQUIRE(
+            pd::Scalar(male_group[0]->GetScalar(4)).as<std::string>() ==
+            "allen");
+        REQUIRE(
+            pd::Scalar(male_group[0]->GetScalar(5)).as<std::string>() ==
+            "hannah");
+        REQUIRE(
+            pd::Scalar(male_group[0]->GetScalar(6)).as<std::string>() ==
+            "allen");
+
+        for (int i = 0; i < 7; i++)
+        {
+            REQUIRE(
+                pd::Scalar(male_group[1]->GetScalar(i)).as<std::string>() ==
+                "male");
+        }
+
+        REQUIRE(pd::Scalar(male_group[2]->GetScalar(0)).as<int>() == 16);
+        REQUIRE(pd::Scalar(male_group[2]->GetScalar(1)).as<int>() == 10);
+        REQUIRE(pd::Scalar(male_group[2]->GetScalar(2)).as<int>() == 20);
+        REQUIRE(pd::Scalar(male_group[2]->GetScalar(3)).as<int>() == 40);
+        REQUIRE(pd::Scalar(male_group[2]->GetScalar(4)).as<int>() == 15);
+        REQUIRE(pd::Scalar(male_group[2]->GetScalar(5)).as<int>() == 35);
+        REQUIRE(pd::Scalar(male_group[2]->GetScalar(6)).as<int>() == 45);
+
+        auto female_group = groupby.group("female");
+        REQUIRE(
+            pd::Scalar(female_group[0]->GetScalar(0)).as<std::string>() ==
+            "victor");
+        REQUIRE(
+            pd::Scalar(female_group[0]->GetScalar(1)).as<std::string>() ==
+            "victor");
+        REQUIRE(
+            pd::Scalar(female_group[0]->GetScalar(2)).as<std::string>() ==
+            "victor");
+
+        for (int i = 0; i < 3; i++)
+        {
+            REQUIRE(
+                pd::Scalar(female_group[1]->GetScalar(i)).as<std::string>() ==
+                "female");
+        }
+
+        REQUIRE(pd::Scalar(female_group[2]->GetScalar(0)).as<int>() == 10);
+        REQUIRE(pd::Scalar(female_group[2]->GetScalar(1)).as<int>() == 30);
+        REQUIRE(pd::Scalar(female_group[2]->GetScalar(2)).as<int>() == 25);
+    }
+
+    SECTION("grouper computes mean of each groups and merge")
+    {
+        auto age_mean = pd::ValidateAndReturn(groupby.mean("age"));
+        REQUIRE(age_mean[0].as<double>() == Catch::Approx(25.857).epsilon(1e-3));
+        REQUIRE(age_mean[1].as<double>() == Catch::Approx(21.667).epsilon(1e-3));
+    }
+
+    SECTION("grouper computes sum of each groups and merge")
+    {
+        auto age_sum = pd::ValidateAndReturn(groupby.sum("age"));
+        REQUIRE(age_sum[0].as<int>() == 181);
+        REQUIRE(age_sum[1].as<int>() == 65);
+    }
+
+    SECTION("grouper computes count of each groups and merge")
+    {
+        auto age_count = pd::ValidateAndReturn(groupby.count("age"));
+        REQUIRE(age_count[0].as<::int64_t>() == 7);
+        REQUIRE(age_count[1].as<::int64_t>() == 3);
+    }
+
+//    SECTION("grouper apply count on each groups and merge")
+//    {
+//        auto count = [](pd::DataFrame const& df)
+//        {
+//            std::cout << df << "\n";
+//            return arrow::MakeScalar(df.num_rows());
+//        };
+//        auto age_count = pd::ValidateAndReturn(groupby.apply(count));
+//        REQUIRE(age_count.at(0, 0) == 7L);
+//        REQUIRE(age_count.at(1, 0) == 3L);
+//    }
+}

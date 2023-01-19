@@ -5,10 +5,9 @@
 
 
 #include "core.h"
-#include "dataframe.h"
+#include "group_by.h"
 #include "stringlike.h"
 #include "datetimelike.h"
-#include "group_by.h"
 #include "arrow/compute/kernels/cumprod.h"
 #include "arrow/compute/kernels/corr.h"
 #include "arrow/compute/kernels/shift.h"
@@ -39,4 +38,9 @@ struct CustomKernelsRegistry
 
 const CustomKernelsRegistry __REGISTER__CUSTOM__KERNELS__;
 
+}
+
+namespace pd {
+template<class V>
+using TableLike = std::map<std::string, std::vector<V>>;
 }

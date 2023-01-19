@@ -3,6 +3,10 @@
 //
 #pragma once
 
+#include <iostream>
+#include <vector>
+#include <cmath>
+#include <algorithm>
 #include <arrow/util/checked_cast.h>
 #include <span>
 #include "ndarray.h"
@@ -10,14 +14,7 @@
 
 namespace pd {
 
-
-#include <iostream>
-#include <vector>
-#include <cmath>
-#include <algorithm>
-
 using namespace std;
-
 
 class Series : public NDArray<Series>
 {
@@ -118,6 +115,16 @@ public:
     [[nodiscard]] std::string name() const;
 
     void add_prefix(std::string prefix);
+
+    inline auto value() const
+    {
+        return m_array;
+    }
+
+    using Shape = std::array<::int64_t, 1>;
+    inline Shape shape(){
+        return {size()};
+    }
 
     void add_suffix(std::string const& suffix);
 
@@ -258,8 +265,8 @@ public:
     [[nodiscard]] Scalar product() const;
     [[nodiscard]] Scalar sum() const;
     [[nodiscard]] Series mode(int n, bool skip_nulls) const;
-    [[nodiscard]] Scalar quantile(float q = 0.5) const;
-    [[nodiscard]] Scalar tdigest(float q = 0.5) const;
+    [[nodiscard]] Scalar quantile(double q = 0.5) const;
+    [[nodiscard]] Scalar tdigest(double q = 0.5) const;
     [[nodiscard]] double median(bool skip_null = true) const;
     [[nodiscard]] double mean(bool skip_null = true) const;
     [[nodiscard]] double std(int ddof = 1, bool skip_na = true) const;

@@ -19,3 +19,11 @@ target_link_libraries(scalar_test PRIVATE Catch2::Catch2WithMain  pandas_arrow )
 add_executable(custom_kernel_test custom_kernel_test.cpp )
 target_include_directories(custom_kernel_test PRIVATE ../..)
 target_link_libraries(custom_kernel_test PRIVATE Catch2::Catch2WithMain  pandas_arrow )
+
+add_executable(benchmark benchmark.cpp )
+target_include_directories(benchmark PRIVATE ../..)
+target_link_libraries(benchmark PRIVATE pandas_arrow )
+
+add_executable(grouper grouper.cpp )
+target_include_directories(grouper PRIVATE ../..)
+target_link_libraries(grouper PRIVATE pandas_arrow )

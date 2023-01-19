@@ -41,6 +41,22 @@ public:
         return result;
     }
 
+    template<typename T>
+    inline std::vector<T> choice(std::vector<T> const& k,
+                                 int size) const
+    {
+        std::vector<T> out;
+        out.reserve(size);
+
+        std::uniform_int_distribution dist(0UL, k.size()-1);
+        std::generate_n(std::back_inserter(out),
+                        size,
+                        [&](){
+                          return k[dist(gen)];
+                        });
+        return out;
+    }
+
     inline vector_double rand(
         vector_double const& min,
         vector_double const& max) const

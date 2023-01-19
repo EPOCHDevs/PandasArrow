@@ -7,8 +7,9 @@
 #include "arrow/compute/api.h"
 
 namespace pd{
-/// The class is a wrapper for the "arrow::Scalar" class from the Apache Arrow
-/// library, which is used for storing scalar values.
+/// The Scalar class is a wrapper for the "arrow::Scalar" class from the
+/// Apache Arrow library. It is used for storing scalar values.
+/// This class has several constructors that allows user to create Scalar object from different types.
     class Scalar
     {
     public:
@@ -94,6 +95,11 @@ namespace pd{
                 return a->ApproxEquals(*arrow::MakeScalar(b));
             }
             return a->Equals(arrow::MakeScalar(b));
+        }
+
+        bool operator==(pd::Scalar const& other) const
+        {
+            return scalar->Equals(other.scalar);
         }
 
     public:

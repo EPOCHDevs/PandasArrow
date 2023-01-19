@@ -124,7 +124,7 @@ namespace pd
 
     bool Series::empty() const
     {
-        return m_array->length() == 0;
+        return (m_array == nullptr) or (m_array->length() == 0);
     }
 
     void Series::add_prefix(std::string prefix)
@@ -203,26 +203,36 @@ namespace pd
                        bool skip_null)  const{
         arrow::compute::ScalarAggregateOptions opt{skip_null};
         auto result = arrow::compute::CallFunction(name, {m_array}, &opt);
-        if (result.ok()) { return std::move(result->scalar()->shared_from_this()); }
+        if (result.ok()) { return result->scalar(); }
         else {
             throw std::runtime_error(result.status().ToString());
         }
     }
 
-    Scalar Series::quantile(float q)  const{
-        arrow::compute::QuantileOptions opt{q};
-        auto result = arrow::compute::CallFunction("quantile", {m_array}, &opt);
-        if (result.ok()) { return std::move(result->scalar()->shared_from_this()); }
-        else {
+    Scalar Series::quantile(double q)  const
+    {
+        arrow::compute::QuantileOptions opt{ q };
+        auto result = arrow::compute::Quantile(m_array, opt);
+        if (result.ok())
+        {
+            return pd::ValidateAndReturn(result->make_array()->GetScalar(0));
+        }
+        else
+        {
             throw std::runtime_error(result.status().ToString());
         }
     }
 
-    Scalar Series::tdigest(float q)  const{
-        arrow::compute::QuantileOptions opt{q};
-        auto result = arrow::compute::CallFunction("tdigest", {m_array}, &opt);
-        if (result.ok()) { return std::move(result->scalar()->shared_from_this()); }
-        else {
+    Scalar Series::tdigest(double q)  const
+    {
+        arrow::compute::TDigestOptions opt{ q };
+        auto result = arrow::compute::TDigest({ m_array }, opt);
+        if (result.ok())
+        {
+            return pd::ValidateAndReturn(result->make_array()->GetScalar(0));
+        }
+        else
+        {
             throw std::runtime_error(result.status().ToString());
         }
     }
@@ -452,7 +462,7 @@ namespace pd
 
     DateTimeLike Series::dt() const
     {
-        if (arrow::is_temporal(m_array->type_id()))
+        if (m_array->type_id() == arrow::Type::TIMESTAMP)
         {
             return { m_array };
         }
@@ -1132,7 +1142,7 @@ namespace pd
         double old_wt_factor = 1. - alpha;
         double new_wt = adjust ? 1. : alpha;
 
-        std::optional<double> weighted = vals[0];
+        auto weighted = vals[0];
         bool is_observation = weighted.has_value();
         int nobs = (is_observation);
         output[0] = (nobs >= minp and weighted.has_value()) ? *weighted : NAN;
@@ -1140,7 +1150,7 @@ namespace pd
 
         for (int i = 1; i < N; i++)
         {
-            std::optional<double> cur = vals[i];
+            auto cur = vals[i];
             is_observation = cur.has_value();
             nobs += is_observation;
             if (weighted.has_value())

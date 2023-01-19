@@ -290,6 +290,20 @@ struct ArrayT
         }
 };
 
+struct ScalarArray
+{
+        static std::shared_ptr<arrow::Array> Make(arrow::ScalarVector const& x)
+        {
+            if (x.empty())
+            {
+                return { nullptr };
+            }
+            auto builder = arrow::MakeBuilder(x.back()->type).MoveValueUnsafe();
+            builder->AppendScalars(x);
+            return builder->Finish().MoveValueUnsafe();
+        }
+};
+
 struct DateArray : ArrayT<date>
 {
         static auto Make(std::vector<date> const& x)

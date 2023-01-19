@@ -21,6 +21,7 @@ namespace pd {
     public:
 
         using ArrayType = std::shared_ptr<arrow::RecordBatch>;
+        using Shape = std::array<int64_t, 2>;
 
         template<class MapType>
         size_t GetTableRowSize(MapType const &table);
@@ -63,9 +64,11 @@ namespace pd {
         DataFrame(std::shared_ptr<arrow::StructArray> const& arr,
                   std::vector<std::string> const& columns);
 
-        inline std::array<int64_t, 2> shape() const
+        inline auto shape() const
         {
-            return {num_rows(), num_columns()};
+            return (m_array == nullptr) ?
+                std::array<int64_t, 2>{ 0, 0 } :
+                std::array<int64_t, 2>{ num_rows(), num_columns() };
         }
 
         template<class T>
@@ -124,8 +127,8 @@ namespace pd {
 
         friend std::ostream& operator<<(std::ostream& a, DataFrame const &b);
 
-        // TODO: Implement and test
-        DataFrame describe();
+        DataFrame describe(bool include_all=true,
+                           bool percentiles=false);
 
         static DataFrame readParquet(std::filesystem::path const &path);
 
@@ -133,7 +136,32 @@ namespace pd {
         class Series operator[](std::string const &column) const;
         DataFrame operator[](std::vector<std::string> const &columns) const;
         std::unordered_map<std::string, pd::Scalar> operator[](int64_t row) const;
+
         Scalar at(int64_t row, int64_t col) const;
+
+        Scalar at(int64_t row,
+                  std::string const& col) const
+        {
+            return at(row, m_array->schema()->GetFieldIndex(col));
+        }
+
+        Scalar at(std::shared_ptr<arrow::Scalar> const& row,
+                  std::string const& col) const
+        {
+            return at(
+                arrow::compute::Index(
+                    m_index,
+                    arrow::compute::IndexOptions(row))
+                    ->scalar_as<arrow::Int64Scalar>()
+                    .value, col);
+        }
+
+        template<typename T> requires (not std::integral<T>)
+        Scalar at(T const& row,
+                  std::string const& col) const
+        {
+            return at(arrow::MakeScalar(row), col);
+        }
 
         DataFrame slice(int offset) const;
         DataFrame slice(int offset, std::vector<std::string> const &columns) const;
@@ -149,6 +177,15 @@ namespace pd {
         [[nodiscard]] DataFrame tail(int length = 5) const;
 
         DataFrame setIndex(std::string const& column_name);
+
+        DataFrame setIndex(std::shared_ptr<arrow::Array> const& index) const
+        {
+            auto newClone = *this;
+            newClone.m_index = index;
+            return newClone;
+        }
+
+        DataFrame setColumns(std::vector<std::string> const& column_names);
 
         [[nodiscard]] Scalar sum() const;
 

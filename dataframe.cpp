@@ -2,13 +2,14 @@
 // Created by dewe on 12/27/22.
 //
 
+#include "dataframe.h"
 #include <arrow/api.h>
+#include <arrow/compute/exec.h>
 #include <arrow/io/api.h>
-#include "filesystem"
+#include <iostream>
+#include <oneapi/tbb/parallel_for_each.h>
 #include <parquet/arrow/reader.h>
 #include <parquet/arrow/writer.h>
-#include <iostream>
-#include <arrow/compute/exec.h>
 #include "arrow/array.h"
 #include "arrow/array/concatenate.h"
 #include "arrow/chunked_array.h"
@@ -23,95 +24,10 @@
 #include "arrow/util/int_util_overflow.h"
 #include "arrow/util/key_value_metadata.h"
 #include "arrow/util/vector.h"
-#include "group_by.h"
 #include "datetimelike.h"
-#include "dataframe.h"
-
-
-#define BINARY_OPERATOR(sign, func)                                                                 \
-DataFrame DataFrame::operator sign(Series const &s) const                      \
-{                                                                                                   \
-    std::vector<std::shared_ptr<arrow::ArrayData>> df_result;                                       \
-    df_result.reserve(m_array->num_columns());                                                      \
-    for (const auto &col: m_array->columns()) {                                                     \
-        auto result = arrow::compute::CallFunction( #func, {col, s.m_array});                       \
-        if (result.ok()) {                                                                          \
-            df_result.emplace_back(result.MoveValueUnsafe().array());                               \
-        } else {                                                                                    \
-            throw std::runtime_error(result.status().ToString());                                   \
-        }                                                                                           \
-    }                                                                                               \
-    return {m_array->schema(), m_array->num_rows(), df_result};                                     \
-}                                                                                                   \
-                                                                                                    \
-DataFrame DataFrame::operator sign (Scalar const &s) const                                          \
-{                                                                                                   \
-    std::vector<std::shared_ptr<arrow::ArrayData>> df_result;                                       \
-    df_result.reserve(m_array->num_columns());                                                      \
-    for (const auto &col: m_array->columns()) {                                                     \
-        auto result = arrow::compute::CallFunction(# func, {col, s.value()});                       \
-        if (result.ok()) {                                                                          \
-            df_result.emplace_back(result.MoveValueUnsafe().array());                               \
-        } else {                                                                                    \
-            throw std::runtime_error(result.status().ToString());                                   \
-        }                                                                                           \
-    }                                                                                               \
-    return {m_array->schema(), m_array->num_rows(), df_result};                                     \
-}                                                                                                   \
-                                                                                                    \
-DataFrame DataFrame::operator sign ( DataFrame const& s)const                                       \
-{                                                                                                   \
-    if(s.m_array->num_columns() == m_array->num_columns()){                                         \
-    std::vector<std::shared_ptr<arrow::ArrayData>> df_result;                                       \
-    df_result.resize(m_array->num_columns());                                                       \
-    auto columns = m_array->columns();                                                              \
-    std::transform(columns.begin(),                                                                 \
-        columns.end(),                                                                              \
-        s.m_array->columns().begin(),                                                               \
-        df_result.begin(),                                                                          \
-        [](std::shared_ptr<arrow::Array> const &a,                                                  \
-        std::shared_ptr<arrow::Array> const &b) -> std::shared_ptr<arrow::ArrayData> {              \
-        auto result = arrow::compute::CallFunction(#func, {a, b});                                  \
-        if (result.ok())                                                                            \
-        {                                                                                            \
-            return result.MoveValueUnsafe().array();                                                 \
-        } else {                                                                                    \
-            throw std::runtime_error(result.status().ToString());                                    \
-        }});                                                                                         \
-        return {m_array->schema(), m_array->num_rows(), df_result};                                 \
-        }                                                                                           \
-        else                                                                                        \
-        {                                                                                           \
-        throw std::runtime_error("Broadcasting not allowed for DataFrame");                         \
-        }                                                                                           \
-}                                                                                                   \
-DataFrame operator sign(Series const &s, DataFrame const& df) {                                     \
-    std::vector<std::shared_ptr<arrow::ArrayData>> df_result;                                       \
-    df_result.reserve(df.m_array->num_columns());                                                   \
-    for (const auto &col: df.m_array->columns()) {                                                  \
-        auto result = arrow::compute::CallFunction(#func, {s.array(), col});                        \
-        if (result.ok()) {                                                                          \
-            df_result.emplace_back(result.MoveValueUnsafe().array());                               \
-        } else {                                                                                    \
-            throw std::runtime_error(result.status().ToString());                                   \
-        }                                                                                           \
-    }                                                                                               \
-    return {df.m_array->schema(), df.m_array->num_rows(), df_result};                               \
-}                                                                                                   \
-DataFrame operator sign(Scalar const &s, DataFrame const& df)                                       \
-{                                                                                                   \
-    std::vector<std::shared_ptr<arrow::ArrayData>> df_result;                                       \
-    df_result.reserve(df.m_array->num_columns());                                                   \
-    for (const auto &col: df.m_array->columns()) {                                                  \
-        auto result = arrow::compute::CallFunction(#func, {s.value(), col});                        \
-        if (result.ok()) {                                                                          \
-            df_result.emplace_back(result.MoveValueUnsafe().array());                               \
-        } else {                                                                                    \
-            throw std::runtime_error(result.status().ToString());                                   \
-        }                                                                                           \
-    }                                                                                               \
-    return {df.m_array->schema(), df.m_array->num_rows(), df_result};                               \
-}                                                                                                   \
+#include "filesystem"
+#include "group_by.h"
+#include "macros.h"
 
 namespace pd {
 
@@ -122,7 +38,7 @@ DataFrame::DataFrame(
 {
     if (not _index)
     {
-        if(table)
+        if (table)
         {
             m_index = uint_range(table->num_rows());
         }
@@ -136,22 +52,30 @@ bool DataFrame::contains(std::string const& column)
 
 DataFrame::DataFrame(
     std::shared_ptr<arrow::StructArray> const& arr,
-    std::vector<std::string> const& columns)
+    std::vector<std::string> const& columns = {})
     : NDArray<DataFrame>(nullptr)
 {
-    if (columns.empty())
-    {
-        throw std::runtime_error("Creating empty DataFrame is not permitted\n");
-    }
 
     arrow::FieldVector fields;
     arrow::ArrayVector arrayVector;
 
-    for (auto const& column : columns)
+    if (columns.empty())
     {
-        auto array = arr->GetFieldByName(column);
-        fields.emplace_back(arrow::field(column, arr->type()));
-        arrayVector.emplace_back(array);
+        arrayVector = arr->fields();
+        auto names = makeDefaultColumnNames(arrayVector.size());
+        for (auto const& name : names)
+        {
+            fields.emplace_back(arrow::field(name, arr->type()));
+        }
+    }
+    else
+    {
+        for (auto const& column : columns)
+        {
+            auto array = arr->GetFieldByName(column);
+            fields.emplace_back(arrow::field(column, arr->type()));
+            arrayVector.emplace_back(array);
+        }
     }
 
     int num_rows = arrayVector.back()->length();
@@ -168,16 +92,16 @@ DataFrame& DataFrame::rename(
     for (auto const& [old, new_] : columns)
     {
         auto index = schemas->GetFieldIndex(old);
-        if(index != -1)
+        if (index != -1)
         {
             auto field = schemas->GetFieldByName(old)->WithName(new_);
             schemas = schemas->SetField(index, field).MoveValueUnsafe();
         }
         else
         {
-            throw std::runtime_error("trying to rename with invalid field: " + old);
+            throw std::runtime_error(
+                "trying to rename with invalid field: " + old);
         }
-
     }
     m_array = arrow::RecordBatch::Make(schemas, num_rows(), m_array->columns());
     return *this;
@@ -229,6 +153,17 @@ DataFrame DataFrame::setIndex(std::string const& column_name)
     auto new_index = m_array->GetColumnByName(column_name);
     return { pd::ValidateAndReturn(m_array->RemoveColumn(column_idx)),
              new_index };
+}
+
+DataFrame DataFrame::setColumns(std::vector<std::string> const& column_names)
+{
+    auto current_column_names = columnNames();
+    std::unordered_map<std::string, std::string> replace;
+    for (int i = 0; i < column_names.size(); ++i)
+    {
+        replace[current_column_names[i]] = column_names[i];
+    }
+    return rename(replace);
 }
 
 DataFrame DataFrame::readParquet(std::filesystem::path const& path)
@@ -352,8 +287,8 @@ Series DataFrame::operator[](const std::string& column) const
     throw std::runtime_error(column + " is not a valid column");
 }
 
-std::unordered_map<std::string, pd::Scalar>
-    DataFrame::operator[](int64_t row) const
+std::unordered_map<std::string, pd::Scalar> DataFrame::operator[](
+    int64_t row) const
 {
     std::unordered_map<std::string, pd::Scalar> result;
     auto columns = columnNames();
@@ -384,29 +319,33 @@ DataFrame DateTimeLike::iso_calendar() const
 DataFrame DateTimeLike::year_month_day() const
 {
     auto result = pd::ValidateAndReturn(arrow::compute::ISOCalendar(m_array));
-    return {
-        result.array_as<arrow::StructArray>(),
-        std::vector<std::string>{ "year", "month", "day" }
-    };
+    return { result.array_as<arrow::StructArray>(),
+             std::vector<std::string>{ "year", "month", "day" } };
 }
 
 Scalar DataFrame::at(int64_t row, int64_t col) const
 {
 
+    if (row < 0)
+    {
+        throw std::runtime_error("@DataFrame::at() row must be >= 0");
+    }
+
     if (col < num_columns())
     {
         auto ptr = m_array->column(col);
         auto result = ptr->GetScalar(row);
-        if(result.ok())
+        if (result.ok())
         {
             return result.MoveValueUnsafe();
         }
-        throw std::runtime_error(std::to_string(row) +
-                                 " is an invalid row index for column " +
-                                 columnNames().at(col));
+        throw std::runtime_error(
+            std::to_string(row) + " is an invalid row index for column " +
+            columnNames().at(col));
     }
 
-    throw std::runtime_error(std::to_string(col) + " is not a valid column index");
+    throw std::runtime_error(
+        std::to_string(col) + " is not a valid column index");
 }
 
 std::vector<std::string> DataFrame::columnNames() const
@@ -596,6 +535,11 @@ Scalar DataFrame::sum() const
 
 DataFrame DataFrame::operator-() const
 {
+    if (m_array == nullptr)
+    {
+        return {};
+    }
+
     std::vector<std::shared_ptr<arrow::ArrayData>> df_result;
     df_result.reserve(m_array->num_columns());
     for (const auto& col : m_array->columns())
@@ -613,70 +557,162 @@ DataFrame DataFrame::operator-() const
     return { m_array->schema(), m_array->num_rows(), df_result };
 }
 
-DataFrame DataFrame::describe()
+using namespace std::string_literals;
+DataFrame DataFrame::describe(bool include_all, bool percentiles)
 {
-    std::unordered_map<std::string, std::vector<double>> stat;
 
-    std::vector<std::string> index;
-    int i = 0;
-    for (auto const& col : m_array->columns())
+    if (m_array == nullptr)
     {
-        Series s(col, false);
-        index.emplace_back(m_array->schema()->field(i++)->name());
-        stat["count"].emplace_back(s.count());
-        stat["mean"].emplace_back(s.mean());
-        stat["std"].emplace_back(s.std());
-        stat["min"].emplace_back(
-            Scalar(s.min().scalar->CastTo(DoubleTypePtr).MoveValueUnsafe())
-                .as<double>());
-        //            stat["25%"].emplace_back( Scalar(s.quantile(0.25).scalar->CastTo(DoubleTypePtr).MoveValueUnsafe()).as<double>());
-        //            stat["50%"].emplace_back( Scalar(s.quantile().scalar->CastTo(DoubleTypePtr).MoveValueUnsafe()).as<double>() ); stat["75%"].emplace_back( Scalar(s.quantile(0.75).scalar->CastTo(DoubleTypePtr).MoveValueUnsafe()).as<double>() );
-        stat["max"].emplace_back(s.max().as<double>());
+        return {};
     }
 
-    arrow::StringBuilder builder;
-    auto status = builder.AppendValues(index);
-    if (status.ok())
+    const auto& valid_types = arrow::NumericTypes();
+    if (std::ranges::any_of(
+            m_array->schema()->fields(),
+            [&valid_types](std::shared_ptr<arrow::Field> const& field)
+            {
+                return std::find(
+                           valid_types.begin(),
+                           valid_types.end(),
+                           field->type()) == valid_types.end();
+            }))
     {
-        return { stat, builder.Finish().MoveValueUnsafe() };
+        throw std::runtime_error("describe(): All Types must be numeric type");
     }
-    throwOnNotOkStatus(status);
-    return { nullptr };
+
+    std::vector<std::string> indexes;
+    if (include_all)
+    {
+        indexes = this->columns();
+    }
+    else
+    {
+        for (auto const& field : this->array()->schema()->fields())
+        {
+            if (field->type()->id() != arrow::Type::NA)
+            {
+                indexes.push_back(field->name());
+            }
+        }
+    }
+
+    auto columns = std::vector{ "count"s, "mean"s, "std"s, "min"s, "nunique"s };
+
+    std::vector<double> percentiles_list;
+    if (percentiles)
+    {
+        columns.insert(columns.end(), { "25%"s, "50%"s, "75%"s });
+        percentiles_list = { 0.25, 0.5, 0.75 };
+    }
+
+    columns.emplace_back("max");
+
+    auto N = indexes.size();
+
+    std::vector<long> counts(N);
+    std::vector<double> mean(N);
+    std::vector<double> std(N);
+    arrow::ScalarVector min(N);
+    std::vector<long> nunique(N);
+    std::vector<arrow::ScalarVector> quantiles(
+        percentiles_list.size(),
+        arrow::ScalarVector{ N });
+    arrow::ScalarVector max(N);
+
+    auto indexesArray = arrow::ArrayT<std::string>::Make(indexes);
+    for (int i = 0; i < indexes.size(); i++)
+    {
+        auto index = indexes[i];
+        auto series = operator[](index);
+
+        counts[i] = series.count();
+        mean[i] = series.mean();
+        std[i] = series.std();
+        min[i] = series.min().value();
+        nunique[i] = series.nunique();
+
+        for (int j = 0; j < percentiles_list.size(); j++)
+        {
+            quantiles[j][i] = series.quantile(percentiles_list[j]).value();
+        }
+
+        max[i] = series.max().value();
+    }
+
+    arrow::ArrayVector data;
+    arrow::FieldVector fields;
+
+    auto common_type = min.back()->type; // todo
+
+    fields.insert(
+        fields.end(),
+        {
+            arrow::field("count", arrow::int64()),
+            arrow::field("mean", arrow::float64()),
+            arrow::field("std", arrow::float64()),
+            arrow::field("min", common_type),
+            arrow::field("nunique", arrow::int64()),
+        });
+
+    data.insert(
+        data.end(),
+        { arrow::ArrayT<long>::Make(counts),
+          arrow::ArrayT<double>::Make(mean),
+          arrow::ArrayT<double>::Make(std),
+          arrow::ScalarArray::Make(min),
+          arrow::ArrayT<long>::Make(nunique) });
+
+    auto p = percentiles_list.begin();
+    for (auto const& q : quantiles)
+    {
+        data.emplace_back(arrow::ScalarArray::Make(q));
+        fields.emplace_back(arrow::field(
+            std::to_string(int((*p++) * 100)).append("%"),
+            common_type));
+    }
+
+    data.emplace_back(arrow::ScalarArray::Make(max));
+    fields.emplace_back(arrow::field("max", common_type));
+
+    return { arrow::schema(fields),
+             static_cast<int64_t>(indexes.size()),
+             data,
+             indexesArray };
 }
 
-BINARY_OPERATOR(-, subtract)
+BINARY_OPERATOR_PARALLEL(-, subtract)
 
-BINARY_OPERATOR(+, add)
+BINARY_OPERATOR_PARALLEL(+, add)
 
-BINARY_OPERATOR(/, divide)
+BINARY_OPERATOR_PARALLEL(/, divide)
 
-BINARY_OPERATOR(*, multiply)
+BINARY_OPERATOR_PARALLEL(*, multiply)
 
-BINARY_OPERATOR(|, bit_wise_or)
+BINARY_OPERATOR_PARALLEL(|, bit_wise_or)
 
-BINARY_OPERATOR(&, bit_wise_and)
+BINARY_OPERATOR_PARALLEL(&, bit_wise_and)
 
-BINARY_OPERATOR(^, bit_wise_xor)
+BINARY_OPERATOR_PARALLEL(^, bit_wise_xor)
 
-BINARY_OPERATOR(<<, shift_left)
+BINARY_OPERATOR_PARALLEL(<<, shift_left)
 
-BINARY_OPERATOR(>>, shift_right)
+BINARY_OPERATOR_PARALLEL(>>, shift_right)
 
-BINARY_OPERATOR(>, greater)
+BINARY_OPERATOR_PARALLEL(>, greater)
 
-BINARY_OPERATOR(>=, greater_equal)
+BINARY_OPERATOR_PARALLEL(>=, greater_equal)
 
-BINARY_OPERATOR(<, less)
+BINARY_OPERATOR_PARALLEL(<, less)
 
-BINARY_OPERATOR(<=, less_equal)
+BINARY_OPERATOR_PARALLEL(<=, less_equal)
 
-BINARY_OPERATOR(==, equal)
+BINARY_OPERATOR_PARALLEL(==, equal)
 
-BINARY_OPERATOR(!=, not_equal)
+BINARY_OPERATOR_PARALLEL(!=, not_equal)
 
-BINARY_OPERATOR(&&, and)
+BINARY_OPERATOR_PARALLEL(&&, and)
 
-BINARY_OPERATOR(||, or)
+BINARY_OPERATOR_PARALLEL(||, or)
 
 arrow::FieldVector DataFrame::dtypes() const
 {
@@ -685,7 +721,8 @@ arrow::FieldVector DataFrame::dtypes() const
 
 std::vector<std::string> DataFrame::columns() const
 {
-    return m_array->schema()->field_names();
+    return (m_array == nullptr) ? std::vector<std::string>{} :
+                                  m_array->schema()->field_names();
 }
 
 DataFrame DataFrame::head(int length) const
@@ -828,86 +865,138 @@ Series DataFrame::coalesce(std::vector<std::string> const& columns)
     return { nullptr, false };
 }
 
-class GroupBy DataFrame::group_by(const std::string& key) const
+GroupBy DataFrame::group_by(const std::string& key) const
 {
-    return { { m_array->GetColumnByName(key) }, m_array };
+    return { key, *this };
 }
 
-DataFrame GroupBy::Compute::agg(
-    std::vector<arrow::compute::Aggregate> const& funcs,
-    Series const& key,
-    std::vector<arrow::Datum> const& columns,
-    arrow::FieldVector const& fields,
-    bool skip_null)
+//arrow::Result<pd::DataFrame> GroupBy::apply(
+//    std::function<std::shared_ptr<arrow::Scalar>(pd::DataFrame const&)> fn)
+//{
+//    auto schema = df.m_array->schema();
+//    auto args = schema->field_names();
+//    auto N = unique_value->length();
+//
+//    auto fv = schema->fields();
+//    arrow::ArrayDataVector arr(args.size());
+//
+//    std::vector<std::shared_ptr<arrow::Scalar>> scalars(N);
+//
+//    tbb::parallel_for(
+//        tbb::blocked_range<size_t>(0, N),
+//        [&](const tbb::blocked_range<size_t>& r)
+//        {
+//            for (size_t i = r.begin(); i != r.end(); ++i)
+//            {
+//                auto key = unique_value->GetScalar(long(i)).MoveValueUnsafe();
+//                auto const& group = groups.at(key);
+//                auto index = indexChunk[key];
+//                auto rows = index->length();
+//
+//                scalars[i] =
+//                    fn(pd::DataFrame{ schema, rows, group, index });
+//            }
+//        });
+//
+//    auto builder = arrow::MakeBuilder(scalars.back()->type).MoveValueUnsafe();
+//    builder->AppendScalars(scalars);
+//    builder->FinishInternal(&arr.back());
+//
+//    return pd::DataFrame(arrow::schema(fv), long(N), arr);
+//}
+
+GROUPBY_NUMERIC_AGG(mean, double)
+GROUPBY_NUMERIC_AGG(approximate_median, double)
+GROUPBY_NUMERIC_AGG(stddev, double)
+GROUPBY_NUMERIC_AGG(tdigest, double)
+GROUPBY_NUMERIC_AGG(variance, double)
+
+GROUPBY_NUMERIC_AGG(count, int64_t)
+GROUPBY_NUMERIC_AGG(count_distinct, int64_t)
+//GROUPBY_NUMERIC_AGG(index, int64_t)
+
+GROUPBY_AGG(max)
+GROUPBY_AGG(min)
+GROUPBY_AGG(sum)
+
+//GROUPBY_AGG(product, int64_t)
+//GROUPBY_AGG(quantile, int64_t)
+
+
+arrow::Status GroupBy::processEach(
+    std::unique_ptr<arrow::compute::Grouper> const& grouper,
+    std::shared_ptr<arrow::ListArray> const& groupings,
+    std::shared_ptr<arrow::Array> const& column)
 {
-    auto result =
-        arrow::compute::internal::GroupBy(columns, { key.array() }, funcs);
-    if (result.ok())
+    using namespace arrow;
+    using namespace arrow::compute;
+
+    ARROW_ASSIGN_OR_RAISE(
+        auto grouped_argument,
+        Grouper::ApplyGroupings(*groupings, *column));
+
+    for (int64_t i_group = 0; i_group < grouper->num_groups(); ++i_group)
     {
-        auto array = result.MoveValueUnsafe().array_as<arrow::StructArray>();
-        auto new_index = key.unique().m_array;
-        return { arrow::schema(fields),
-                 new_index->length(),
-                 array->fields(),
-                 new_index };
+        ARROW_ASSIGN_OR_RAISE( std::shared_ptr<arrow::Scalar> keyScalar, unique_value->GetScalar(i_group));
+
+        groups[keyScalar].emplace_back(grouped_argument->value_slice(i_group));
     }
-    throw std::runtime_error(result.status().ToString());
+    return arrow::Status::OK();
 }
 
-DataFrame GroupBy::Compute::agg(
-    const std::vector<std::string>& fnc,
-    bool skip_null)
+arrow::Status GroupBy::processIndex(
+    std::unique_ptr<arrow::compute::Grouper> const& grouper,
+    std::shared_ptr<arrow::ListArray> const& groupings)
 {
+    using namespace arrow;
+    using namespace arrow::compute;
 
-    std::vector<std::pair<std::shared_ptr<arrow::Field>, DataFrame::ArrayType>>
-        agg_result;
+    ARROW_ASSIGN_OR_RAISE(
+        auto grouped_argument,
+        Grouper::ApplyGroupings(*groupings, *df.indexArray()));
 
-    int total_size = fnc.size() + columns.size();
-    std::vector<arrow::compute::Aggregate> aggregations;
-    std::vector<arrow::Datum> args;
-    arrow::FieldVector fields;
-
-    fields.reserve(total_size);
-    aggregations.reserve(total_size);
-    args.reserve(total_size);
-
-    std::shared_ptr<arrow::compute::FunctionOptions> f =
-        std::make_shared<arrow::compute::ScalarAggregateOptions>(skip_null);
-
-    int field_idx = 0;
-    for (auto const& col : column_data)
+    for (int64_t i_group = 0; i_group < grouper->num_groups(); ++i_group)
     {
-        auto field = columns[field_idx++];
-        for (auto const& name : fnc)
-        {
-            aggregations.emplace_back(
-                arrow::compute::Aggregate{ "hash_" + name, f });
-            args.emplace_back(col);
-            fields.emplace_back(
-                arrow::field(field->name() + "_" + name, field->type()));
-        }
+        ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Scalar>  keyScalar, unique_value->GetScalar(i_group));
+        indexChunk[keyScalar] = grouped_argument->value_slice(i_group);
+    }
+    return arrow::Status::OK();
+}
+
+arrow::Status GroupBy::makeGroups()
+{
+    using namespace arrow;
+    using namespace arrow::compute;
+
+    auto schema = df.array()->schema();
+
+    ARROW_ASSIGN_OR_RAISE(
+        auto key_batch,
+        ExecBatch::Make(std::vector<Datum>{ df[keyStr].array() }));
+
+    ARROW_ASSIGN_OR_RAISE(auto grouper, Grouper::Make(key_batch.GetTypes()));
+
+    ARROW_ASSIGN_OR_RAISE(
+        Datum id_batch,
+        grouper->Consume(ExecSpan(key_batch)));
+
+    ARROW_ASSIGN_OR_RAISE(
+        auto groupings,
+        Grouper::MakeGroupings(
+            *id_batch.array_as<UInt32Array>(),
+            grouper->num_groups()));
+
+    ARROW_ASSIGN_OR_RAISE(auto uniques, grouper->GetUniques());
+    unique_value = uniques.values[0].make_array();
+
+    processIndex(grouper, groupings);
+
+    for (auto const& col : df.m_array->columns())
+    {
+        processEach(grouper, groupings, col);
     }
 
-    return agg(aggregations, key_data, args, fields, skip_null).sort_index();
+    return arrow::Status::OK();
 }
-
-GroupBy::Compute GroupBy::operator[](
-    std::vector<std::string> const& columns_str)
-{
-    std::vector<arrow::Datum> args(columns_str.size());
-    arrow::FieldVector columns;
-    auto fields = rb->schema()->fields();
-    std::ranges::transform(
-        columns_str,
-        args.begin(),
-        [&, this](auto const& k)
-        {
-            auto arr = rb->GetColumnByName(k);
-            columns.emplace_back(arrow::field(k, arr->type()));
-            return arr;
-        });
-    return Compute{ columns, args, { key, false } };
-}
-
 
 }
