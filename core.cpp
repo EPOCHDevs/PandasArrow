@@ -9,10 +9,6 @@
 #include "dataframe.h"
 #include "group_by.h"
 
-
-typedef boost::date_time::subsecond_duration<time_duration,1000000000> nanosec;
-typedef boost::date_time::subsecond_duration<time_duration,1000000000> nanoseconds;
-
 namespace pd {
 
 std::pair<std::string, int> splitTimeSpan(std::string const& freq)
@@ -40,73 +36,68 @@ std::pair<std::string, int> splitTimeSpan(std::string const& freq)
 }
 
 template<class Iterator = day_iterator, typename FreqTime = int>
-std::shared_ptr<arrow::Array> date_range(
+std::shared_ptr<arrow::TimestampArray> date_range(
     date const& start,
     date const& end,
     FreqTime freq = 1,
     std::string const& tz = "")
 {
-    Iterator it(start, freq);
-    auto builderResult = arrow::MakeBuilder(
-        std::make_shared<arrow::TimestampType>(arrow::TimeUnit::NANO, tz));
-
-    if (builderResult.ok())
+    if (start >= end)
     {
-        auto builder = builderResult.MoveValueUnsafe();
-
-        while (*it <= end)
-        {
-            arrow::TimestampScalar ts(fromDate(*it), arrow::TimeUnit::NANO, tz);
-            auto status = builder->AppendScalar(ts);
-            if (status.ok())
-            {
-                ++it;
-            }
-            else
-            {
-                throw std::runtime_error(status.ToString());
-            }
-        }
-        return builder->Finish().MoveValueUnsafe();
+        throw std::runtime_error("start date has to be less than end date");
     }
-    throw std::runtime_error(builderResult.status().ToString());
+
+    if (freq < 1)
+    {
+        throw std::runtime_error("FREQ must be >= 1");
+    }
+
+    auto N = size_t(std::round(
+        double(date_period(end, start).length().days()) / double(freq)));
+    std::vector<int64_t> timestamps;
+    timestamps.reserve(N);
+
+    for (auto it = Iterator(start, freq); it <= end; ++it)
+    {
+        timestamps.push_back(fromDate(*it));
+    }
+
+    return toDateTime(timestamps, arrow::TimeUnit::NANO, tz);
 }
 
 template<class Iterator = day_iterator, typename FreqTime = int>
-std::shared_ptr<arrow::Array> date_range(
+std::shared_ptr<arrow::TimestampArray> date_range(
     date const& start,
     int period,
     FreqTime freq,
     std::string const& tz = "")
 {
-    Iterator it(start, freq);
-    auto builderResult = arrow::MakeBuilder(
-        std::make_shared<arrow::TimestampType>(arrow::TimeUnit::NANO, tz));
-
-    if (builderResult.ok())
+    if (period <= 0)
     {
-        auto builder = builderResult.MoveValueUnsafe();
-
-        while (period > 0)
-        {
-            arrow::TimestampScalar ts(fromDate(*it), arrow::TimeUnit::NANO, tz);
-            auto status = builder->AppendScalar(ts);
-            if (status.ok())
-            {
-                ++it;
-                period--;
-            }
-            else
-            {
-                throw std::runtime_error(status.ToString());
-            }
-        }
-        return builder->Finish().MoveValueUnsafe();
+        throw std::runtime_error("period has to be positive");
     }
-    throw std::runtime_error(builderResult.status().ToString());
+    if (freq < 1)
+    {
+        throw std::runtime_error("FREQ must be >= 1");
+    }
+
+    Iterator it(start, freq);
+
+    std::vector<int64_t> timestamps(period);
+
+    std::generate_n(
+        timestamps.begin(),
+        period,
+        [&it]()
+        {
+            auto result = fromDate(*it);
+            ++it;
+            return result;
+        });
+    return toDateTime(timestamps);
 }
 
-std::shared_ptr<arrow::Array> switchFunction(
+std::shared_ptr<arrow::TimestampArray> switchFunction(
     date const& start,
     auto const& end_or_period,
     std::string const& freq,
@@ -157,7 +148,7 @@ std::shared_ptr<arrow::Array> switchFunction(
         "date_range with start:date_type is only compatible with [D W M Y] freq_unit");
 }
 
-std::shared_ptr<arrow::Array> switchFunction(
+std::shared_ptr<arrow::TimestampArray> switchFunction(
     ptime const& start,
     auto const& end_or_period,
     std::string const& freq,
@@ -189,88 +180,73 @@ std::shared_ptr<arrow::Array> switchFunction(
         "[T/min S L/ms U/us N/ns] freq_unit");
 }
 
-std::shared_ptr<arrow::Array> date_range(
+std::shared_ptr<arrow::TimestampArray> date_range(
     ptime const& start,
     ptime const& end,
     time_duration const& freq,
     std::string const& tz)
 {
-    time_iterator it(start, freq);
-    auto builderResult = arrow::MakeBuilder(
-        std::make_shared<arrow::TimestampType>(arrow::TimeUnit::NANO, tz));
-
-    if (builderResult.ok())
+    if (start >= end)
     {
-        auto builder = builderResult.MoveValueUnsafe();
-
-        while (*it <= end)
-        {
-            arrow::TimestampScalar ts(
-                fromPTime(*it),
-                arrow::TimeUnit::NANO,
-                tz);
-            auto status = builder->AppendScalar(ts);
-            if (status.ok())
-            {
-                ++it;
-            }
-            else
-            {
-                throw std::runtime_error(status.ToString());
-            }
-        }
-        return builder->Finish().MoveValueUnsafe();
+        throw std::runtime_error("start date has to be less than end date");
     }
-    throw std::runtime_error(builderResult.status().ToString());
+
+    if (freq.is_negative() or freq.is_zero())
+    {
+        throw std::runtime_error("FREQ must be positive");
+    }
+
+    std::vector<int64_t> timestamps;
+    for (auto it = time_iterator(start, freq); it <= end; ++it)
+    {
+        timestamps.push_back(fromPTime(*it));
+    }
+
+    return toDateTime(timestamps, arrow::TimeUnit::NANO, tz);
 }
 
-std::shared_ptr<arrow::Array> date_range(
+std::shared_ptr<arrow::TimestampArray> date_range(
     ptime const& start,
     int period,
     time_duration const& freq,
     std::string const& tz)
 {
-    time_iterator it(start, freq);
-    auto builderResult = arrow::MakeBuilder(
-        std::make_shared<arrow::TimestampType>(arrow::TimeUnit::NANO, tz));
-
-    if (builderResult.ok())
+    if (period <= 0)
     {
-        auto builder = builderResult.MoveValueUnsafe();
-
-        while (period > 0)
-        {
-            arrow::TimestampScalar ts(
-                fromPTime(*it),
-                arrow::TimeUnit::NANO,
-                tz);
-            auto status = builder->AppendScalar(ts);
-            if (status.ok())
-            {
-                ++it;
-                period--;
-            }
-            else
-            {
-                throw std::runtime_error(status.ToString());
-            }
-        }
-        return builder->Finish().MoveValueUnsafe();
+        throw std::runtime_error("period has to be positive");
     }
-    throw std::runtime_error(builderResult.status().ToString());
+
+    if (freq.is_negative() or freq.is_zero())
+    {
+        throw std::runtime_error("FREQ must be positive");
+    }
+
+    time_iterator it(start, freq);
+    std::vector<int64_t> timestamps(period);
+
+    std::generate_n(
+        timestamps.begin(),
+        period,
+        [it]() mutable
+        {
+            auto result = fromPTime(*it);
+            ++it;
+            return result;
+        });
+
+    return toDateTime(timestamps, arrow::TimeUnit::NANO, tz);
 }
 
-std::shared_ptr<arrow::Array> date_range(
+std::shared_ptr<arrow::TimestampArray> date_range(
     date const& start,
     date const& end,
     std::string const& freq,
     std::string const& tz)
 {
-
     return switchFunction(start, end, freq, tz);
 }
 
-std::shared_ptr<arrow::Array> date_range(
+std::shared_ptr<arrow::TimestampArray> date_range(
     date const& start,
     int period,
     std::string const& freq,
@@ -279,7 +255,7 @@ std::shared_ptr<arrow::Array> date_range(
     return switchFunction(start, period, freq, tz);
 }
 
-std::shared_ptr<arrow::Array> date_range(
+std::shared_ptr<arrow::TimestampArray> date_range(
     ptime const& start,
     ptime const& end,
     std::string const& freq,
@@ -288,7 +264,7 @@ std::shared_ptr<arrow::Array> date_range(
     return switchFunction(start, end, freq, tz);
 }
 
-std::shared_ptr<arrow::Array> date_range(
+std::shared_ptr<arrow::TimestampArray> date_range(
     ptime const& start,
     int period,
     std::string const& freq,
@@ -297,239 +273,88 @@ std::shared_ptr<arrow::Array> date_range(
     return switchFunction(start, period, freq, tz);
 }
 
-std::shared_ptr<arrow::Array> range(int64_t start, int64_t end)
+std::shared_ptr<arrow::Int64Array> range(int64_t start, int64_t end)
 {
     arrow::Int64Builder builder;
     auto rangeView = std::views::iota(start, end);
-    auto status = builder.AppendValues(rangeView.begin(), rangeView.end());
-    if (status.ok())
-    {
-        return builder.Finish().MoveValueUnsafe();
-    }
-    else
-    {
-        throw std::runtime_error(status.ToString());
-    }
+    ABORT_NOT_OK(builder.AppendValues(rangeView.begin(), rangeView.end()));
+
+    return dynamic_pointer_cast<arrow::Int64Array>(
+        builder.Finish().MoveValueUnsafe());
 }
 
-
-auto generate_bins_dt64(std::shared_ptr<arrow::Int64Array> const& values,
-                        std::shared_ptr<arrow::Int64Array> const& binner,
-                        bool closed_right)
+std::shared_ptr<arrow::Array> combineIndexes(
+    std::vector<Series::ArrayType> const& indexes,
+    bool ignore_index)
 {
-    if(pd::Series(values, false).count_na() > 0)
+    if (ignore_index)
     {
-        throw std::runtime_error("value in generate_bins_dt64 contains nan");
+        std::vector<int64_t> idx_len(indexes.size());
+        std::ranges::transform(
+            indexes,
+            idx_len.begin(),
+            [](Series::ArrayType const& idx) { return idx->length(); });
+        return range(0L, std::accumulate(idx_len.begin(), idx_len.end(), 0L));
     }
 
-    int64_t lenidx = values->length();
-    int64_t lenbin = binner->length();
+    auto result = arrow::Concatenate(indexes);
+    if (result.ok())
+        return result.MoveValueUnsafe();
 
-    if(lenidx <= 0 or lenbin <= 0)
-    {
-        throw std::runtime_error("Invalid length for values or for binner");
-    }
-
-    if(values->GetView(0) < binner->GetView(0))
-    {
-        throw std::runtime_error("Values falls before first bin");
-    }
-
-    if(values->GetView(lenidx - 1) > binner->GetView(lenbin - 1) )
-    {
-        throw std::runtime_error("Values falls after last bin")   ;
-    }
-
-    auto bins = std::vector<int64_t>(lenbin-1);
-
-    int64_t j = 0, bc = 0;
-    int64_t r_bin{};
-    if(closed_right)
-    {
-        for(int64_t i = 0; i < lenbin-1; i++)
-        {
-            r_bin = binner->GetView(i + 1);
-            while(j < lenidx and values->GetView(j) <= r_bin)
-            {
-                j++;
-            }
-            bins[bc] = j;
-            bc++;
-        }
-    }
-    else
-    {
-        for(int64_t i = 0; i < lenbin-1; i++)
-        {
-            r_bin = binner->GetView(i + 1);
-            while(j < lenidx and  values->GetView(j) < r_bin)
-            {
-                j++;
-            }
-            bins[bc] = j;
-            bc++;
-        }
-    }
-
-    return bins;
+    throw std::runtime_error(result.status().ToString());
 }
 
-class GroupBy resample(
-    pd::DataFrame const& df,
-    time_duration const& freq,
-    bool closed_right,
-    bool label_right,
-    std::string const& tz)
+pd::DataFrame concatRows(
+    std::vector<pd::DataFrame> const& objs,
+    JoinType join,
+    bool ignore_index,
+    bool sort)
 {
-    auto ax = df.index();
-    if (ax.size() > 2)
-    {
-        int64_t N = ax.size();
-
-        auto first = time_from_string(ax[0].scalar->ToString());
-        auto last = time_from_string(ax[N - 1].scalar->ToString());
-
-        auto binner = date_range(first, last, freq, tz);
-        auto ax_values = ax.cast<int64_t>();
-
-        auto bin_edges = Series(binner, false).cast<int64_t>();
-
-        auto bins = generate_bins_dt64(
-            std::dynamic_pointer_cast<arrow::Int64Array>(ax_values.array()),
-            std::dynamic_pointer_cast<arrow::Int64Array>(bin_edges.array()),
-            closed_right);
-
-        if (closed_right)
-        {
-            if (label_right)
-            {
-                bin_edges = bin_edges[Slice{ 1 }];
-            }
-        }
-        else if (label_right)
-        {
-            bin_edges = bin_edges[Slice{ 1 }];
-        }
-
-        if (bins.size() < bin_edges.size())
-        {
-            bin_edges = bin_edges[Slice{ 0, int(bins.size()) }];
-        }
-
-        arrow::Int64Builder builder;
-        auto status = builder.Reserve(N);
-
-        if (status.ok())
-        {
-            int64_t l = 0;
-            int i = 0;
-            for (int64_t r : bins)
-            {
-                auto bin_edge = *bin_edges[i++].scalar;
-                status = builder.AppendScalar(bin_edge, r - l);
-
-                if (status.ok())
-                {
-                    l = r;
-                }
-                else
-                {
-                    throw std::runtime_error(status.ToString());
-                }
-            }
-            auto arr = builder.Finish().MoveValueUnsafe();
-
-            arrow::compute::CastOptions opt{ true };
-            opt.to_type = TimestampTypePtr;
-            arr = ValidateHelper(arrow::compute::Cast(arr, opt)).m_array;
-
-            return pd::DataFrame(df.m_array->AddColumn(df.num_columns(), "idx", arr).MoveValueUnsafe()).group_by("idx");
-        }
-        else
-        {
-            throw std::runtime_error(status.ToString());
-        }
-    }
-    else
-    {
-        throw std::runtime_error("Cannot Resample a df of rows < 2");
-    }
-}
-
-    std::shared_ptr<arrow::Array>
-    combineIndexes(std::vector<Series::ArrayType> const& indexes,
-                   bool ignore_index)
-    {
-        if(ignore_index)
-        {
-            std::vector<int64_t> idx_len(indexes.size());
-            std::ranges::transform(indexes,
-                                   idx_len.begin(),
-                                   [](Series::ArrayType const& idx){
-                                       return idx->length();
-                                   });
-            return range(
-                0L,
-                std::accumulate(idx_len.begin(), idx_len.end(), 0L));
-        }
-
-        auto result = arrow::Concatenate(indexes);
-        if(result.ok())
-            return result.MoveValueUnsafe();
-
-        throw std::runtime_error(result.status().ToString());
-    }
-
-pd::DataFrame concatRows(std::vector<pd::DataFrame> const& objs,
-                         JoinType join,
-                         bool ignore_index,
-                         bool sort)
-{
-    std::vector<
-        std::pair<std::shared_ptr<arrow::Field>,
-            std::vector<Series::ArrayType> > > newDf;
+    std::vector<std::pair<
+        std::shared_ptr<arrow::Field>,
+        std::vector<Series::ArrayType>>>
+        newDf;
     std::vector<Series::ArrayType> newIdx;
 
-    auto insertNewDf = [&newDf](std::shared_ptr<arrow::Field> const& col,
-                                pd::DataFrame const& df,
-                                Series::ArrayType const& arr)
+    auto insertNewDf = [&newDf](
+                           std::shared_ptr<arrow::Field> const& col,
+                           pd::DataFrame const& df,
+                           Series::ArrayType const& arr)
     {
         auto col_name = col->name();
-        if(auto it =
-                std::ranges::find_if(newDf,
-                                     [&col_name](auto const& item)
-                                     {
-                                         return item.first->name() == col_name;
-                                     }); it != newDf.end() )
+        if (auto it = std::ranges::find_if(
+                newDf,
+                [&col_name](auto const& item)
+                { return item.first->name() == col_name; });
+            it != newDf.end())
         {
             it->second.emplace_back(arr);
         }
         else
         {
-            newDf.emplace_back(col, std::vector<Series::ArrayType>{arr});
+            newDf.emplace_back(col, std::vector<Series::ArrayType>{ arr });
         }
     };
 
     auto newColumns = mergeColumns(objs, join);
 
-    for(pd::DataFrame const& df: objs)
+    for (pd::DataFrame const& df : objs)
     {
-        auto schema  = df.array()->schema();
+        auto schema = df.array()->schema();
 
-        for(std::shared_ptr<arrow::Field> const& col: newColumns)
+        for (std::shared_ptr<arrow::Field> const& col : newColumns)
         {
             auto col_name = col->name();
             int index = schema->GetFieldIndex(col_name);
-            if(index != -1)
+            if (index != -1)
             {
-                insertNewDf(col, df,
-                            df.array()->column(index));
+                insertNewDf(col, df, df.array()->column(index));
             }
             else
             {
-                auto result = arrow::MakeArrayOfNull(col->type(),
-                                                        df.num_rows());
-                if(result.ok())
+                auto result =
+                    arrow::MakeArrayOfNull(col->type(), df.num_rows());
+                if (result.ok())
                 {
                     auto nullArray = result.MoveValueUnsafe();
                     insertNewDf(col, df, nullArray);
@@ -544,23 +369,22 @@ pd::DataFrame concatRows(std::vector<pd::DataFrame> const& objs,
         newIdx.emplace_back(df.indexArray());
     }
 
-    if(sort)
+    if (sort)
     {
-        std::ranges::sort(newDf,
-                          [](auto const& a, auto const& b){
-
-                              return a.first->name() < b.first->name();
-                          });
+        std::ranges::sort(
+            newDf,
+            [](auto const& a, auto const& b)
+            { return a.first->name() < b.first->name(); });
     }
 
     arrow::FieldVector fieldVector;
     arrow::ArrayVector arrayVectors;
 
-    for(auto const& [field, arr]: newDf)
+    for (auto const& [field, arr] : newDf)
     {
         fieldVector.push_back(field);
         auto result = arrow::Concatenate(arr);
-        if(result.ok())
+        if (result.ok())
         {
             arrayVectors.push_back(result.MoveValueUnsafe());
         }
@@ -571,17 +395,19 @@ pd::DataFrame concatRows(std::vector<pd::DataFrame> const& objs,
     }
 
     int64_t numRows = arrayVectors[0]->length();
-    auto rb =  arrow::RecordBatch::Make(arrow::schema(fieldVector),
-                                       numRows,
-                                       arrayVectors);
+    auto rb = arrow::RecordBatch::Make(
+        arrow::schema(fieldVector),
+        numRows,
+        arrayVectors);
 
-    return {rb, combineIndexes(newIdx, ignore_index)};
+    return { rb, combineIndexes(newIdx, ignore_index) };
 }
 
-Series ValidateHelper(auto && result)
+Series ValidateHelper(auto&& result)
 {
-    if (result.ok()) {
-        return pd::Series{result->make_array(), false, ""};
+    if (result.ok())
+    {
+        return pd::Series{ result->make_array(), false, "" };
     }
     throw std::runtime_error(result.status().ToString());
 }
@@ -591,44 +417,49 @@ pd::DataFrame concatColumnsUnsafe(std::vector<pd::DataFrame> const& objs)
     auto df = objs.at(0).array();
     auto N = df->num_columns();
 
-    for(int i = 1 ; i < objs.size(); i++)
+    for (int i = 1; i < objs.size(); i++)
     {
         for (auto const& field : objs[i].array()->schema()->fields())
         {
-            auto result = df->AddColumn(N++, field,
-                                        objs[i][field->name()].m_array);
-            if(result.ok())
+            auto result =
+                df->AddColumn(N++, field, objs[i][field->name()].m_array);
+            if (result.ok())
             {
                 df = result.MoveValueUnsafe();
-            }else
+            }
+            else
             {
                 throw std::runtime_error(result.status().ToString());
             }
         }
     }
-    return {df,
-            objs.at(0).indexArray()};
+    return { df, objs.at(0).indexArray() };
 }
 
-pd::DataFrame concatColumns(std::vector<pd::DataFrame> const& objs,
-                            JoinType join,
-                            bool ignore_index,
-                            bool sort)
+pd::DataFrame concatColumns(
+    std::vector<pd::DataFrame> const& objs,
+    JoinType join,
+    bool ignore_index,
+    bool sort)
 {
-    std::vector<
-        std::pair<std::shared_ptr<arrow::Field>, Series::ArrayType> > newDf;
+    std::vector<std::pair<std::shared_ptr<arrow::Field>, Series::ArrayType>>
+        newDf;
 
     auto newIdx = mergeRows(objs, join);
 
-    if(sort)
+    if (sort)
     {
         auto idx = arrow::compute::SortIndices(*newIdx).MoveValueUnsafe();
-        newIdx = ValidateHelper(
-            arrow::compute::CallFunction("array_take", {newIdx, idx})).m_array;
+        newIdx =
+            ValidateHelper(
+                arrow::compute::CallFunction("array_take", { newIdx, idx }))
+                .m_array;
     }
 
-    std::vector<std::future<std::pair<std::shared_ptr<arrow::Field>, Series::ArrayType>>> futures;
-    for(pd::DataFrame const& df: objs)
+    std::vector<std::future<
+        std::pair<std::shared_ptr<arrow::Field>, Series::ArrayType>>>
+        futures;
+    for (pd::DataFrame const& df : objs)
     {
         auto schema = df.array()->schema();
         auto df_index = df.index();
@@ -647,18 +478,19 @@ pd::DataFrame concatColumns(std::vector<pd::DataFrame> const& objs,
                             arrow::MakeBuilder(c->type()).MoveValueUnsafe();
 
                         auto status = builder->Reserve(n->length());
-                        if(builder->Reserve(n->length()).ok())
+                        if (builder->Reserve(n->length()).ok())
                         {
                             for (int i = 0; i < n->length(); i++)
                             {
                                 auto idx = n->GetScalar(i).MoveValueUnsafe();
                                 auto result = j.index(idx);
-                                status =  (result == -1 ?
-                                                   builder->AppendNull() :
-                                                   builder->AppendScalar(
-                                                       *arr->GetScalar(result)
-                                                            .MoveValueUnsafe()) );
-                                if(status.ok() )
+                                status =
+                                    (result == -1 ?
+                                         builder->AppendNull() :
+                                         builder->AppendScalar(
+                                             *arr->GetScalar(result)
+                                                  .MoveValueUnsafe()));
+                                if (status.ok())
                                 {
                                     continue;
                                 }
@@ -667,7 +499,8 @@ pd::DataFrame concatColumns(std::vector<pd::DataFrame> const& objs,
                                     throw std::runtime_error(status.ToString());
                                 }
                             }
-                        }else
+                        }
+                        else
                         {
                             throw std::runtime_error(status.ToString());
                         }
@@ -682,10 +515,10 @@ pd::DataFrame concatColumns(std::vector<pd::DataFrame> const& objs,
     arrow::ArrayVector arrayVectors;
 
     int i = 0;
-    for(auto& ftr: futures)
+    for (auto& ftr : futures)
     {
         auto [field, arr] = ftr.get();
-        if(ignore_index)
+        if (ignore_index)
         {
             field = arrow::field(std::to_string(i++), field->type());
         }
@@ -694,41 +527,42 @@ pd::DataFrame concatColumns(std::vector<pd::DataFrame> const& objs,
     }
 
     int64_t numRows = arrayVectors[0]->length();
-    auto rb =  arrow::RecordBatch::Make(arrow::schema(fieldVector),
-                                       numRows,
-                                       arrayVectors);
+    auto rb = arrow::RecordBatch::Make(
+        arrow::schema(fieldVector),
+        numRows,
+        arrayVectors);
 
-    return {rb, newIdx};
+    return { rb, newIdx };
 }
 
-pd::DataFrame concat(std::vector<pd::DataFrame> const& objs,
-                     AxisType axis_type,
-                     JoinType join,
-                     bool ignore_index,
-                     bool sort)
+pd::DataFrame concat(
+    std::vector<pd::DataFrame> const& objs,
+    AxisType axis_type,
+    JoinType join,
+    bool ignore_index,
+    bool sort)
 {
     auto fn = axis_type == AxisType::Index ? concatRows : concatColumns;
     return fn(objs, join, ignore_index, sort);
 }
 
 
-std::vector<std::shared_ptr<arrow::Field> >
-mergeColumns(std::vector<pd::DataFrame> const& objs,
-             JoinType join)
+std::vector<std::shared_ptr<arrow::Field>> mergeColumns(
+    std::vector<pd::DataFrame> const& objs,
+    JoinType join)
 {
     std::unordered_map<std::shared_ptr<arrow::Field>, int64_t> order;
     std::vector<std::shared_ptr<arrow::Field>> result =
         objs[0].array()->schema()->fields();
 
     int i = 0;
-    for(auto const& field: result)
+    for (auto const& field : result)
     {
         order[field] = i++;
     }
 
-    auto fieldEqual =  [](auto const& l, auto const& r){
-        return l->name() < r->name();
-    };
+    auto fieldEqual = [](auto const& l, auto const& r)
+    { return l->name() < r->name(); };
 
     std::for_each(
         objs.begin() + 1,
@@ -758,9 +592,9 @@ mergeColumns(std::vector<pd::DataFrame> const& objs,
                     fieldEqual);
             }
 
-            for(auto const& field: fields)
+            for (auto const& field : fields)
             {
-                if(not order.contains(field))
+                if (not order.contains(field))
                 {
                     order[field] = i++;
                 }
@@ -768,15 +602,15 @@ mergeColumns(std::vector<pd::DataFrame> const& objs,
             result = temp;
         });
 
-    std::ranges::sort(result, [&order](auto const& l, auto const& r){
-                          return order[l] < order[r];
-    });
+    std::ranges::sort(
+        result,
+        [&order](auto const& l, auto const& r) { return order[l] < order[r]; });
     return result;
 }
 
-std::shared_ptr<arrow::Array>
-mergeRows(std::vector<pd::DataFrame> const& objs,
-             JoinType join)
+std::shared_ptr<arrow::Array> mergeRows(
+    std::vector<pd::DataFrame> const& objs,
+    JoinType join)
 {
     std::vector<std::shared_ptr<arrow::Array>> indexes(objs.size());
     std::ranges::transform(
@@ -789,7 +623,9 @@ mergeRows(std::vector<pd::DataFrame> const& objs,
         auto index = indexes[0];
         for (auto other = indexes.begin() + 1; other != indexes.end(); other++)
         {
-            index = Series(index, true).intersection(Series{*other, true}).m_array;
+            index = Series(index, true)
+                        .intersection(Series{ *other, true })
+                        .m_array;
         }
         return index;
     }

@@ -6,52 +6,6 @@
 #include "pandas_arrow.h"
 #include "stdexcept"
 
-
-template<class T>
-std::shared_ptr<arrow::Array> ArrayFromJSON(std::string_view json)
-{
-
-    rapidjson::Document doc;
-    doc.Parse(json.data());
-    if (!doc.IsArray())
-    {
-        throw std::runtime_error("Input JSON is not an array");
-    }
-
-    typename arrow::CTypeTraits<T>::BuilderType builder;
-
-    for (const auto& val : doc.GetArray())
-    {
-        if (val.IsNull())
-        {
-            builder.AppendNull();
-        }
-        else if (val.IsInt())
-        {
-            builder.Append(val.GetInt());
-        }
-        else if (val.IsInt64())
-        {
-            builder.Append(val.GetInt64());
-        }
-        else if (val.IsDouble())
-        {
-            builder.Append(val.GetDouble());
-        }
-//        else if (val.IsString())
-//        {
-//            builder.Append(val.GetString());
-//        }
-        else
-        {
-            throw std::runtime_error("Unsupported data type in JSON array");
-        }
-    }
-    std::shared_ptr<arrow::Array> array;
-    builder.Finish(&array);
-    return array;
-}
-
 bool operator==(std::shared_ptr<arrow::DataType> const& a,
                 std::shared_ptr<arrow::DataType> const& b)
 {
@@ -63,7 +17,7 @@ using namespace pd;
 
 TEST_CASE("Test Series constructor with arrow array and boolean input") {
     // Create an Arrow array to pass as input
-    auto arr = ArrayFromJSON<int>("[1, 2, 3, 4, 5]");
+    auto arr = arrow::ArrayFromJSON<int>("[1, 2, 3, 4, 5]");
 
     // Test with isIndex = true
     Series s1(arr, true);
@@ -255,7 +209,7 @@ TEST_CASE("Test Series Math Functions", "[series]")
 
 TEST_CASE("Test Series values() and const_ptr() functions") {
     // Create an Arrow array to pass as input
-    auto arr = ArrayFromJSON<int>("[1, 2, 3, 4, 5]");
+    auto arr = arrow::ArrayFromJSON<int>("[1, 2, 3, 4, 5]");
     // Create a Series object with the array
     Series s(arr, false);
 
@@ -270,7 +224,7 @@ TEST_CASE("Test Series values() and const_ptr() functions") {
 
 TEST_CASE("Test Series view() function") {
     // Create an Arrow array to pass as input
-    auto arr = ArrayFromJSON<float>("[1.1, 2.2, 3.3, 4.4, 5.5]");
+    auto arr = arrow::ArrayFromJSON<float>("[1.1, 2.2, 3.3, 4.4, 5.5]");
     // Create a Series object with the array
     Series s(arr, false);
 
@@ -1561,6 +1515,179 @@ TEST_CASE("Test Series::apply() function")
     REQUIRE(result.at(4) == 49);
 }
 
+TEST_CASE("Test min_max function for Series", "[series]") {
+    pd::Series s(std::vector<int>{1, 2, 3, 4, 5});
+    auto min_max = s.min_max(false);
+    REQUIRE(min_max.min.as<int>() == 1);
+    REQUIRE(min_max.max.as<int>() == 5);
+
+    s = pd::Series(
+        arrow::ArrayT<int>::Make({1, 2, 3, 4, 5},
+                                 {true, true, true, true, false}), nullptr);
+    min_max = s.min_max(true);
+    REQUIRE(min_max.min == 1);
+    REQUIRE(min_max.max == 4);
+}
+
+TEST_CASE("Test min function for Series", "[series]") {
+    auto array = arrow::ArrayT<int>::Make({1, 2, 3, 4, 5}, {true, true, true, true, false});
+    pd::Series s(array, nullptr);
+    auto result = s.min();
+    REQUIRE(result.as<int>() == 1);
+}
+
+TEST_CASE("Test max function for Series", "[series]") {
+    auto array = arrow::ArrayT<int>::Make({1, 2, 3, 4, 5}, {true, true, true, true, false});
+    pd::Series s(array, nullptr);
+    auto result = s.max();
+    REQUIRE(result.as<int>() == 4);
+}
+
+TEST_CASE("Test product function for Series", "[series]") {
+    auto array = arrow::ArrayT<int>::Make({1, 2, 3, 4, 5}, {true, true, true, true, false});
+    pd::Series s(array, nullptr);
+    auto result = s.product();
+    REQUIRE(result.as<long>() == 24);
+
+    array = arrow::ArrayT<int>::Make({1, 2, 3, 4, 5});
+    s = pd::Series(array, nullptr);
+    result = s.product();
+    REQUIRE(result.as<long>() == 120);
+}
+
+TEST_CASE("Test median function for Series", "[series]")
+{
+    pd::Series s(std::vector<int>{1, 2, 3, 4, 5});
+    auto result = s.median();
+    REQUIRE(result == 3);
+
+    s = pd::Series(std::vector<int>{1, 2, 3, 4, 5}, {true, true, true, true, false});
+    result = s.median(true);
+    REQUIRE(result == 3);
+
+    s = pd::Series(std::vector<int>{1, 2, 3, 4, 5}, {false, true, true, true, true});
+    result = s.median(true);
+    REQUIRE(result == 3);
+
+    s = pd::Series(std::vector<int>{1, 2, 3, 4, 5, 6}, {true, true, true, true, true, false});
+    result = s.median();
+    REQUIRE(result == 3.5);
+
+}
+
+TEST_CASE("Test mean function for Series", "[series]") {
+    pd::Series s(std::vector<int>{1, 2, 3, 4, 5});
+    auto result = s.mean();
+    REQUIRE(result == 3);
+
+    s = pd::Series(
+        arrow::ArrayT<int>::Make({1, 2, 3, 4, 5}, {true, true, true, true, false}), nullptr);
+    result = s.mean(true);
+    REQUIRE(result == 2.5);
+
+    s = pd::Series(
+        arrow::ArrayT<int>::Make({1, 2, 3, 4, 5}, {false, true, true, true, true}), nullptr);
+    result = s.mean(true);
+    REQUIRE(result == 3.5);
+}
+
+TEST_CASE("Test std function for Series", "[series]") {
+    pd::Series s(std::vector<double>{1, 2, 3, 4, 5});
+    auto result = s.std();
+    REQUIRE(result == Approx(1.5811388300841898));
+
+    s = pd::Series(
+        arrow::ArrayT<double>::Make({1, 2, 3, 4, 5}, {true, true, true, true, false}), nullptr);
+    result = s.std(0, true);
+    REQUIRE(result == Approx(1.118033988749895).epsilon(1e-6));
+
+    result = s.std(0, false);
+    REQUIRE(std::isnan(result));
+}
+
+TEST_CASE("Test var function for Series", "[series]") {
+    pd::Series s(std::vector<double>{1, 2, 3, 4, 5});
+    auto result = s.var();
+    REQUIRE(result == Approx(2.5));
+
+    s = pd::Series(
+        arrow::ArrayT<double>::Make({1, 2, 3, 4, NAN}, {true, true, true, true, false}), nullptr);
+    result = s.var(0, true);
+    REQUIRE(result == Approx(1.25));
+
+    result = s.var(0, false);
+    REQUIRE(std::isnan(result));
+}
+
+TEST_CASE("Test mode function for Series", "[series]")
+{
+    pd::Series s(std::vector<int>{ 1, 2, 3, 4, 5, 2, 2, 2, 3 });
+    auto df = s.mode(1, false);
+
+    REQUIRE(df["mode"][0] == 2);
+    REQUIRE(df["count"][0] == 4L);
+
+    df = s.mode(2, false);
+
+    REQUIRE(df["mode"][0] == 2);
+    REQUIRE(df["count"][0] == 4L);
+
+    REQUIRE(df["mode"][1] == 3);
+    REQUIRE(df["count"][1] == 2L);
+
+    s = pd::Series(
+        arrow::ArrayT<int>::Make(
+            { 1, 1, 3, 4, 5, 2, 2, 2 },
+            { true, true, true, true, false, false, false, true }),
+        nullptr);
+    df = s.mode(1, true);
+
+    REQUIRE(df["mode"][0] == 1);
+    REQUIRE(df["count"][0] == 2L);
+
+    df = s.mode(1, false);
+
+    REQUIRE(df["mode"].empty());
+    REQUIRE(df["count"].empty());
+}
+
+TEST_CASE("Test quantile function for Series", "[series]") {
+    pd::Series s(std::vector<int>{1, 2, 3, 4, 5});
+    auto result = s.quantile(0.5);
+    REQUIRE(result.as<double>() == 3);
+
+    s = pd::Series(std::vector<int>{1, 2, 3, 4, 5}, {true, true, true, true, false});
+    result = s.quantile(0.5);
+    REQUIRE(result.as<double>() == 3);
+}
+
+TEST_CASE("Test tdigest function for Series", "[series]") {
+    pd::Series s(std::vector<int>{1, 2, 3, 4, 5});
+    auto result = s.tdigest(0.5);
+    REQUIRE(result.as<double>() == 3);
+
+    s = pd::Series(std::vector<int>{1, 2, 3, 4, 5}, {true, true, true, true, false});
+    result = s.tdigest(0.5);
+    REQUIRE(result.as<double>() == 3);
+}
+
+TEST_CASE("Test agg function for Series", "[series]") {
+    ArrayPtr array = arrow::ArrayT<int>::Make({1, 2, 3, 4, 5});
+    pd::Series s(array, nullptr);
+
+    auto result = s.agg("sum");
+    REQUIRE(result.as<long>() == 15);
+
+    array = arrow::ArrayT<double>::Make({1, 2, 3, 4, NAN}, {true, true, true, true, false});
+    s = pd::Series(array, nullptr);
+
+    result = s.agg("sum", true);
+    REQUIRE(result.as<double>() == 10);
+
+    result = s.agg("sum", false);
+    REQUIRE_FALSE(result.isValid());
+}
+
 TEST_CASE("Test Series::argmax() and Series::argmin() functions")
 {
 
@@ -1799,6 +1926,93 @@ TEST_CASE("Testing series::ewm2", "[series]")
             s.ewm(2, EWMAlphaType::Alpha, true, true, 2),
             std::runtime_error);
     }
+}
+
+TEST_CASE("Test reindex vs reindex_async benchmark small data", "[reindex]")
+{
+    // Create a test input Series
+    auto inputData = pd::random::RandomState(100).randn(100, 0, 2);
+    auto inputIndex = pd::date_range(ptime(), 100, "T");
+    pd::Series inputSeries(inputData, "", inputIndex);
+
+    auto newIndex = pd::date_range(ptime(), 100, "30S");
+    pd::Series sortedOut{nullptr, nullptr}, out{nullptr, nullptr};
+
+    BENCHMARK("benchmark reindex") {
+        sortedOut = inputSeries.reindex(newIndex);
+        return 1;
+    };
+
+    BENCHMARK("benchmark reindex_async") {
+        out = inputSeries.reindexAsync(newIndex);
+        return 1;
+    };
+
+    REQUIRE(sortedOut.array()->Equals(out.array()));
+    REQUIRE(sortedOut.indexArray()->Equals(out.indexArray()));
+}
+
+TEST_CASE("Test reindex vs reindex_async benchamark avg case", "[reindex]")
+{
+    // Create a test input Series
+    auto inputData = pd::random::RandomState(100).randn(1e6, 0, 2);
+    auto inputIndex = pd::date_range(ptime(), 1e5, "T");
+    pd::Series inputSeries(inputData, "", inputIndex);
+
+    auto newIndex = pd::date_range(ptime(), 1e6, "30S");
+    pd::Series sortedOut{nullptr, nullptr}, out{nullptr, nullptr};
+
+    BENCHMARK("benchmark reindex") {
+        sortedOut = inputSeries.reindex(newIndex);
+        return 1;
+    };
+
+    BENCHMARK("benchmark reindex_async") {
+        out = inputSeries.reindexAsync(newIndex);
+        return 1;
+    };
+}
+
+TEST_CASE("Test reindex vs reindex_async benchamark big data", "[reindex]")
+{
+    // Create a test input Series
+    auto inputData = pd::random::RandomState(100).randn(1e6, 0, 2);
+    auto inputIndex = pd::date_range(ptime(), 1e6);
+    pd::Series inputSeries(inputData, "", inputIndex);
+
+    auto newIndex = pd::date_range(ptime() + minutes(1), 1e6);
+    pd::Series sortedOut{nullptr, nullptr}, out{nullptr, nullptr};
+
+    BENCHMARK("benchmark reindex") {
+        sortedOut = inputSeries.reindex(newIndex);
+        return 1;
+    };
+
+    BENCHMARK("benchmark reindex_async") {
+        out = inputSeries.reindexAsync(newIndex);
+        return 1;
+    };
+}
+
+TEST_CASE("Test reindex function", "[reindex]")
+{
+    // Create a test input Series
+    auto inputData = arrow::ArrayT<::int64_t>::Make({1, 2, 3, 4, 5});
+    auto inputIndex = arrow::ArrayT<::int64_t>::Make({1, 2, 3, 4, 5});
+    pd::Series inputSeries(inputData, inputIndex);
+
+    // Create a new index array
+    auto newIndex = arrow::ArrayT<::int64_t>::Make({1, 2, 4, 5, 6});
+
+    // Reindex the input Series
+    pd::Series outputSeries = inputSeries.reindex(newIndex);
+
+    // Check that the new index is correct
+    REQUIRE(outputSeries.indexArray()->Equals(newIndex));
+
+    // Check that the values are correct
+    auto expectedValues = arrow::ArrayT<::int64_t>::Make({1, 2, 4, 5, 0}, {true, 1, 1, 1, 0});
+    REQUIRE(outputSeries.array()->Equals(expectedValues));
 }
 
 using int64 = int64_t;

@@ -114,4 +114,9 @@ namespace pd{
     {
         Scalar min, max;
     };
+
+    struct ModeWithCount
+    {
+        Scalar mode, count;
+    };
 }

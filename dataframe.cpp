@@ -834,17 +834,22 @@ DataFrame DataFrame::sort_values(
 Series DataFrame::coalesce()
 {
     std::vector<arrow::Datum> args(m_array->num_columns());
-    std::ranges::copy(
+    std::copy(
         m_array->columns().begin(),
         m_array->columns().end(),
         args.begin());
-    auto result = arrow::compute::CallFunction("coalesce", args);
-    if (result.ok())
-    {
-        return { result.MoveValueUnsafe().make_array(), false };
-    }
-    throwOnNotOkStatus(result.status());
-    return { nullptr, false };
+
+    return ValidateHelper(arrow::compute::CallFunction("coalesce", args));
+}
+
+DataFrame Series::mode(int n, bool skip_nulls)  const
+{
+    auto modeWithCount = pd::ValidateAndReturn(arrow::compute::Mode(
+        m_array,
+        arrow::compute::ModeOptions{ n, skip_nulls }));
+    auto modeStruct = modeWithCount.array_as<arrow::StructArray>();
+
+    return { modeStruct, {"mode", "count"} };
 }
 
 Series DataFrame::coalesce(std::vector<std::string> const& columns)
@@ -870,57 +875,148 @@ GroupBy DataFrame::group_by(const std::string& key) const
     return { key, *this };
 }
 
-//arrow::Result<pd::DataFrame> GroupBy::apply(
-//    std::function<std::shared_ptr<arrow::Scalar>(pd::DataFrame const&)> fn)
-//{
-//    auto schema = df.m_array->schema();
-//    auto args = schema->field_names();
-//    auto N = unique_value->length();
-//
-//    auto fv = schema->fields();
-//    arrow::ArrayDataVector arr(args.size());
-//
-//    std::vector<std::shared_ptr<arrow::Scalar>> scalars(N);
-//
-//    tbb::parallel_for(
-//        tbb::blocked_range<size_t>(0, N),
-//        [&](const tbb::blocked_range<size_t>& r)
-//        {
-//            for (size_t i = r.begin(); i != r.end(); ++i)
-//            {
-//                auto key = unique_value->GetScalar(long(i)).MoveValueUnsafe();
-//                auto const& group = groups.at(key);
-//                auto index = indexChunk[key];
-//                auto rows = index->length();
-//
-//                scalars[i] =
-//                    fn(pd::DataFrame{ schema, rows, group, index });
-//            }
-//        });
-//
-//    auto builder = arrow::MakeBuilder(scalars.back()->type).MoveValueUnsafe();
-//    builder->AppendScalars(scalars);
-//    builder->FinishInternal(&arr.back());
-//
-//    return pd::DataFrame(arrow::schema(fv), long(N), arr);
-//}
+arrow::Result<pd::DataFrame> GroupBy::apply_async(std::function<ScalarPtr (Series const&)> fn)
+{
+    std::shared_ptr<arrow::Schema> schema = df.m_array->schema();
+
+    ::int64_t numGroups = groupSize();
+    ::int64_t numColumns = schema->num_fields();
+
+    arrow::ArrayDataVector resultForEachColumn(numGroups);
+    auto columnNames = schema->field_names();
+
+    tbb::parallel_for(
+        0L,
+        numColumns,
+        [&](::int64_t columnIdx)
+        {
+            arrow::ScalarVector result(numGroups);
+            std::string const& columnName = columnNames[columnIdx];
+            std::ranges::transform(
+                std::views::iota(0L, numGroups),
+                result.begin(),
+                [&](::int64_t groupIdx)
+                {
+                    ScalarPtr key = GetKeyByIndex(groupIdx);
+
+                    ArrayPtr index = indexGroups[key];
+                    int64_t numRows = index->length();
+
+                    arrow::ArrayVector group = groups[key];
+                    ArrayPtr columnInGroup = group[columnIdx];
+
+                    auto seriesFromGroupArray =
+                        pd::Series(columnInGroup, index, columnName);
+                    return fn(seriesFromGroupArray);
+                });
+            resultForEachColumn[columnIdx] =
+                ValidateAndReturn(buildData(result));
+        });
+
+    return pd::DataFrame(schema, numGroups, resultForEachColumn);
+}
+
+arrow::Result<pd::Series> GroupBy::apply_async(std::function<ScalarPtr (DataFrame const&)> fn)
+{
+    ::int64_t numGroups = groupSize();
+    arrow::ScalarVector result(numGroups);
+    std::shared_ptr<arrow::Schema> schema = df.m_array->schema();
+
+    tbb::parallel_for(
+        0L,
+        numGroups,
+        [&](::int64_t groupIdx)
+        {
+            ScalarPtr key = GetKeyByIndex(groupIdx);
+            ArrayPtr index = indexGroups[key];
+            arrow::ArrayVector group = groups[key];
+            int64_t numRows = index->length();
+            auto dataFrameGroup = pd::DataFrame(schema, numRows, group, index);
+            result[groupIdx] = fn(dataFrameGroup);
+        });
+
+    ARROW_ASSIGN_OR_RAISE(auto finalArray, buildArray(result));
+    return pd::Series(finalArray, nullptr);
+}
+
+arrow::Result<pd::DataFrame> GroupBy::apply(std::function<ScalarPtr (Series const&)> fn)
+{
+    std::shared_ptr<arrow::Schema> schema = df.m_array->schema();
+
+    ::int64_t numGroups = groupSize();
+    ::int64_t numColumns = schema->num_fields();
+
+    arrow::ArrayDataVector resultForEachColumn(numGroups);
+    auto columnNames = schema->field_names();
+
+    std::ranges::transform(
+        std::views::iota(0L, numColumns),
+        resultForEachColumn.begin(),
+        [&](::int64_t columnIdx)
+        {
+            arrow::ScalarVector result(numGroups);
+            std::string const& columnName = columnNames[columnIdx];
+            std::ranges::transform(
+                std::views::iota(0L, numGroups),
+                result.begin(),
+                [&](::int64_t groupIdx)
+                {
+                    ScalarPtr key = GetKeyByIndex(groupIdx);
+
+                    ArrayPtr index = indexGroups[key];
+                    int64_t numRows = index->length();
+
+                    arrow::ArrayVector group = groups[key];
+                    ArrayPtr columnInGroup = group[columnIdx];
+
+                    auto seriesFromGroupArray =
+                        pd::Series(columnInGroup, index, columnName);
+                    return fn(seriesFromGroupArray);
+                });
+            return ValidateAndReturn(buildData(result));
+        });
+
+    return pd::DataFrame(schema, numGroups, resultForEachColumn);
+}
+
+ arrow::Result<pd::Series> GroupBy::apply(std::function<ScalarPtr (DataFrame const&)> fn)
+ {
+    ::int64_t numGroups = groupSize();
+    arrow::ScalarVector result(numGroups);
+    std::shared_ptr<arrow::Schema> schema = df.m_array->schema();
+
+    std::ranges::transform(
+        std::views::iota(0L, numGroups),
+        result.begin(),
+        [&](::int64_t i)
+        {
+            ScalarPtr key = GetKeyByIndex(i);
+            ArrayPtr index = indexGroups[key];
+            arrow::ArrayVector group = groups[key];
+            int64_t numRows = index->length();
+            auto dataFrameGroup = pd::DataFrame(schema, numRows, group, index);
+            return fn(dataFrameGroup);
+        });
+
+    ARROW_ASSIGN_OR_RAISE(auto finalArray, buildArray(result));
+    return pd::Series(finalArray, nullptr);
+ }
 
 GROUPBY_NUMERIC_AGG(mean, double)
 GROUPBY_NUMERIC_AGG(approximate_median, double)
 GROUPBY_NUMERIC_AGG(stddev, double)
 GROUPBY_NUMERIC_AGG(tdigest, double)
 GROUPBY_NUMERIC_AGG(variance, double)
+GROUPBY_NUMERIC_AGG(all, bool)
+GROUPBY_NUMERIC_AGG(any, bool)
 
 GROUPBY_NUMERIC_AGG(count, int64_t)
 GROUPBY_NUMERIC_AGG(count_distinct, int64_t)
-//GROUPBY_NUMERIC_AGG(index, int64_t)
 
 GROUPBY_AGG(max)
 GROUPBY_AGG(min)
 GROUPBY_AGG(sum)
-
-//GROUPBY_AGG(product, int64_t)
-//GROUPBY_AGG(quantile, int64_t)
+GROUPBY_AGG(product)
 
 
 arrow::Status GroupBy::processEach(
@@ -937,7 +1033,9 @@ arrow::Status GroupBy::processEach(
 
     for (int64_t i_group = 0; i_group < grouper->num_groups(); ++i_group)
     {
-        ARROW_ASSIGN_OR_RAISE( std::shared_ptr<arrow::Scalar> keyScalar, unique_value->GetScalar(i_group));
+        ARROW_ASSIGN_OR_RAISE(
+            std::shared_ptr<arrow::Scalar> keyScalar,
+            uniqueKeys->GetScalar(i_group));
 
         groups[keyScalar].emplace_back(grouped_argument->value_slice(i_group));
     }
@@ -957,22 +1055,25 @@ arrow::Status GroupBy::processIndex(
 
     for (int64_t i_group = 0; i_group < grouper->num_groups(); ++i_group)
     {
-        ARROW_ASSIGN_OR_RAISE(std::shared_ptr<arrow::Scalar>  keyScalar, unique_value->GetScalar(i_group));
-        indexChunk[keyScalar] = grouped_argument->value_slice(i_group);
+        ARROW_ASSIGN_OR_RAISE(
+            std::shared_ptr<arrow::Scalar> keyScalar,
+            uniqueKeys->GetScalar(i_group));
+        indexGroups[keyScalar] = grouped_argument->value_slice(i_group);
     }
     return arrow::Status::OK();
 }
 
-arrow::Status GroupBy::makeGroups()
+arrow::Status GroupBy::makeGroups(std::string const& keyInStringFormat)
 {
     using namespace arrow;
     using namespace arrow::compute;
 
     auto schema = df.array()->schema();
-
+    auto key_array =
+        keyInStringFormat == "__resampler_idx__" ? df.indexArray() : df[keyInStringFormat].array();
     ARROW_ASSIGN_OR_RAISE(
         auto key_batch,
-        ExecBatch::Make(std::vector<Datum>{ df[keyStr].array() }));
+        ExecBatch::Make(std::vector<Datum>{ key_array }));
 
     ARROW_ASSIGN_OR_RAISE(auto grouper, Grouper::Make(key_batch.GetTypes()));
 
@@ -987,16 +1088,418 @@ arrow::Status GroupBy::makeGroups()
             grouper->num_groups()));
 
     ARROW_ASSIGN_OR_RAISE(auto uniques, grouper->GetUniques());
-    unique_value = uniques.values[0].make_array();
+    uniqueKeys = uniques.values[0].make_array();
 
-    processIndex(grouper, groupings);
+    RETURN_NOT_OK(processIndex(grouper, groupings));
 
     for (auto const& col : df.m_array->columns())
     {
-        processEach(grouper, groupings, col);
+        RETURN_NOT_OK(processEach(grouper, groupings, col));
     }
 
     return arrow::Status::OK();
 }
 
+arrow::Result<pd::DataFrame> GroupBy::min_max(
+    std::vector<std::string> const& args)
+{
+    auto schema = df.m_array->schema();
+    auto N = groups.size();
+
+    arrow::FieldVector fv;
+    for (auto const& arg : args)
+    {
+        auto type = schema->GetFieldByName(arg)->type();
+        fv.push_back(arrow::field(arg + "_min", type));
+        fv.push_back(arrow::field(arg + "_max", type));
+    }
+
+    long keysLength = uniqueKeys->length();
+    arrow::ArrayDataVector array(fv.size());
+
+    for (size_t i = 0; i < args.size(); i++)
+    {
+        const auto& arg = args[i];
+        int index = schema->GetFieldIndex(arg);
+
+        arrow::ScalarVector min(keysLength), max(keysLength);
+        tbb::parallel_for(
+            tbb::blocked_range<size_t>(0, keysLength),
+            [&](const tbb::blocked_range<size_t>& r)
+            {
+                for (size_t j = r.begin(); j != r.end(); ++j)
+                {
+                    auto key = uniqueKeys->GetScalar(long(j)).MoveValueUnsafe();
+                    auto& group = groups.at(key);
+
+                    auto d =
+                        ValidateAndReturn(arrow::compute::MinMax(group[index]))
+                            .scalar_as<arrow::StructScalar>()
+                            .value;
+                    min[j] = d[0];
+                    max[j] = d[1];
+                }
+            });
+
+        std::shared_ptr<arrow::ArrayBuilder> minBuilder, maxBuilder;
+        if (not min.empty())
+        {
+            minBuilder =
+                ValidateAndReturn(arrow::MakeBuilder(min.back()->type));
+            maxBuilder =
+                ValidateAndReturn(arrow::MakeBuilder(max.back()->type));
+
+            RETURN_NOT_OK(minBuilder->AppendScalars(min));
+            RETURN_NOT_OK(maxBuilder->AppendScalars(max));
+        }
+
+        std::shared_ptr<arrow::ArrayData> min_data, max_data;
+        RETURN_NOT_OK(minBuilder->FinishInternal(&min_data));
+        RETURN_NOT_OK(maxBuilder->FinishInternal(&max_data));
+
+        array[i * 2] = min_data;
+        array[i * 2 + 1] = max_data;
+    }
+
+    return pd::DataFrame(arrow::schema(fv), long(N), array);
+}
+
+arrow::Result<pd::DataFrame> GroupBy::min_max(std::string const& arg)
+{
+    auto schema = df.m_array->schema();
+    auto N = groups.size();
+
+    auto fv = schema->GetFieldByName(arg);
+
+    long L = uniqueKeys->length();
+    int index = schema->GetFieldIndex(arg);
+
+    arrow::ScalarVector min(L), max(L);
+    tbb::parallel_for(
+        tbb::blocked_range<size_t>(0, L),
+        [&](const tbb::blocked_range<size_t>& r)
+        {
+            for (size_t j = r.begin(); j != r.end(); ++j)
+            {
+                auto key = uniqueKeys->GetScalar(long(j)).MoveValueUnsafe();
+                auto& group = groups.at(key);
+
+                auto d = ValidateAndReturn(arrow::compute::MinMax(group[index]))
+                             .scalar_as<arrow::StructScalar>().value;
+                min[j] = d[0];
+                max[j] = d[1];
+            }
+        });
+
+    std::shared_ptr<arrow::DataType> dtype;
+    std::shared_ptr<arrow::ArrayBuilder> minBuilder, maxBuilder;
+    if (not min.empty())
+    {
+        dtype = min.back()->type;
+        minBuilder = ValidateAndReturn(arrow::MakeBuilder(dtype));
+        maxBuilder = ValidateAndReturn(arrow::MakeBuilder(dtype));
+
+        RETURN_NOT_OK(minBuilder->AppendScalars(min));
+        RETURN_NOT_OK(maxBuilder->AppendScalars(max));
+    }
+
+    std::shared_ptr<arrow::ArrayData> min_data, max_data;
+    RETURN_NOT_OK(minBuilder->FinishInternal(&min_data));
+    RETURN_NOT_OK(maxBuilder->FinishInternal(&max_data));
+
+    return pd::DataFrame{ arrow::schema(
+                              arrow::FieldVector{ arrow::field("min", dtype),
+                                                  arrow::field("max", dtype) }),
+                          L,
+                          arrow::ArrayDataVector{ min_data, max_data } };
+}
+
+arrow::Result<pd::DataFrame> GroupBy::first(
+    std::vector<std::string> const& args)
+{
+    auto schema = df.m_array->schema();
+    auto N = groups.size();
+
+    auto fv = fieldVectors(args, schema);
+    arrow::ArrayDataVector arr(args.size());
+
+    tbb::parallel_for(
+        tbb::blocked_range<size_t>(0, args.size()),
+        [&](const tbb::blocked_range<size_t>& r)
+        {
+            for (size_t i = r.begin(); i != r.end(); ++i)
+            {
+                const auto& arg = args[i];
+                long L = uniqueKeys->length();
+                int index = schema->GetFieldIndex(arg);
+
+                arrow::ScalarVector result(L);
+                tbb::parallel_for(
+                    0L,
+                    L,
+                    [&](size_t j)
+                    {
+                        auto key =
+                            uniqueKeys->GetScalar(long(j)).MoveValueUnsafe();
+                        auto& group = groups.at(key);
+                        ARROW_ASSIGN_OR_RAISE(
+                            result[j],
+                            group[index]->GetScalar(0));
+                    });
+
+                ARROW_ASSIGN_OR_RAISE(arr[i], buildData(result));
+            }
+        });
+
+    return pd::DataFrame(arrow::schema(fv), long(N), arr);
+}
+
+arrow::Result<pd::Series> GroupBy::first(std::string const& arg)
+{
+    auto schema = df.m_array->schema();
+    auto N = groups.size();
+
+    auto fv = schema->GetFieldByName(arg);
+
+    long L = uniqueKeys->length();
+    int index = schema->GetFieldIndex(arg);
+
+    arrow::ScalarVector result(L);
+    //    tbb::parallel_for(
+    tbb::blocked_range<size_t> r(0, L);
+    //        [&](const tbb::blocked_range<size_t>& r)
+    //        {
+    for (size_t j = r.begin(); j != r.end(); ++j)
+    {
+        auto key = uniqueKeys->GetScalar(long(j)).MoveValueUnsafe();
+        auto& group = groups.at(key);
+
+        ARROW_ASSIGN_OR_RAISE(result[j], group[index]->GetScalar(0));
+    }
+    //        });
+
+    ARROW_ASSIGN_OR_RAISE(auto data, buildArray(result));
+    return pd::Series(data, nullptr);
+}
+
+arrow::Result<pd::DataFrame> GroupBy::last(
+    std::vector<std::string> const& args)
+{
+    auto schema = df.m_array->schema();
+    auto N = groups.size();
+
+    auto fv = fieldVectors(args, schema);
+    arrow::ArrayDataVector arr(args.size());
+
+    tbb::parallel_for(
+        tbb::blocked_range<size_t>(0, args.size()),
+        [&](const tbb::blocked_range<size_t>& r)
+        {
+            for (size_t i = r.begin(); i != r.end(); ++i)
+            {
+                const auto& arg = args[i];
+                long L = uniqueKeys->length();
+                int index = schema->GetFieldIndex(arg);
+
+                arrow::ScalarVector result(L);
+                tbb::parallel_for(
+                    tbb::blocked_range<size_t>(0, uniqueKeys->length()),
+                    [&](const tbb::blocked_range<size_t>& r)
+                    {
+                        for (size_t j = r.begin(); j != r.end(); ++j)
+                        {
+                            auto key = uniqueKeys->GetScalar(long(j))
+                                           .MoveValueUnsafe();
+                            auto& group = groups.at(key);
+                            auto groupLength = group[index]->length();
+                            auto lastIndex = groupLength-1;
+                            ARROW_ASSIGN_OR_RAISE(result[j], group[index]->GetScalar(lastIndex));
+                        }
+                    });
+
+                ARROW_ASSIGN_OR_RAISE(arr[i], buildData(result));
+            }
+        });
+
+    return pd::DataFrame(arrow::schema(fv), long(N), arr);
+}
+
+arrow::Result<pd::Series> GroupBy::last(
+    std::string const& arg)
+{
+    auto schema = df.m_array->schema();
+    auto N = groups.size();
+
+    auto fv = schema->GetFieldByName(arg);
+
+    long L = uniqueKeys->length();
+    int index = schema->GetFieldIndex(arg);
+
+    arrow::ScalarVector result(L);
+    std::ranges::transform(
+        std::views::iota(0, L),
+        result.begin(),
+        [&](int j)
+        {
+            auto key = uniqueKeys->GetScalar(long(j)).MoveValueUnsafe();
+            auto& group = groups.at(key);
+            auto groupLength = group[index]->length();
+            auto lastIndex = groupLength - 1;
+            return ValidateAndReturn(group[index]->GetScalar(lastIndex));
+        });
+
+    ARROW_ASSIGN_OR_RAISE(auto data, buildArray(result));
+    return pd::Series(data, nullptr);
+}
+
+arrow::Result<pd::DataFrame> GroupBy::mode(
+    std::vector<std::string> const& args)
+{
+    auto schema = df.m_array->schema();
+    auto N = groups.size();
+
+    auto fv = fieldVectors(args, schema);
+    arrow::ArrayDataVector arr(args.size());
+
+    tbb::parallel_for(
+        tbb::blocked_range<size_t>(0, args.size()),
+        [&](const tbb::blocked_range<size_t>& r)
+        {
+            for (size_t i = r.begin(); i != r.end(); ++i)
+            {
+                const auto& arg = args[i];
+                long L = uniqueKeys->length();
+                int index = schema->GetFieldIndex(arg);
+
+                arrow::ScalarVector result(L);
+                tbb::parallel_for(
+                    tbb::blocked_range<size_t>(0, uniqueKeys->length()),
+                    [&](const tbb::blocked_range<size_t>& r)
+                    {
+                        for (size_t j = r.begin(); j != r.end(); ++j)
+                        {
+                            auto key = uniqueKeys->GetScalar(long(j))
+                                           .MoveValueUnsafe();
+                            auto& group = groups.at(key);
+
+                            arrow::Datum d = ValidateAndReturn(
+                                arrow::compute::Mode(group[index]));
+                            result[j] = d.scalar();
+                        }
+                    });
+                ARROW_ASSIGN_OR_RAISE(arr[i], buildData(result));
+            }
+        });
+
+    return pd::DataFrame(arrow::schema(fv), long(N), arr);
+}
+
+arrow::Result<pd::Series> GroupBy::mode(std::string const& arg)
+{
+    auto schema = df.m_array->schema();
+    auto N = groups.size();
+
+    auto fv = schema->GetFieldByName(arg);
+
+    long L = uniqueKeys->length();
+    int index = schema->GetFieldIndex(arg);
+
+    arrow::ScalarVector result(L);
+    tbb::parallel_for(
+        tbb::blocked_range<size_t>(0, L),
+        [&](const tbb::blocked_range<size_t>& r)
+        {
+            for (size_t j = r.begin(); j != r.end(); ++j)
+            {
+                auto key = uniqueKeys->GetScalar(long(j)).MoveValueUnsafe();
+                auto& group = groups.at(key);
+
+                arrow::Datum d = ValidateAndReturn(
+                    arrow::compute::Mode(group[index]));
+                result[j] = d.scalar();
+            }
+        });
+
+    ARROW_ASSIGN_OR_RAISE(auto data, buildArray(result));
+    return pd::Series(data, nullptr);
+}
+
+arrow::Result<pd::DataFrame> GroupBy::quantile(
+    std::vector<std::string> const& args,
+    std::vector<double> const& q)
+{
+    auto schema = df.m_array->schema();
+    auto N = groups.size();
+
+    auto fv = fieldVectors(args, schema);
+    arrow::ArrayDataVector arr(args.size());
+
+    auto options =
+        convertToArrowFunctionOptions<arrow::compute::QuantileOptions>(q);
+    tbb::parallel_for(
+        tbb::blocked_range<size_t>(0, args.size()),
+        [&](const tbb::blocked_range<size_t>& r)
+        {
+            for (size_t i = r.begin(); i != r.end(); ++i)
+            {
+                const auto& arg = args[i];
+                long L = uniqueKeys->length();
+                int index = schema->GetFieldIndex(arg);
+
+                arrow::ScalarVector result(L);
+                tbb::parallel_for(
+                    tbb::blocked_range<size_t>(0, uniqueKeys->length()),
+                    [&](const tbb::blocked_range<size_t>& r)
+                    {
+                        for (size_t j = r.begin(); j != r.end(); ++j)
+                        {
+                            auto key = uniqueKeys->GetScalar(long(j))
+                                           .MoveValueUnsafe();
+                            auto& group = groups.at(key);
+
+                            arrow::Datum d =
+                                ValidateAndReturn(arrow::compute::Quantile(
+                                    group[index],
+                                    options[i]));
+                            result[j] = d.scalar();
+                        }
+                    });
+                ARROW_ASSIGN_OR_RAISE(arr[i], buildData(result));
+            }
+        });
+
+    return pd::DataFrame(arrow::schema(fv), long(N), arr);
+}
+
+arrow::Result<pd::Series> GroupBy::quantile(std::string const& arg, double q)
+{
+    auto schema = df.m_array->schema();
+    auto N = groups.size();
+
+    auto fv = schema->GetFieldByName(arg);
+
+    long L = uniqueKeys->length();
+    int index = schema->GetFieldIndex(arg);
+
+    arrow::compute::QuantileOptions option(q);
+
+    arrow::ScalarVector result(L);
+    tbb::parallel_for(
+        tbb::blocked_range<size_t>(0, L),
+        [&](const tbb::blocked_range<size_t>& r)
+        {
+            for (size_t j = r.begin(); j != r.end(); ++j)
+            {
+                auto key = uniqueKeys->GetScalar(long(j)).MoveValueUnsafe();
+                auto& group = groups.at(key);
+
+                arrow::Datum d = ValidateAndReturn(
+                    arrow::compute::Quantile(group[index], option));
+                result[j] = d.scalar();
+            }
+        });
+
+    ARROW_ASSIGN_OR_RAISE(auto data, buildArray(result));
+    return pd::Series(data, nullptr);
+}
 }

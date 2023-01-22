@@ -264,7 +264,7 @@ public:
     [[nodiscard]] Scalar max() const;
     [[nodiscard]] Scalar product() const;
     [[nodiscard]] Scalar sum() const;
-    [[nodiscard]] Series mode(int n, bool skip_nulls) const;
+    [[nodiscard]] DataFrame mode(int n, bool skip_nulls) const;
     [[nodiscard]] Scalar quantile(double q = 0.5) const;
     [[nodiscard]] Scalar tdigest(double q = 0.5) const;
     [[nodiscard]] double median(bool skip_null = true) const;
@@ -285,6 +285,9 @@ public:
     [[nodiscard]] class DataFrame value_counts() const;
     [[nodiscard]] std::shared_ptr<arrow::DictionaryArray> dictionary_encode()
         const;
+
+    pd::Series reindex(std::shared_ptr<arrow::Array> const&newIndex) const noexcept;
+    pd::Series reindexAsync(std::shared_ptr<arrow::Array> const&newIndex) const noexcept;
 
     [[nodiscard]] Series unique() const;
     [[nodiscard]] Series drop_na() const;
@@ -328,8 +331,6 @@ public:
 
     [[nodiscard]] Series to_datetime() const;
     [[nodiscard]] Series to_datetime(std::string const& format) const;
-
-    [[nodiscard]] Series resample(std::string const& rule) const;
 
     [[nodiscard]] Series shift(
         int32_t shift_value = 1,
@@ -531,7 +532,7 @@ Series Series::apply(auto&& func, Args&&... args) const
 
         if (status.ok())
         {
-            for (std::optional<DataT> const& element : *realArray)
+            for (auto const& element : *realArray)
             {
                 OutputT res = func(*element, std::forward<Args>(args)...);
                 builder.UnsafeAppend(res);

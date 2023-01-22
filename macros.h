@@ -65,56 +65,47 @@ BINARY_OPERATOR_PARALLEL_SCALAR_OR_SERIES(Scalar, sign, func)
 #define GROUPBY_NUMERIC_AGG(func, T) \
 arrow::Result<pd::DataFrame> GroupBy:: func(std::vector<std::string> const& args) \
 { \
-    auto schema = df.m_array->schema(); \
-    auto N = groups.size(); \
-\
-auto fv = fieldVectors(args, schema); \
-    arrow::ArrayDataVector arr(args.size()); \
-\
-tbb::parallel_for( \
-        tbb::blocked_range<size_t>(0, args.size()), \
-        [&](const tbb::blocked_range<size_t>& r) \
-        { \
-            for (size_t i = r.begin(); i != r.end(); ++i) \
-            { \
-                const auto& arg = args[i]; \
-                long L = unique_value->length(); \
-                int index = schema->GetFieldIndex(arg); \
-\
-                std::vector<T> result(L); \
-                tbb::parallel_for( \
-                    tbb::blocked_range<size_t>(0, unique_value->length()), \
-                    [&](const tbb::blocked_range<size_t>& r) \
-                    { \
-                        for (size_t j = r.begin(); j != r.end(); ++j) \
+        auto schema = df.m_array->schema(); \
+        auto N = groups.size(); \
+    \
+    auto fv = fieldVectors(args, schema); \
+        arrow::ArrayDataVector arr(args.size()); \
+    \
+                for (size_t i = 0; i < args.size(); ++i) \
+                { \
+                    const auto& arg = args[i]; \
+                    long L = uniqueKeys->length(); \
+                    int index = schema->GetFieldIndex(arg); \
+    \
+                    std::vector<T> result(L); \
+                    tbb::parallel_for( \
+                        tbb::blocked_range<size_t>(0, uniqueKeys->length()), \
+                        [&](const tbb::blocked_range<size_t>& r) \
                         { \
-                            auto key = unique_value->GetScalar(long(j)) \
-               .MoveValueUnsafe(); \
-                            auto& group = groups.at(key); \
-\
-arrow::Datum d = arrow::compute::CallFunction( \
-                                                 #func,\
-                                                 { group[index] }, \
-                                                 nullptr) \
-                                                 .MoveValueUnsafe(); \
-                            result[j] = \
-    d.scalar_as<arrow::CTypeTraits<T>::ScalarType>().value; \
-                        } \
-                    }); \
-\
-                auto builder = arrow::CTypeTraits<T>::BuilderType(); \
-                    builder.AppendValues(result); \
-\
-                std::shared_ptr<arrow::ArrayData> data; \
-                    builder.FinishInternal(&data); \
-                arr[i] = data; \
-            } \
-        }); \
-\
-    fv.emplace_back(arrow::field(keyStr, unique_value->type())); \
-        arr.push_back(unique_value->data()); \
-\
-    return pd::DataFrame(arrow::schema(fv), long(N), arr); \
+                            for (size_t j = 0; j < L; j++) \
+                            { \
+                                auto key = uniqueKeys->GetScalar(long(j)).MoveValueUnsafe(); \
+                                auto& group = groups.at(key); \
+    \
+    arrow::Datum d = arrow::compute::CallFunction( \
+                                                     #func,\
+                                                     { group[index] }, \
+                                                     defaultOpt.get()) \
+                                                     .MoveValueUnsafe(); \
+                                result[j] = \
+        d.scalar_as<arrow::CTypeTraits<T>::ScalarType>().value; \
+                            } \
+                        }); \
+    \
+                    auto builder = arrow::CTypeTraits<T>::BuilderType(); \
+                        builder.AppendValues(result); \
+    \
+                    std::shared_ptr<arrow::ArrayData> data; \
+                        builder.FinishInternal(&data); \
+                    arr[i] = data; \
+                } \
+    \
+        return pd::DataFrame(arrow::schema(fv), long(N), arr); \
 } \
 \
 arrow::Result<pd::Series> GroupBy:: func(std::string const& arg) \
@@ -124,7 +115,7 @@ arrow::Result<pd::Series> GroupBy:: func(std::string const& arg) \
 \
 auto fv = schema->GetFieldByName(arg); \
 \
-    long L = unique_value->length(); \
+    long L = uniqueKeys->length(); \
     int index = schema->GetFieldIndex(arg); \
 \
 std::vector<T> result(L); \
@@ -134,13 +125,14 @@ std::vector<T> result(L); \
         { \
             for (size_t j = r.begin(); j != r.end(); ++j) \
             { \
-                auto key = unique_value->GetScalar(long(j)).MoveValueUnsafe(); \
+                auto key = \
+                        uniqueKeys->GetScalar(long(j)).MoveValueUnsafe(); \
                 auto& group = groups.at(key); \
 \
                 arrow::Datum d = arrow::compute::CallFunction( \
                                      #func, \
                                      { group[index] }, \
-                                     nullptr) \
+                                     defaultOpt.get()) \
                                      .MoveValueUnsafe(); \
                 result[j] = d.scalar_as<arrow::CTypeTraits<T>::ScalarType>().value; \
             } \
@@ -158,56 +150,38 @@ return pd::Series(data, nullptr); \
 #define GROUPBY_AGG(func) \
 arrow::Result<pd::DataFrame> GroupBy:: func(std::vector<std::string> const& args) \
 { \
-            auto schema = df.m_array->schema(); \
-            auto N = groups.size(); \
+                auto schema = df.m_array->schema(); \
+                auto num_groups = groups.size(); \
+                auto fv = fieldVectors(args, schema); \
+                arrow::ArrayDataVector arr(args.size()); \
+            for (size_t i = 0; i < args.size(); i++)\
+                                    { \
+    const auto& arg = args[i]; \
+    long L = uniqueKeys->length(); \
+    int index = schema->GetFieldIndex(arg); \
+    \
+    arrow::ScalarVector result(L); \
+    tbb::parallel_for( \
+    tbb::blocked_range<size_t>(0, L), \
+    [&](const tbb::blocked_range<size_t>& r) \
+    { \
+    for (size_t j = r.begin(); j != r.end(); ++j) \
+    { \
+    auto key = uniqueKeys->GetScalar(long(j)).MoveValueUnsafe(); \
+    auto& group = groups.at(key); \
+    arrow::Datum d = pd::ValidateAndReturn(arrow::compute::CallFunction( \
+                     #func,\
+                     { group[index] }, \
+                     defaultOpt.get())); \
+    result[j] = d.scalar();\
+    }\
+    });\
+    \
+    ARROW_ASSIGN_OR_RAISE(arr[i], buildData(result));\
+    }\
         \
-        auto fv = fieldVectors(args, schema); \
-            arrow::ArrayDataVector arr(args.size()); \
-        \
-        tbb::parallel_for( \
-                tbb::blocked_range<size_t>(0, args.size()), \
-                [&](const tbb::blocked_range<size_t>& r) \
-                { \
-                    for (size_t i = r.begin(); i != r.end(); ++i) \
-                    { \
-                        const auto& arg = args[i]; \
-                        long L = unique_value->length(); \
-                        int index = schema->GetFieldIndex(arg); \
-        \
-                        arrow::ScalarVector result(L); \
-                        tbb::parallel_for( \
-                            tbb::blocked_range<size_t>(0, unique_value->length()), \
-                            [&](const tbb::blocked_range<size_t>& r) \
-                            { \
-                                for (size_t j = r.begin(); j != r.end(); ++j) \
-                                { \
-                                    auto key = unique_value->GetScalar(long(j)) \
-                       .MoveValueUnsafe(); \
-                                    auto& group = groups.at(key); \
-        \
-        arrow::Datum d = arrow::compute::CallFunction( \
-                                                         #func,\
-                                                         { group[index] }, \
-                                                         nullptr) \
-                                                         .MoveValueUnsafe(); \
-                                    result[j] = d.scalar(); \
-                                } \
-                            }); \
-        \
-                        auto builder = arrow::MakeBuilder(df[keyStr].dtype()).MoveValueUnsafe(); \
-                            builder->AppendScalars(result); \
-        \
-                        std::shared_ptr<arrow::ArrayData> data; \
-                            builder->FinishInternal(&data); \
-                        arr[i] = data; \
-                    } \
-                }); \
-        \
-            fv.emplace_back(arrow::field(keyStr, unique_value->type())); \
-                arr.push_back(unique_value->data()); \
-        \
-            return pd::DataFrame(arrow::schema(fv), long(N), arr); \
-} \
+        return pd::DataFrame(arrow::schema(fv), long(num_groups), arr);\
+}\
 \
 arrow::Result<pd::Series> GroupBy:: func(std::string const& arg) \
 { \
@@ -216,7 +190,7 @@ arrow::Result<pd::Series> GroupBy:: func(std::string const& arg) \
         \
         auto fv = schema->GetFieldByName(arg); \
         \
-            long L = unique_value->length(); \
+            long L = uniqueKeys->length(); \
             int index = schema->GetFieldIndex(arg); \
         \
         arrow::ScalarVector result(L); \
@@ -226,23 +200,27 @@ arrow::Result<pd::Series> GroupBy:: func(std::string const& arg) \
                 { \
                     for (size_t j = r.begin(); j != r.end(); ++j) \
                     { \
-                        auto key = unique_value->GetScalar(long(j)).MoveValueUnsafe(); \
+                        auto key = \
+                        uniqueKeys->GetScalar(long(j)).MoveValueUnsafe(); \
                         auto& group = groups.at(key); \
         \
                         arrow::Datum d = arrow::compute::CallFunction( \
                                              #func, \
                                              { group[index] }, \
-                                            nullptr) \
+                                             defaultOpt.get()) \
                                              .MoveValueUnsafe(); \
                         result[j] = d.scalar(); \
                     } \
                 }); \
         \
-            auto builder = arrow::MakeBuilder(df[keyStr].dtype()).MoveValueUnsafe();\
-            builder->AppendScalars(result); \
-        \
+std::shared_ptr<arrow::ArrayBuilder> builder;\
+        if(not result.empty())\
+        {\
+        builder = arrow::MakeBuilder(result.back()->type).MoveValueUnsafe();\
+        RETURN_NOT_OK(builder->AppendScalars(result));\
+        }\
         std::shared_ptr<arrow::Array> data; \
-        builder->Finish(&data); \
+        RETURN_NOT_OK(builder->Finish(&data)); \
         \
         return pd::Series(data, nullptr); \
 }

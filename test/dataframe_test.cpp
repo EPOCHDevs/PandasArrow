@@ -357,10 +357,8 @@ TEST_CASE("Test describe with all NA values", "[describe]")
 
     for (int i = 0; i < 3; i++)
     {
-        for (int j = 1; j < 3; j++)
-        {
-            REQUIRE(desc.at(i, j).as<double>() == 0);
-        }
+        REQUIRE( std::isnan(desc.at(i, 1).as<double>()));
+        REQUIRE( std::isnan(desc.at(i, 2).as<double>()));
 
         for (int j : {0, 4})
         {
@@ -477,52 +475,52 @@ TEST_CASE("Test all math operators for DataFrame", "[math_operators]")
 TEST_CASE("Test argsort", "[argsort]")
 {
     // Create a test DataFrame with some sample data
-    pd::DataFrame df = std::vector<std::vector<int>>{ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } };
-    df.setColumns({ "a", "b", "c" });
+    pd::DataFrame df{
+        std::vector<std::vector<int>>{ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 }
+        }, { "a", "b", "c" }};
 
     // Test argsort with ascending = true
     auto sorted = df.argsort({"a"}, true);
     REQUIRE(sorted.count() == 3);
-    REQUIRE(sorted[0] == 0);
-    REQUIRE(sorted[1] == 1);
-    REQUIRE(sorted[2] == 2);
+    REQUIRE(sorted[0] == 0ul);
+    REQUIRE(sorted[1] == 1ul);
+    REQUIRE(sorted[2] == 2ul);
 
     // Test argsort with ascending = false
     sorted = df.argsort({"a"}, false);
     REQUIRE(sorted.count() == 3);
-    REQUIRE(sorted[0] == 2);
-    REQUIRE(sorted[1] == 1);
-    REQUIRE(sorted[2] == 0);
+    REQUIRE(sorted[0] == 2ul);
+    REQUIRE(sorted[1] == 1ul);
+    REQUIRE(sorted[2] == 0ul);
 
     // Test argsort with multiple fields
     sorted = df.argsort({"a", "b"}, true);
     REQUIRE(sorted.count() == 3);
-    REQUIRE(sorted[0] == 0);
-    REQUIRE(sorted[1] == 1);
-    REQUIRE(sorted[2] == 2);
+    REQUIRE(sorted[0] == 0ul);
+    REQUIRE(sorted[1] == 1ul);
+    REQUIRE(sorted[2] == 2ul);
 }
 
 TEST_CASE("Test sort_index with ascending=true and ignore_index=false", "[sort_index]")
 {
-    pd::DataFrame df(std::vector<std::vector<int>>{ { 1, 2, 3 },
-                                                    { 4, 5, 6 },
-                                                    { 7, 8, 9 } });
-    df.setColumns({ "a", "b", "c" });
-    df.setIndex(arrow::ArrayT<std::string>::Make({ "c"s, "b"s, "a"s }));
+    pd::DataFrame df(
+        std::vector<std::vector<int>>{ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } },
+        { "a", "b", "c" },
+        arrow::ArrayT<std::string>::Make({ "c"s, "b"s, "a"s }));
 
     auto sorted = df.sort_index(true, false);
 
-    REQUIRE(sorted.index().equals(std::vector<std::string>{"a","b","c"}));
+    REQUIRE(sorted.index().equals(std::vector<std::string>{ "a", "b", "c" }));
 
-    REQUIRE(sorted.at(0,0) == df.at(2,0));
-    REQUIRE(sorted.at(1,0) == df.at(1,0));
-    REQUIRE(sorted.at(2,0) == df.at(0,0));
-    REQUIRE(sorted.at(0,1) == df.at(2,1));
-    REQUIRE(sorted.at(1,1) == df.at(1,1));
-    REQUIRE(sorted.at(2,1) == df.at(0,1));
-    REQUIRE(sorted.at(0,2) == df.at(2,2));
-    REQUIRE(sorted.at(1,2) == df.at(1,2));
-    REQUIRE(sorted.at(2,2) == df.at(0,2));
+    REQUIRE(sorted.at(0, 0) == df.at(2, 0));
+    REQUIRE(sorted.at(1, 0) == df.at(1, 0));
+    REQUIRE(sorted.at(2, 0) == df.at(0, 0));
+    REQUIRE(sorted.at(0, 1) == df.at(2, 1));
+    REQUIRE(sorted.at(1, 1) == df.at(1, 1));
+    REQUIRE(sorted.at(2, 1) == df.at(0, 1));
+    REQUIRE(sorted.at(0, 2) == df.at(2, 2));
+    REQUIRE(sorted.at(1, 2) == df.at(1, 2));
+    REQUIRE(sorted.at(2, 2) == df.at(0, 2));
 }
 
 TEST_CASE("Test sort_index with ascending=false and ignore_index=true", "[sort_index]")
@@ -530,10 +528,37 @@ TEST_CASE("Test sort_index with ascending=false and ignore_index=true", "[sort_i
     pd::DataFrame df(std::vector<std::vector<int>>{ { 1, 2, 3 },
                                                     { 4, 5, 6 },
                                                     { 7, 8, 9 } });
-    df.setColumns({ "a", "b", "c" });
-    df.setIndex(arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
+    df = df.setColumns({ "a", "b", "c" });
+    df = df.setIndex(arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
+
+    INFO(df);
 
     auto sorted = df.sort_index(false, true);
+
+    INFO(sorted);
+
+    REQUIRE(sorted.shape() == df.shape());
+    REQUIRE(sorted.columns() == df.columns());
+    REQUIRE(sorted.index().equals(std::vector<::uint64_t>{ 0, 1, 2 }));
+    REQUIRE(sorted.at(2, 0) == 1);
+    REQUIRE(sorted.at(1, 1) == 5);
+    REQUIRE(sorted.at(0, 2) == 9);
+}
+
+TEST_CASE("Test sort_index with ascending=false and ignore_index=false", "[sort_index]")
+{
+    pd::DataFrame df(std::vector<std::vector<int>>{ { 1, 2, 3 },
+                                                    { 4, 5, 6 },
+                                                    { 7, 8, 9 } });
+    df = df.setColumns({ "a", "b", "c" });
+    df = df.setIndex(arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
+
+    INFO(df);
+
+    auto sorted = df.sort_index(false, false);
+
+    INFO(sorted);
+
     REQUIRE(sorted.shape() == df.shape());
     REQUIRE(sorted.columns() == df.columns());
     REQUIRE(sorted.index().equals(std::vector<std::string>{ "z", "y", "x" }));
@@ -547,8 +572,8 @@ TEST_CASE("Test sort_values with by and ascending=false and ignore_index=true", 
     pd::DataFrame df(std::vector<std::vector<int>>{ { 1, 2, 3 },
                                                     { 4, 5, 6 },
                                                     { 7, 8, 9 } });
-    df.setColumns({ "a", "b", "c" });
-    df.setIndex(arrow::ArrayT<std::string>::Make({ "x", "y", "z" }));
+    df = df.setColumns({ "a", "b", "c" });
+    df = df.setIndex(arrow::ArrayT<std::string>::Make({ "x", "y", "z" }));
 
     auto sorted = df.sort_values({"a","b"},false, true);
 
@@ -569,33 +594,26 @@ TEST_CASE("Test sort_values with by and ascending=false and ignore_index=true", 
     REQUIRE(sorted.index().equals(std::vector<::uint64_t>{ 0, 1, 2 }));
 }
 
+//  Each row of the output will be the corresponding value of the
+//  first input which is non-null for that row, otherwise null.
 TEST_CASE("Test DataFrame coalesce", "[DataFrame]")
 {
     pd::DataFrame df(std::vector<std::vector<int>>{ { 1, 2 },
                                                     { 3, 4 },
-                                                    { 5, 6 } });
-    df.setColumns({ "a", "b" });
+                                                    { 5, 6 } }, {"a", "b", "c"});
 
     // Test coalesce() method
     pd::Series series = df.coalesce();
-    REQUIRE(series.shape() == pd::Series::Shape{ 6 });
-    REQUIRE(series.indexArray()->Equals(
-        arrow::ArrayT<::uint64_t>::Make({ 0, 1, 2, 3, 4, 5 })));
+    INFO(series);
+    REQUIRE(series.shape() == pd::Series::Shape{ 2});
     REQUIRE(series.at(0) == 1);
     REQUIRE(series.at(1) == 2);
-    REQUIRE(series.at(2) == 3);
-    REQUIRE(series.at(3) == 4);
-    REQUIRE(series.at(4) == 5);
-    REQUIRE(series.at(5) == 6);
 
     // Test coalesce(std::vector<std::string> const& columns) method
-    pd::Series series2 = df.coalesce({"a"});
+    pd::Series series2 = df.coalesce({"b", "c"});
     REQUIRE(series2.shape() == pd::Series::Shape{ 2 });
-    REQUIRE(series2.indexArray()->Equals(
-        arrow::ArrayT<::uint64_t>::Make({ 1, 2 })));
-    REQUIRE(series2.at(0) == 1);
-    REQUIRE(series2.at(1) == 3);
-    REQUIRE(series2.at(2) == 5);
+    REQUIRE(series2.at(0) == 3);
+    REQUIRE(series2.at(1) == 4);
 }
 
 TEST_CASE("makeGroups() works with a single column key", "[makeGroups]") {
@@ -685,17 +703,21 @@ TEST_CASE("makeGroups() works on dataframe with more than two column keys", "[ma
                                 "male"s,
                                 "male"s } },
         std::pair{ "age"s,
-                   std::vector{ 16, 10, 10, 20, 30, 40, 15, 25, 35, 45 } }
+                   std::vector{ 16, 10, 10, 20, 30, 40, 15, 25, 35, 45 } },
+        std::pair{ "height"s, std::vector{ 9, 9, 9, 9, 9, 8, 8, 8, 8, 8 } }
     };
+
+#define MALE 0
+#define FEMALE 1
     pd::GroupBy groupby("gender", df);
 
     SECTION("groupSize() is valid")
     {
         REQUIRE(groupby.groupSize() == 2);
-        REQUIRE(groupby.group("male").size() == 3);
-        REQUIRE(groupby.group("female").size() == 3);
+        REQUIRE(groupby.group("male").size() == 4);
+        REQUIRE(groupby.group("female").size() == 4);
 
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < 4; i++)
         {
             REQUIRE(groupby.group("male").at(i)->length() == 7);
             REQUIRE(groupby.group("female").at(i)->length() == 3);
@@ -782,15 +804,86 @@ TEST_CASE("makeGroups() works on dataframe with more than two column keys", "[ma
     SECTION("grouper computes mean of each groups and merge")
     {
         auto age_mean = pd::ValidateAndReturn(groupby.mean("age"));
-        REQUIRE(age_mean[0].as<double>() == Catch::Approx(25.857).epsilon(1e-3));
-        REQUIRE(age_mean[1].as<double>() == Catch::Approx(21.667).epsilon(1e-3));
+        REQUIRE(
+            age_mean[0].as<double>() == Catch::Approx(25.857).epsilon(1e-3));
+        REQUIRE(
+            age_mean[1].as<double>() == Catch::Approx(21.667).epsilon(1e-3));
+
+        auto age_height_mean =
+            pd::ValidateAndReturn(groupby.mean({ "age"s, "height"s }));
+        INFO(age_height_mean);
+        REQUIRE(age_height_mean["age"][0].as<double>() == 25.857142857142858);
+        REQUIRE(age_height_mean["age"][1].as<double>() == 21.666666666666668);
+
+        REQUIRE(age_height_mean["height"][0].as<double>() == 8.428571428571429);
+        REQUIRE(age_height_mean["height"][1].as<double>() == 8.666666666666666);
+    }
+
+    SECTION("grouper computes min_max of each groups and merge")
+    {
+        pd::GroupBy groupby1("gender", df);
+        auto age_max = pd::ValidateAndReturn(groupby1.min_max("age"));
+
+        INFO(age_max);
+        REQUIRE(age_max["min"][MALE].as<int32_t>() == 10);
+        REQUIRE(age_max["min"][FEMALE].as<int32_t>() == 10);
+
+        REQUIRE(age_max["max"][MALE].as<int32_t>() == 45);
+        REQUIRE(age_max["max"][FEMALE].as<int32_t>() == 30);
+
+        auto age_height_max =
+            pd::ValidateAndReturn(groupby.min_max({ "age"s, "height"s }));
+        INFO(age_height_max);
+        REQUIRE(age_height_max["age_min"][MALE].as<int32_t>() == 10);
+        REQUIRE(age_height_max["age_min"][FEMALE].as<int32_t>() == 10);
+
+        REQUIRE(age_height_max["age_max"][MALE].as<int32_t>() == 45);
+        REQUIRE(age_height_max["age_max"][FEMALE].as<int32_t>() == 30);
+
+        REQUIRE(age_height_max["height_min"][MALE].as<int32_t>() == 8);
+        REQUIRE(age_height_max["height_min"][FEMALE].as<int32_t>() == 8);
+
+        REQUIRE(age_height_max["height_max"][MALE].as<int32_t>() == 9);
+        REQUIRE(age_height_max["height_max"][FEMALE].as<int32_t>() == 9);
+    }
+
+    SECTION("grouper computes max of each groups and merge")
+    {
+        auto age_max = pd::ValidateAndReturn(groupby.max("age"));
+        REQUIRE(age_max[0].as<int32_t>() == 45);
+        REQUIRE(age_max[1].as<int32_t>() == 30);
+
+        auto age_height_max =
+            pd::ValidateAndReturn(groupby.max({ "age"s, "height"s }));
+
+        REQUIRE(age_height_max["age"][0].as<int32_t>() == 45);
+        REQUIRE(age_height_max["age"][1].as<int32_t>() == 30);
+
+        REQUIRE(age_height_max["height"][0].as<int32_t>() == 9);
+        REQUIRE(age_height_max["height"][1].as<int32_t>() == 9);
+    }
+
+    SECTION("grouper computes min of each groups and merge")
+    {
+        auto age_min = pd::ValidateAndReturn(groupby.min("age"));
+        REQUIRE(age_min[0].as<int32_t>() == 10);
+        REQUIRE(age_min[1].as<int32_t>() == 10);
     }
 
     SECTION("grouper computes sum of each groups and merge")
     {
         auto age_sum = pd::ValidateAndReturn(groupby.sum("age"));
-        REQUIRE(age_sum[0].as<int>() == 181);
-        REQUIRE(age_sum[1].as<int>() == 65);
+        REQUIRE(age_sum[0].as<int64_t>() == 181);
+        REQUIRE(age_sum[1].as<int64_t>() == 65);
+
+        auto age_height_sum =
+            pd::ValidateAndReturn(groupby.sum({ "age"s, "height"s }));
+
+        REQUIRE(age_height_sum["age"][0].as<int64_t>() == 181);
+        REQUIRE(age_height_sum["age"][1].as<int64_t>() == 65);
+
+        REQUIRE(age_height_sum["height"][0].as<int64_t>() == 59);
+        REQUIRE(age_height_sum["height"][1].as<int64_t>() == 26);
     }
 
     SECTION("grouper computes count of each groups and merge")
@@ -800,15 +893,302 @@ TEST_CASE("makeGroups() works on dataframe with more than two column keys", "[ma
         REQUIRE(age_count[1].as<::int64_t>() == 3);
     }
 
-//    SECTION("grouper apply count on each groups and merge")
+    SECTION("BarData Resample")
+    {
+        pd::DataFrame bardata{
+            arrow::DateTimeArray::Make(
+                { time_from_string("2002-01-01 09:30:05.030376354"),
+                  time_from_string("2002-01-01 09:31:05.030376354"),
+                  time_from_string("2002-01-02 09:30:05.030376354"),
+                  time_from_string("2002-01-02 16:30:05.030376354"),
+                  time_from_string("2002-01-05 09:30:05.030376354") }),
+            std::pair("high"s, std::vector<float>{ 11.1, 20.2, 21., 15, 20 }),
+            std::pair("low"s, std::vector<float>{ 9.1, 9.2, 10., 5, 10 }),
+            std::pair("close"s, std::vector<float>{ 10.1, 15.2, 20., 15, 15 }),
+            std::pair("open"s, std::vector<float>{ 10, 20.2, 10., 15, 10 }),
+            std::pair("volume"s, std::vector<uint64_t>{ 100, 200, 210, 1, 2 })
+        };
+
+        auto day_info = bardata.index().dt().day();
+        pd::DataFrame new_df = pd::ValidateAndReturn(
+            bardata.array()->AddColumn(5, "day", day_info.array()));
+
+        auto grouper = new_df.group_by("day");
+
+        REQUIRE(grouper.unique()->length() == 3);
+
+        REQUIRE(grouper.group(1l).size() == 6);
+        REQUIRE(grouper.group(1l).at(0)->length() == 2);
+
+        REQUIRE(grouper.group(2l).size() == 6);
+        REQUIRE(grouper.group(2l).at(0)->length() == 2);
+
+        REQUIRE(grouper.group(5l).size() == 6);
+        REQUIRE(grouper.group(5l).at(0)->length() == 1);
+
+        auto open = grouper.first("open");
+        auto close = grouper.last("close");
+        auto high = grouper.max("high");
+        auto low = grouper.min("low");
+        auto volume = grouper.sum("volume");
+
+        new_df =
+            pd::DataFrame{ arrow::schema(arrow::FieldVector{
+                               arrow::field("high", arrow::float32()),
+                               arrow::field("low", arrow::float32()),
+                               arrow::field("close", arrow::float32()),
+                               arrow::field("open", arrow::float32()),
+                               arrow::field("volume", arrow::uint64()),
+                               arrow::field(
+                                   "date",
+                                   arrow::timestamp(arrow::TimeUnit::NANO)) }),
+                           3,
+                           { high->array(),
+                             low->array(),
+                             close->array(),
+                             open->array(),
+                             volume->array(),
+                             arrow::DateArray::Make({ date(2002, 01, 01),
+                                                      date(2002, 01, 02),
+                                                      date(2002, 01, 05) }) } };
+        new_df = new_df.setIndex("date");
+        std::cout << bardata << "\n";
+        std::cout << new_df << "\n";
+    }
+}
+
+TEST_CASE("Test apply method with Series input", "[GroupBy]")
+{
+    auto df = pd::DataFrame(std::map<std::string, std::vector<::int32_t>>{
+        { "a", { 1, 1, 3, 1, 1, 1, 3, 8, 2, 2 } },
+        { "b", { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 } } });
+
+    auto groupby = df.group_by("a"s);
+    REQUIRE(groupby.groupSize() == 4);
+
+    auto summation = [](pd::Series const& s) -> std::shared_ptr<arrow::Scalar>
+    { return s.sum().scalar; };
+
+    // Apply function to each group
+    pd::DataFrame result{nullptr};
+
+    SECTION("Group synchronously")
+    {
+        // Apply function to each group
+        ASSIGN_OR_ABORT(result, groupby.apply(summation));
+    }
+
+    SECTION("Group ASynchronously")
+    {
+        // Apply function to each group
+        ASSIGN_OR_ABORT(result, groupby.apply_async(summation));
+    }
+
+    // Check that the result DataFrame has the correct number of rows and columns
+    REQUIRE(result.num_rows() == groupby.groupSize());
+    REQUIRE(result.num_columns() == 2);
+
+    // Check that the values in the result DataFrame are as expected
+    REQUIRE(
+        result["a"].values<::int64_t>() == std::vector<int64_t>{ 5, 6, 8, 4 });
+    REQUIRE(
+        result["b"].values<int64_t>() == std::vector<int64_t>{ 37, 12, 3, 3 });
+}
+
+TEST_CASE("Test apply method with DataFrame input", "[GroupBy]")
+{
+    auto df = pd::DataFrame(std::map<std::string, std::vector<::int32_t>>{
+        { "a", { 1, 1, 3, 1, 1, 1, 3, 8, 2, 2 } },
+        { "b", { 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 } } });
+
+    auto groupby = df.group_by("a"s);
+    REQUIRE(groupby.groupSize() == 4);
+
+    auto summation = [](pd::DataFrame const& s) -> std::shared_ptr<arrow::Scalar>
+    { return s.sum().scalar; };
+
+    pd::Series result{std::vector<::int64_t>{}};
+
+    SECTION("Group synchronously")
+    {
+        // Apply function to each group
+        ASSIGN_OR_ABORT(result, groupby.apply(summation));
+    }
+
+    SECTION("Group ASynchronously")
+    {
+        // Apply function to each group
+        ASSIGN_OR_ABORT(result, groupby.apply_async(summation));
+    }
+
+    // Check that the result DataFrame has the correct number of rows and columns
+    REQUIRE(result.size() == groupby.groupSize());
+
+    // Check that the values in the result DataFrame are as expected
+    REQUIRE(
+        result.values<::int64_t>() == std::vector<int64_t>{ 42, 18, 11, 7 });
+}
+
+TEST_CASE("generate_bins", "[Core]")
+{
+    auto value = pd::range(1, 7);
+    std::vector<
+        std::tuple<std::vector<::int64_t>, bool, std::vector<::int64_t>>>
+        params{ { { 0, 3, 6, 9 }, false, { 2, 5, 6 } },
+                { { 0, 3, 6, 9 }, true, { 3, 6, 6 } },
+                { { 0, 3, 6 }, false, { 2, 5 } },
+                { { 0, 3, 6 }, true, { 3, 6 } }};
+
+    for(auto const& [binner, closed_right, expected]: params)
+    {
+        DYNAMIC_SECTION("binner_size" << binner.size() << " closed_right=" << closed_right)
+        {
+            REQUIRE(
+                pd::generate_bins_dt64(
+                    value,
+                    arrow::ArrayT<std::int64_t>::Make(binner),
+                    closed_right) == expected);
+        }
+    }
+
+}
+
+TEST_CASE("Test groupinfo downsampling", "[Resample]")
+{
+    std::vector<ptime> index{ time_from_string("2000-01-01 00:00:00.000000000"),
+                              time_from_string("2000-01-01 00:03:00.000000000"),
+                              time_from_string("2000-01-01 00:06:00.000000000")};
+
+    pd::GroupInfo info{ std::vector<::int64_t>{ 3, 6, 9 },
+                        arrow::DateTimeArray::Make(index) };
+    auto groups = info.downsample();
+
+    REQUIRE(groups.size() == 9);
+    REQUIRE(groups[0] == pd::fromPTime(index[0]));
+    REQUIRE(groups[1] == pd::fromPTime(index[0]));
+    REQUIRE(groups[2] == pd::fromPTime(index[0]));
+    REQUIRE(groups[3] == pd::fromPTime(index[1]));
+    REQUIRE(groups[4] == pd::fromPTime(index[1]));
+    REQUIRE(groups[5] == pd::fromPTime(index[1]));
+    REQUIRE(groups[6] == pd::fromPTime(index[2]));
+    REQUIRE(groups[7] == pd::fromPTime(index[2]));
+    REQUIRE(groups[8] == pd::fromPTime(index[2]));
+    REQUIRE_FALSE(info.upsampling());
+}
+
+TEST_CASE("Test groupinfo upsampling", "[Resample]")
+{
+    std::vector<ptime> index{ time_from_string("2000-01-01 00:00:00.000000000"),
+                              time_from_string("2000-01-01 00:00:30.000000000"),
+                              time_from_string("2000-01-01 00:01:00.000000000"),
+                              time_from_string("2000-01-01 00:01:30.000000000"),
+                              time_from_string("2000-01-01 00:02:00.000000000"),
+                              time_from_string("2000-01-01 00:02:30.000000000"),
+                              time_from_string("2000-01-01 00:03:00.000000000"),
+                              time_from_string("2000-01-01 00:03:30.000000000"),
+                              time_from_string("2000-01-01 00:04:00.000000000"),
+                              time_from_string("2000-01-01 00:04:30.000000000"),
+                              time_from_string("2000-01-01 00:05:00.000000000"),
+                              time_from_string("2000-01-01 00:05:30.000000000"),
+                              time_from_string("2000-01-01 00:06:00.000000000"),
+                              time_from_string("2000-01-01 00:06:30.000000000"),
+                              time_from_string("2000-01-01 00:07:00.000000000"),
+                              time_from_string("2000-01-01 00:07:30.000000000"),
+                              time_from_string(
+                                  "2000-01-01 00:08:00.000000000") };
+
+    pd::GroupInfo info{
+        std::vector<
+            ::int64_t>{ 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9 },
+        arrow::DateTimeArray::Make(index)
+    };
+    REQUIRE(info.upsampling());
+}
+
+TEST_CASE("Test resample on series", "[Resample]")
+{
+    auto index = pd::date_range(ptime(date(2000, 1, 1)), 9);
+    auto series = pd::Series(pd::range(0, 9), index);
+
+    SECTION("Downsample series into 3 minute bins  and sum")
+    {
+        auto resampler = pd::resample(series,
+                                      time_duration(0, 3, 0));
+
+        auto group_index = resampler.index();
+        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(0))->ToString() == "2000-01-01 00:00:00.000000000");
+        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(1))->ToString() == "2000-01-01 00:03:00.000000000");
+        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(2))->ToString() == "2000-01-01 00:06:00.000000000");
+
+        auto sum = pd::ValidateAndReturn(resampler.sum());
+        REQUIRE(sum.at(0, 0) == 3L);
+        REQUIRE(sum.at(1, 0) == 12L);
+        REQUIRE(sum.at(2, 0) == 21L);
+    }
+
+//    SECTION("Downsample series into 3 minute bins  and sum, "
+//        "label with right")
 //    {
-//        auto count = [](pd::DataFrame const& df)
-//        {
-//            std::cout << df << "\n";
-//            return arrow::MakeScalar(df.num_rows());
-//        };
-//        auto age_count = pd::ValidateAndReturn(groupby.apply(count));
-//        REQUIRE(age_count.at(0, 0) == 7L);
-//        REQUIRE(age_count.at(1, 0) == 3L);
+//        auto resampler = pd::resample(series,
+//                                      time_duration(0, 3, 0), false, true);
+//
+//        auto group_index = resampler.index();
+//        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(0))->ToString() == "2000-01-01 00:03:00.000000000");
+//        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(1))->ToString() == "2000-01-01 00:06:00.000000000");
+//        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(2))->ToString() == "2000-01-01 00:09:00.000000000");
+//
+//        auto sum = pd::ValidateAndReturn(resampler.sum());
+//        REQUIRE(sum.at(0, 0) == 3L);
+//        REQUIRE(sum.at(1, 0) == 12L);
+//        REQUIRE(sum.at(2, 0) == 21L);
 //    }
+//
+//    SECTION("Downsample series into 3 minute bins  and sum, "
+//        "label and close right")
+//    {
+//        auto resampler = pd::resample(series,
+//                                      time_duration(0, 3, 0), true, true);
+//
+//        auto group_index = resampler.index();
+//
+//        REQUIRE(group_index->length() == 4);
+//
+//        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(0))->ToString() == "2000-01-01 00:00:00.000000000");
+//        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(1))->ToString() == "2000-01-01 00:03:00.000000000");
+//        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(2))->ToString() == "2000-01-01 00:06:00.000000000");
+//        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(3))->ToString() == "2000-01-01 00:09:00.000000000");
+//
+//        auto sum = pd::ValidateAndReturn(resampler.sum());
+//        REQUIRE(sum.at(0, 0) == 0L);
+//        REQUIRE(sum.at(1, 0) == 6L);
+//        REQUIRE(sum.at(2, 0) == 15L);
+//        REQUIRE(sum.at(3, 0) == 15L);
+//    }
+}
+
+TEST_CASE("Upsample the series into 30 second bins.")
+{
+    auto index = pd::date_range(ptime(date(2000, 1, 1)), 9);
+    auto series = pd::Series(pd::range(0, 9), index);
+
+    auto resampler = pd::resample(series, time_duration(0, 0, 30));
+
+    auto group_index = resampler.index();
+
+    REQUIRE(group_index->length() == 17);
+
+//    REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(0))->ToString() == "2000-01-01 00:00:00.000000000");
+//    REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(1))->ToString() == "2000-01-01 00:00:30.000000000");
+//    REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(2))->ToString() == "2000-01-01 00:01:00.000000000");
+//    REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(3))->ToString() == "2000-01-01 00:01:30.000000000");
+//    REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(4))->ToString() == "2000-01-01 00:02:00.000000000");
+//
+//    auto df = resampler.data();
+//    REQUIRE(df.num_rows() == 17);
+//    INFO(df);
+//    REQUIRE(df.at(0, 0) == 0L);
+//    REQUIRE_FALSE(df.at(1, 0).isValid());
+//    REQUIRE(df.at(2, 0) == 15L);
+//    REQUIRE_FALSE(df.at(3, 0).isValid());
+//    REQUIRE(df.at(4, 0) == 15L);
 }

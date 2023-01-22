@@ -12,12 +12,15 @@ find_package(TBB CONFIG REQUIRED)
 
 # install arrow from here https://arrow.apache.org/install/
 
-add_library(pandas_arrow series.cpp scalar.cpp dataframe.cpp core.cpp)
+add_library(pandas_arrow series.cpp scalar.cpp
+        dataframe.cpp core.cpp resample.cpp)
 
 target_link_libraries(pandas_arrow PRIVATE
-        arrow parquet ${Boost_LIBRARIES} TBB::tbb tabulate::tabulate)
+        arrow parquet ${Boost_LIBRARIES}
+        TBB::tbb tabulate::tabulate)
 
-target_include_directories(pandas_arrow PUBLIC . ${Boost_INCLUDE_DIRS})
+target_include_directories(pandas_arrow PUBLIC .
+        ${Boost_INCLUDE_DIRS})
 
 add_subdirectory(arrow)
 

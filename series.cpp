@@ -15,6 +15,7 @@
 #include "arrow/compute/kernels/pct_change.h"
 #include "datetimelike.h"
 #include "filesystem"
+#include "group_by.h"
 #include "ranges"
 #include "stringlike.h"
 
@@ -62,13 +63,7 @@ Series ClassT :: name () const{ \
 #define Aggregation(name, ReturnT) \
 ReturnT Series:: name (bool skip_null) const {    \
 arrow::compute::ScalarAggregateOptions opt{skip_null};                                   \
-auto result = arrow::compute::CallFunction(# name, {m_array}, &opt);   \
-if(result.ok()) \
-{   \
-    return result->scalar_as< typename arrow::CTypeTraits<ReturnT>::ScalarType>().value;   \
-}else{  \
-throw std::runtime_error(result.status().ToString());   \
-}   \
+return ValidateHelperScalar<ReturnT>(arrow::compute::CallFunction(# name, {m_array}, &opt));   \
 }
 
 #define AggregationWithCustomOption(name, f_name, ReturnT, option) \
@@ -250,11 +245,6 @@ namespace pd
         }
     }
 
-    Series Series::mode(int n, bool skip_nulls)  const{
-        return ValidateHelper(arrow::compute::Mode(m_array,
-                                                   arrow::compute::ModeOptions{n, skip_nulls}));
-    }
-
     Aggregation(all, bool)
     Aggregation(any, bool)
     Aggregation(mean, double)
@@ -269,15 +259,11 @@ namespace pd
     AggregationWithCustomOption(nunique, count_distinct, int64_t,
                                 arrow::compute::CountOptions{})
 
-    double Series::std(int ddof, bool skip_na)  const {
-        auto result = arrow::compute::Stddev(m_array,
-                                             arrow::compute::VarianceOptions{ddof, skip_na});
-        if(result.ok())
-        {
-            return result->scalar_as<arrow::DoubleScalar>().value;
-        }else{
-            throw std::runtime_error(result.status().ToString());
-        }
+    double Series::std(int ddof, bool skip_na)  const
+    {
+        return ValidateHelperScalar<double>(arrow::compute::Stddev(
+            m_array,
+            arrow::compute::VarianceOptions{ ddof, skip_na }));
     }
 
     int64_t Series::index(Scalar const& search)  const
@@ -1249,6 +1235,105 @@ namespace pd
     Series Series::where(Series const &cond, Scalar const &other) const
     {
         return if_else(cond, other);
+    }
+    pd::Series Series::reindex(const shared_ptr<arrow::Array>& newIndex) const noexcept
+    {
+        if (newIndex->type()->id() != m_index->type()->id())
+        {
+            throw std::runtime_error(
+                "Index type of newIndex does not match "
+                "the index type of the current series.");
+        }
+
+        // Get the length of the new index
+        int64_t newIndexLen = newIndex->length();
+
+        // Create a new values array builder for the reindexed series
+        auto null = arrow::MakeNullScalar(m_array->type());
+        std::vector<ScalarPtr> scalars(newIndexLen, null);
+
+        // Create a hashmap to store the index-value pairs of the current series
+        std::unordered_map<ScalarPtr , ::int64_t, HashScalar, HashScalar> indexValueMap;
+        for (int64_t i = 0; i < m_index->length(); i++)
+        {
+            indexValueMap[m_index->GetScalar(i).MoveValueUnsafe()] = i;
+        }
+
+        // Iterate through the new index and add the corresponding values to the new values array builder
+        for (int64_t i = 0; i < newIndexLen; i++)
+        {
+            auto && newIndexValue = newIndex->GetScalar(i).MoveValueUnsafe();
+            if (indexValueMap.contains(newIndexValue))
+            {
+                int64_t valueIndex = indexValueMap[newIndexValue];
+                scalars[i] =
+                    m_array->GetScalar(valueIndex).MoveValueUnsafe();
+            }
+        }
+        // Build the new values array
+        ASSIGN_OR_ABORT(
+            auto newValuesBuilder,
+            arrow::MakeBuilder(m_array->type()));
+
+        ABORT_NOT_OK( newValuesBuilder->AppendScalars(scalars) );
+
+        std::shared_ptr<arrow::Array> newValues;
+        ABORT_NOT_OK(newValuesBuilder->Finish(&newValues));
+
+        // Return a new series with the reindexed values and new index
+        return { newValues, newIndex, m_name };
+    }
+
+    pd::Series Series::reindexAsync(std::shared_ptr<arrow::Array> const&newIndex) const noexcept
+    {
+        if (newIndex->type()->id() != m_index->type()->id())
+        {
+            throw std::runtime_error(
+                "Index type of newIndex does not match "
+                "the index type of the current series.");
+        }
+
+        // Get the length of the new index
+        int64_t newIndexLen = newIndex->length();
+
+        // Create a new values array builder for the reindexed series
+        // Use Intel TBB to parallelize the reindex operation
+        auto null = arrow::MakeNullScalar(m_array->type());
+        std::vector<ScalarPtr> scalars(newIndexLen, null);
+
+        // Create a hashmap to store the index-value pairs of the current series
+        std::unordered_map<ScalarPtr, int64_t, HashScalar, HashScalar>
+            indexValueMap;
+        for (int64_t i = 0; i < m_index->length(); i++)
+        {
+            indexValueMap[m_index->GetScalar(i).MoveValueUnsafe()] = i;
+        }
+
+        tbb::parallel_for(
+            0L,
+            newIndexLen,
+            [&](int64_t i)
+            {
+                auto && newIndexValue = newIndex->GetScalar(i).MoveValueUnsafe();
+                if (indexValueMap.contains(newIndexValue))
+                {
+                    int64_t valueIndex = indexValueMap[newIndexValue];
+                    scalars[i] =
+                        m_array->GetScalar(valueIndex).MoveValueUnsafe();
+                }
+            });
+        // Build the new values array
+        ASSIGN_OR_ABORT(
+            auto newValuesBuilder,
+            arrow::MakeBuilder(m_array->type()));
+
+        ABORT_NOT_OK( newValuesBuilder->AppendScalars(scalars) );
+
+        std::shared_ptr<arrow::Array> newValues;
+        ABORT_NOT_OK(newValuesBuilder->Finish(&newValues));
+
+        // Return a new series with the reindexed values and new index
+        return { newValues, newIndex, m_name };
     }
 
     GenericFunctionSeriesReturnDateTimeLike(day)
