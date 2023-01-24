@@ -23,3 +23,7 @@ target_link_libraries(custom_kernel_test PRIVATE Catch2::Catch2WithMain  pandas_
 add_executable(benchmark benchmark.cpp )
 target_include_directories(benchmark PRIVATE ../..)
 target_link_libraries(benchmark PRIVATE pandas_arrow )
+
+add_executable(hash_practise hash_practise.cpp )
+target_include_directories(hash_practise PRIVATE ../..)
+target_link_libraries(hash_practise PRIVATE pandas_arrow )

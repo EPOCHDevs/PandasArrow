@@ -18,7 +18,7 @@ std::vector<int64_t> generate_bins_dt64(
     int64_t nat_count = 0;
     if (values->null_count() > 0)
     {
-        ASSIGN_OR_ABORT(auto datum, arrow::compute::DropNull(values));
+        auto datum = pd::ReturnOrThrowOnFailure(arrow::compute::DropNull(values));
         values = datum.template array_as<T>();
         nat_count = values->null_count();
     }
@@ -119,7 +119,7 @@ std::pair<ptime, ptime> adjustDatesAnchored(
     ptime first = start;
     ptime last = end;
 
-    ptime origin_time = ptime(); // origin == "epoch"
+    ptime origin_time(date(1970, 1, 1));; // origin == "epoch"
     if (std::holds_alternative<TimeGrouperOrigin>(origin_opt))
     {
         auto origin = std::get<1>(origin_opt);

@@ -13,7 +13,7 @@ find_package(TBB CONFIG REQUIRED)
 # install arrow from here https://arrow.apache.org/install/
 
 add_library(pandas_arrow series.cpp scalar.cpp
-        dataframe.cpp core.cpp resample.cpp)
+        dataframe.cpp core.cpp resample.cpp concat.cpp)
 
 target_link_libraries(pandas_arrow PRIVATE
         arrow parquet ${Boost_LIBRARIES}

@@ -169,7 +169,7 @@ arrow::Result<pd::DataFrame> GroupBy:: func(std::vector<std::string> const& args
     { \
     auto key = uniqueKeys->GetScalar(long(j)).MoveValueUnsafe(); \
     auto& group = groups.at(key); \
-    arrow::Datum d = pd::ValidateAndReturn(arrow::compute::CallFunction( \
+    arrow::Datum d = pd::ReturnOrThrowOnFailure(arrow::compute::CallFunction( \
                      #func,\
                      { group[index] }, \
                      defaultOpt.get())); \
@@ -223,4 +223,22 @@ std::shared_ptr<arrow::ArrayBuilder> builder;\
         RETURN_NOT_OK(builder->Finish(&data)); \
         \
         return pd::Series(data, nullptr); \
+}
+
+
+#define FOR_ALL_COLUMN(SERIES_FUNCTION_NAME)\
+DataFrame DataFrame:: SERIES_FUNCTION_NAME () const\
+{\
+    auto N = num_columns();\
+    arrow::ArrayDataVector new_columns(N);\
+    tbb::parallel_for(\
+        0L,\
+        N,\
+        [&](::int64_t i)\
+        {\
+            new_columns[i] = Series(this->m_array->column(i), m_index)\
+                                 . SERIES_FUNCTION_NAME ()\
+                                 .m_array->data();\
+        });\
+    return DataFrame(m_array->schema(), num_rows(), new_columns, m_index);\
 }

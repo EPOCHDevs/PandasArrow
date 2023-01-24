@@ -2,22 +2,16 @@
 // Created by dewe on 12/27/22.
 //
 #pragma once
-#include "ndarray.h"
 #include "filesystem"
+#include "ndframe.h"
 #include "tabulate/table.hpp"
-
-
-namespace arrow
-{
-    class Table;
-}
 
 namespace pd {
 
     constexpr int PD_MAX_ROW_TO_PRINT = {100};
     constexpr int PD_MAX_COL_TO_PRINT = {10};
 
-    class DataFrame : public NDArray<DataFrame>{
+    class DataFrame : public NDFrame<DataFrame>{
     public:
 
         using ArrayType = std::shared_ptr<arrow::RecordBatch>;
@@ -34,14 +28,12 @@ namespace pd {
         DataFrame(std::shared_ptr<arrow::Schema> const &schemas,
                   int64_t num_rows,
                   std::vector<std::shared_ptr<arrow::ArrayData>> const &table,
-                  std::shared_ptr<arrow::Array> const& _index=nullptr) :
-                NDArray<DataFrame>(arrow::RecordBatch::Make(schemas, num_rows, table), _index){}
+                  std::shared_ptr<arrow::Array> const& _index=nullptr) : NDFrame<DataFrame>(arrow::RecordBatch::Make(schemas, num_rows, table), _index){}
 
         DataFrame(std::shared_ptr<arrow::Schema> const &schemas,
                   int64_t num_rows,
                   std::vector<std::shared_ptr<arrow::Array>> const &table,
-                  std::shared_ptr<arrow::Array> const& _index=nullptr) :
-                NDArray<DataFrame>(arrow::RecordBatch::Make(schemas, num_rows, table), _index){}
+                  std::shared_ptr<arrow::Array> const& _index=nullptr) : NDFrame<DataFrame>(arrow::RecordBatch::Make(schemas, num_rows, table), _index){}
 
         template<class ... ColumnTypes, size_t N = std::tuple_size_v<std::tuple<ColumnTypes ...>>>
         DataFrame(std::array<std::string, N> columns,
@@ -61,6 +53,9 @@ namespace pd {
         DataFrame(MapType<std::string, V> const &table,
                   std::shared_ptr<arrow::Array> const& index=nullptr);
 
+        DataFrame(ArrayTable const &table,
+                  std::shared_ptr<arrow::Array> const& index=nullptr);
+
         DataFrame(std::shared_ptr<arrow::StructArray> const& arr,
                   std::vector<std::string> const& columns);
 
@@ -70,6 +65,14 @@ namespace pd {
                 std::array<int64_t, 2>{ 0, 0 } :
                 std::array<int64_t, 2>{ num_rows(), num_columns() };
         }
+
+        inline ArrayPtr fieldArray() const
+        {
+            return arrow::ArrayT<std::string>::Make(columnNames());
+        }
+
+        TablePtr toTable(
+            std::optional<std::string> const& index_name={}) const;
 
         template<class T>
         static std::pair<arrow::FieldVector , arrow::ArrayVector>
@@ -97,10 +100,12 @@ namespace pd {
                             arrow::ArrayVector& arrays,
                             arrow::FieldVector& fields);
 
+        DataFrame transpose() const;
+
         DataFrame& rename(
             std::unordered_map<std::string, std::string> const& columns);
 
-        bool contains(std::string const& column);
+        bool contains(std::string const& column) const;
 
         void add_prefix(std::string const& prefix);
 
@@ -145,6 +150,10 @@ namespace pd {
             return at(row, m_array->schema()->GetFieldIndex(col));
         }
 
+        pd::DataFrame reindex(std::shared_ptr<arrow::Array> const&newIndex) const noexcept;
+
+        pd::DataFrame reindexAsync(std::shared_ptr<arrow::Array> const&newIndex) const noexcept;
+
         Scalar at(std::shared_ptr<arrow::Scalar> const& row,
                   std::string const& col) const
         {
@@ -162,6 +171,16 @@ namespace pd {
         {
             return at(arrow::MakeScalar(row), col);
         }
+
+        DataFrame ffill() const;
+        DataFrame bfill() const;
+
+        [[nodiscard]] DataFrame is_null() const;
+        [[nodiscard]] DataFrame is_valid() const;
+        [[nodiscard]] DataFrame is_finite() const;
+        [[nodiscard]] DataFrame is_infinite() const;
+
+        DataFrame drop_na() const;
 
         DataFrame slice(int offset) const;
         DataFrame slice(int offset, std::vector<std::string> const &columns) const;
@@ -188,6 +207,11 @@ namespace pd {
         DataFrame setColumns(std::vector<std::string> const& column_names);
 
         [[nodiscard]] Scalar sum() const;
+
+        bool equals_(DataFrame const& other) const override
+        {
+            return m_array->Equals(*other.m_array) && m_index->Equals(other.indexArray());
+        }
 
         template<typename T> requires (not std::same_as<DataFrame, T>)
         bool equals(std::vector<T> const &a) const;
@@ -360,6 +384,13 @@ namespace pd {
                               bool ignore_index=false);
 
         [[nodiscard]] class GroupBy group_by(std::string const&) const;
+        [[nodiscard]] class Resampler resample(std::string const& rule,
+                                               bool closed_right = false,
+                                               bool label_right = false,
+                                               std::variant<ptime, TimeGrouperOrigin> const& origin =
+                                                   TimeGrouperOrigin::StartDay,
+                                               time_duration const& offset = time_duration(),
+                                               std::string const& tz = "") const;
 
         [[nodiscard]] Series coalesce();
         [[nodiscard]] Series coalesce(std::vector<std::string> const& columns);
@@ -372,7 +403,7 @@ namespace pd {
     DataFrame::DataFrame(std::array<std::string, N> columns,
               std::shared_ptr<arrow::Array> const& _index,
               std::vector<ColumnTypes> && ... columnData)
-        :NDArray<DataFrame>(std::get<0>(std::forward_as_tuple(columnData ...)).size(),
+        : NDFrame<DataFrame>(std::get<0>(std::forward_as_tuple(columnData ...)).size(),
                              _index) {
 
         if (m_index->length() == 0) {
@@ -402,7 +433,7 @@ namespace pd {
     template<class ... ColumnTypes, size_t N>
     DataFrame::DataFrame(std::shared_ptr<arrow::Array> const& _index,
               std::pair<std::string, std::vector<ColumnTypes>> && ... columnData)
-        :NDArray<DataFrame>(std::get<0>(std::forward_as_tuple(columnData ...)).second.size(),
+        : NDFrame<DataFrame>(std::get<0>(std::forward_as_tuple(columnData ...)).second.size(),
                              _index) {
 
         int64_t nRows = m_index->length();
@@ -425,8 +456,7 @@ namespace pd {
     template<class T>
     DataFrame::DataFrame(std::vector<std::vector<T>> const &table,
               std::vector<std::string> columns,
-              std::shared_ptr<arrow::Array> const& _index):
-          NDArray<DataFrame>(table.back().size(), _index) {
+              std::shared_ptr<arrow::Array> const& _index): NDFrame<DataFrame>(table.back().size(), _index) {
 
         if (m_index->length() == 0) {
             throw std::runtime_error("Cannot Create DataFrame with empty columns");
@@ -449,8 +479,7 @@ namespace pd {
     template<template <typename...> class MapType, typename V>
     DataFrame::DataFrame(
         MapType<std::string, V> const &table,
-        std::shared_ptr<arrow::Array> const& index):
-          NDArray<DataFrame>(GetTableRowSize(table), index) {
+        std::shared_ptr<arrow::Array> const& index): NDFrame<DataFrame>(GetTableRowSize(table), index) {
 
         if (m_index->length() == 0) {
             throw std::runtime_error("Cannot Create DataFrame with empty columns");
@@ -489,6 +518,7 @@ namespace pd {
                        columns.begin(),
                        arrays.begin(),
                        [&fields](std::vector<T> const &column, std::string const &name) {
+
 
                            typename arrow::CTypeTraits<T>::BuilderType builder;
                            arrow::Status status;
@@ -587,37 +617,28 @@ namespace pd {
             typename Type::BuilderType builder;
             auto column = std::get<I>(columnData);
 
-            arrow::Status status;
             std::vector<uint8_t> cacheForStringArrayNullBitMap;
             if constexpr (std::is_same_v<T, std::string>)
             {
                 cacheForStringArrayNullBitMap = makeValidFlags(column);
-                status = builder.AppendValues(column, cacheForStringArrayNullBitMap.data());
+                ThrowOnFailure(builder.AppendValues(
+                    column,
+                    cacheForStringArrayNullBitMap.data()));
             }
             else
             {
-                status = builder.AppendValues(column, makeValidFlags(column));
+                ThrowOnFailure(
+                    builder.AppendValues(column, makeValidFlags(column)));
             }
 
-            if (status.ok()) {
-                auto result = builder.Finish();
-                if (result.ok()) {
-                    arrays[I] = result.MoveValueUnsafe();
-                    fields[I] = arrow::field(columns[I], Type::type_singleton());
-                    makeFieldArrayPairT<N, I + 1, PrimitiveTypes ...>(
-                        std::forward<TupleVectorT>(columnData),
-                        arrays,
-                        fields,
-                        columns);
-                }else{
-                    throwOnNotOkStatus(result.status())   ;
-                }
-            }
-            else
-            {
-                throwOnNotOkStatus(status);
-            }
+            arrays[I] = ReturnOrThrowOnFailure(builder.Finish());
 
+            fields[I] = arrow::field(columns[I], Type::type_singleton());
+            makeFieldArrayPairT<N, I + 1, PrimitiveTypes...>(
+                std::forward<TupleVectorT>(columnData),
+                arrays,
+                fields,
+                columns);
         }
     }
 
@@ -631,12 +652,19 @@ namespace pd {
         }
         else
         {
-            for(auto const& [_, value]: table)
+            for (auto const& [_, value] : table)
             {
-                return value.size();
+                if constexpr (std::is_same_v<T, ArrayPtr>)
+                {
+                    return value->length();
+                }
+                else
+                {
+                    return value.size();
+                }
             }
-            return 0;
         }
+        return 0;
     }
 
     template<size_t N, size_t I , class ... PrimitiveTypes,
@@ -658,30 +686,23 @@ namespace pd {
             if constexpr (std::is_same_v<T, std::string>)
             {
                 cacheForStringArrayNullBitMap = makeValidFlags(column);
-                status = builder.AppendValues(column, cacheForStringArrayNullBitMap.data());
+                ThrowOnFailure(builder.AppendValues(
+                    column,
+                    cacheForStringArrayNullBitMap.data()));
             }
             else
             {
-                status = builder.AppendValues(column, makeValidFlags(column));
+                ThrowOnFailure(
+                    builder.AppendValues(column, makeValidFlags(column)));
             }
 
-            if (status.ok()) {
-                auto result = builder.Finish();
-                if (result.ok()) {
-                    arrays[I] = result.MoveValueUnsafe();
-                    fields[I] = arrow::field(name, Type::type_singleton());
-                    makeFieldArrayPairT<N, I + 1, PrimitiveTypes ...>(
-                        std::forward<TupleVectorT>(columnData),
-                        arrays,
-                        fields);
-                }else{
-                    throwOnNotOkStatus(result.status())   ;
-                }
-            }
-            else
-            {
-                throwOnNotOkStatus(status);
-            }
+            arrays[I] = ReturnOrThrowOnFailure(builder.Finish());
+
+            fields[I] = arrow::field(name, Type::type_singleton());
+            makeFieldArrayPairT<N, I + 1, PrimitiveTypes...>(
+                std::forward<TupleVectorT>(columnData),
+                arrays,
+                fields);
         }
     }
 
@@ -697,11 +718,11 @@ namespace pd {
 
     template<typename T> requires (not std::same_as<DataFrame, T>)
     bool DataFrame::equals(std::vector<T> const &a) const {
-        return NDArray<DataFrame>::equals_(DataFrame(a));
+        return NDFrame<DataFrame>::equals_(DataFrame(a));
     }
 
     template<typename T> requires (not std::same_as<DataFrame, T>)
     bool DataFrame::approx_equals(std::vector<T> const &a) const {
-        return NDArray<DataFrame>::approx_equals_(DataFrame(a));
+        return NDFrame<DataFrame>::approx_equals_(DataFrame(a));
     }
 }

@@ -6,6 +6,19 @@
 #include "memory"
 #include "arrow/compute/api.h"
 
+#define BINARY_OPERATOR(op, name) \
+    inline Scalar operator op (Scalar const &s) const { \
+        return ReturnOrThrowOnFailure(arrow::compute::CallFunction(#name, { this->scalar, s.scalar })).scalar(); \
+    }\
+    template<typename T> requires std::is_scalar_v<T> \
+    inline Scalar operator op (T const &s) const { \
+        return *this op Scalar(s); \
+    } \
+    template<typename T> requires std::is_scalar_v<T> \
+    friend Scalar operator op (T const &s, Scalar const &rhs) { \
+        return Scalar(s) op rhs; \
+    }
+
 namespace pd{
 /// The Scalar class is a wrapper for the "arrow::Scalar" class from the
 /// Apache Arrow library. It is used for storing scalar values.
@@ -13,11 +26,12 @@ namespace pd{
     class Scalar
     {
     public:
-        Scalar()=default;
+        Scalar() = default;
 
-        Scalar(arrow::Result<std::shared_ptr<arrow::Scalar>> const& sc):scalar(nullptr)
+        Scalar(arrow::Result<std::shared_ptr<arrow::Scalar>> const& sc)
+            : scalar(nullptr)
         {
-            if(sc.ok())
+            if (sc.ok())
             {
                 scalar = sc.ValueUnsafe();
             }
@@ -27,25 +41,49 @@ namespace pd{
             }
         }
 
-        Scalar(std::shared_ptr<arrow::Scalar> const& sc):scalar(sc)
-        {}
+        inline bool operator == (Scalar const &s) const
+        {
+            return ReturnOrThrowOnFailure(arrow::compute::CallFunction(
+                                              "equal",
+                                              { this->scalar, s.scalar }))
+                .scalar_as<arrow::BooleanScalar>()
+                .value;
+        }
 
-        Scalar(std::shared_ptr<arrow::Scalar> && value);
+        template<typename T> requires std::is_scalar_v<T>
+        inline bool operator == (T const &s) const {
+            return *this == Scalar(s);
+        }
+        template<typename T> requires std::is_scalar_v<T>
+        friend bool operator == (T const &s, Scalar const &rhs) {
+            return Scalar(s) == rhs;
+        }
+
+        Scalar(std::shared_ptr<arrow::Scalar> const& sc) : scalar(sc)
+        {
+        }
+
+        Scalar(std::shared_ptr<arrow::Scalar>&& value);
 
         Scalar(pd::Scalar const& sc) = default;
 
-        Scalar(const char* x):scalar(arrow::MakeScalar(x)) {}
+        Scalar(const char* x) : scalar(arrow::MakeScalar(x))
+        {
+        }
 
-        template<typename T> requires (std::is_scalar_v<T> or std::same_as<T, std::string>)
-        Scalar(T const& x):scalar(arrow::MakeScalar(x)) {}
+        template<typename T>
+            requires(std::is_scalar_v<T> or std::same_as<T, std::string>)
+        Scalar(T const& x) : scalar(arrow::MakeScalar(x))
+        {
+        }
 
         /// template function "as()" that allows the user to cast the Scalar object to a specified type.
         template<class T>
         T as()
         {
             using ArrowType = arrow::CTypeTraits<T>::ScalarType;
-            auto res  = std::dynamic_pointer_cast<ArrowType>(scalar);
-            if(res)
+            auto res = std::dynamic_pointer_cast<ArrowType>(scalar);
+            if (res)
             {
                 if constexpr (std::same_as<T, std::string>)
                 {
@@ -56,7 +94,8 @@ namespace pd{
                     return res->value;
                 }
             }
-            else{
+            else
+            {
                 throw std::runtime_error("Invalid Scalar Cast");
             }
         }
@@ -72,35 +111,38 @@ namespace pd{
             return os;
         }
 
-        inline const std::shared_ptr<arrow::Scalar> value() const
+        inline std::shared_ptr<arrow::Scalar> value() const
         {
             return scalar;
         }
 
-        template<typename B> requires std::is_scalar_v<B>
-        bool operator==(B b) const
+        operator bool();
+
+        template<typename T>
+        inline Scalar cast() const
         {
-            if(std::is_floating_point_v<B>)
-            {
-                return scalar->ApproxEquals(*arrow::MakeScalar(b));
-            }
-            return scalar->Equals(arrow::MakeScalar(b));
+            return ReturnOrThrowOnFailure(
+                value()->CastTo(arrow::CTypeTraits<T>::type_singleton()));
         }
 
-        template<typename B> requires std::is_scalar_v<B>
-        friend bool operator==(std::shared_ptr<arrow::Scalar> const& a, B b)
-        {
-            if(std::is_floating_point_v<B>)
-            {
-                return a->ApproxEquals(*arrow::MakeScalar(b));
-            }
-            return a->Equals(arrow::MakeScalar(b));
-        }
-
-        bool operator==(pd::Scalar const& other) const
-        {
-            return scalar->Equals(other.scalar);
-        }
+        BINARY_OPERATOR(/, divide)
+        BINARY_OPERATOR(+, add)
+        BINARY_OPERATOR(-, subtract)
+        BINARY_OPERATOR(*, multiply)
+        BINARY_OPERATOR(|, bit_wise_or)
+        BINARY_OPERATOR(&, bit_wise_and)
+        BINARY_OPERATOR(^, bit_wise_xor)
+        BINARY_OPERATOR(<<, shift_left)
+        BINARY_OPERATOR(>>, shift_right)
+        BINARY_OPERATOR(>, greater)
+        BINARY_OPERATOR(>=, greater_equal)
+        BINARY_OPERATOR(<, less)
+        BINARY_OPERATOR(<=, less_equal)
+//        BINARY_OPERATOR(==, equal)
+        BINARY_OPERATOR(!=, not_equal)
+        BINARY_OPERATOR(&&, and)
+        BINARY_OPERATOR(||, or)
+#undef BINARY_OPERATOR
 
     public:
         std::shared_ptr<arrow::Scalar> scalar{

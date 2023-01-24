@@ -73,7 +73,7 @@ struct RawArrayCastException : std::exception
 
 
 template<class BaseT>
-struct NDArray
+struct NDFrame
 {
 
 public:
@@ -89,27 +89,27 @@ public:
         return m_array;
     }
 
-    NDArray(
+    NDFrame(
         ArrayType const& array,
         std::shared_ptr<arrow::Array> const& _index,
         bool skipIndex = false);
 
-    NDArray(ArrayType const& array, int64_t num_rows)
+    NDFrame(ArrayType const& array, int64_t num_rows)
         : m_array(array), m_index(uint_range(num_rows))
     {
     }
 
-    NDArray(std::shared_ptr<arrow::Array> const& _index=nullptr)
+    NDFrame(std::shared_ptr<arrow::Array> const& _index=nullptr)
         : m_array(nullptr), m_index(_index)
     {
     }
 
-    NDArray(int64_t num_rows)
+    NDFrame(int64_t num_rows)
         : m_array(nullptr), m_index(uint_range(num_rows))
     {
     }
 
-    NDArray(int64_t num_rows, std::shared_ptr<arrow::Array> const& _index);
+    NDFrame(int64_t num_rows, std::shared_ptr<arrow::Array> const& _index);
 
     template<typename T>
     static std::vector<bool> makeValidFlags(std::vector<T> const& arr);
@@ -142,18 +142,10 @@ protected:
 
     void setIndexer();
 
-    static inline void throwOnNotOkStatus(arrow::Status const& status)
-    {
-        if(not status.ok())
-            throw std::runtime_error(status.ToString());
-    }
-
-    template<class T>
-    static T ValidateAndReturn(arrow::Result<T>&& result);
 };
 
 template<class BaseT>
-NDArray<BaseT>::NDArray(
+NDFrame<BaseT>::NDFrame(
     ArrayType const& array,
     std::shared_ptr<arrow::Array> const& _index,
     bool skipIndex)
@@ -178,7 +170,7 @@ NDArray<BaseT>::NDArray(
 }
 
 template<class BaseT>
-NDArray<BaseT>::NDArray(
+NDFrame<BaseT>::NDFrame(
     int64_t num_rows,
     std::shared_ptr<arrow::Array> const& _index)
     : m_array(nullptr)
@@ -194,7 +186,7 @@ NDArray<BaseT>::NDArray(
 }
 
 template<class BaseT>
-std::vector<uint8_t> NDArray<BaseT>::makeValidFlags(
+std::vector<uint8_t> NDFrame<BaseT>::makeValidFlags(
     std::vector<std::string> const& arr)
 {
 
@@ -210,24 +202,18 @@ std::vector<uint8_t> NDArray<BaseT>::makeValidFlags(
 }
 
 template<class BaseT>
-std::shared_ptr<arrow::Array> NDArray<BaseT>::uint_range(int64_t n_rows)
+std::shared_ptr<arrow::Array> NDFrame<BaseT>::uint_range(int64_t n_rows)
 {
     std::vector<uint64_t> index(n_rows);
     std::iota(index.begin(), index.end(), 0);
     arrow::UInt64Builder builder;
 
-    auto status = builder.AppendValues(index);
-    if (status.ok())
-    {
-        return ValidateAndReturn(builder.Finish());
-    }
-
-    throwOnNotOkStatus(status);
-    return {};
+    ThrowOnFailure(builder.AppendValues(index));
+    return ReturnOrThrowOnFailure(builder.Finish());
 }
 
 template<class BaseT>
-void NDArray<BaseT>::setIndexer()
+void NDFrame<BaseT>::setIndexer()
 {
     if(m_array != nullptr)
     {
@@ -241,7 +227,7 @@ void NDArray<BaseT>::setIndexer()
 
 template<class BaseT>
 template<typename T>
- std::vector<bool> NDArray<BaseT>::makeValidFlags(std::vector<T> const& arr)
+ std::vector<bool> NDFrame<BaseT>::makeValidFlags(std::vector<T> const& arr)
 {
 
     std::vector<bool> valid;
@@ -253,29 +239,6 @@ template<typename T>
     }
 
     return valid;
-}
-
-template<class BaseT>
-template<class T>
- T NDArray<BaseT>::ValidateAndReturn(arrow::Result<T>&& result)
-{
-    if (result.ok())
-    {
-        return result.MoveValueUnsafe();
-    }
-
-    throw std::runtime_error(result.status().ToString());
-}
-
-template<class T>
-static T ValidateAndReturn(arrow::Result<T>&& result)
-{
-    if (result.ok())
-    {
-        return result.MoveValueUnsafe();
-    }
-
-    throw std::runtime_error(result.status().ToString());
 }
 
 }

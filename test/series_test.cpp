@@ -11,7 +11,7 @@ bool operator==(std::shared_ptr<arrow::DataType> const& a,
 {
     return a->Equals(b);
 }
-
+using namespace std::string_literals;
 using namespace Catch;
 using namespace pd;
 
@@ -1952,7 +1952,7 @@ TEST_CASE("Test reindex vs reindex_async benchmark small data", "[reindex]")
     REQUIRE(sortedOut.indexArray()->Equals(out.indexArray()));
 }
 
-TEST_CASE("Test reindex vs reindex_async benchamark avg case", "[reindex]")
+TEST_CASE("Test reindex vs reindex_async benchmark avg case", "[reindex]")
 {
     // Create a test input Series
     auto inputData = pd::random::RandomState(100).randn(1e6, 0, 2);
@@ -1962,36 +1962,40 @@ TEST_CASE("Test reindex vs reindex_async benchamark avg case", "[reindex]")
     auto newIndex = pd::date_range(ptime(), 1e6, "30S");
     pd::Series sortedOut{nullptr, nullptr}, out{nullptr, nullptr};
 
-    BENCHMARK("benchmark reindex") {
-        sortedOut = inputSeries.reindex(newIndex);
-        return 1;
-    };
+    auto start = std::chrono::high_resolution_clock::now();
+    sortedOut = inputSeries.reindex(newIndex);
+    auto end = std::chrono::high_resolution_clock::now();
 
-    BENCHMARK("benchmark reindex_async") {
-        out = inputSeries.reindexAsync(newIndex);
-        return 1;
-    };
+    std::cout << std::chrono::duration<double>(end-start).count() << " s.\n";
+
+    start = std::chrono::high_resolution_clock::now();
+    out = inputSeries.reindexAsync(newIndex);
+    end = std::chrono::high_resolution_clock::now();
+
+    std::cout << std::chrono::duration<double>(end-start).count() << " s.\n";
 }
 
 TEST_CASE("Test reindex vs reindex_async benchamark big data", "[reindex]")
 {
     // Create a test input Series
-    auto inputData = pd::random::RandomState(100).randn(1e6, 0, 2);
-    auto inputIndex = pd::date_range(ptime(), 1e6);
+    auto inputData = pd::random::RandomState(100).randn(5e6, 0, 2);
+    auto inputIndex = pd::date_range(ptime(), 5e6);
     pd::Series inputSeries(inputData, "", inputIndex);
 
     auto newIndex = pd::date_range(ptime() + minutes(1), 1e6);
     pd::Series sortedOut{nullptr, nullptr}, out{nullptr, nullptr};
 
-    BENCHMARK("benchmark reindex") {
-        sortedOut = inputSeries.reindex(newIndex);
-        return 1;
-    };
+    auto start = std::chrono::high_resolution_clock::now();
+    sortedOut = inputSeries.reindex(newIndex);
+    auto end = std::chrono::high_resolution_clock::now();
 
-    BENCHMARK("benchmark reindex_async") {
-        out = inputSeries.reindexAsync(newIndex);
-        return 1;
-    };
+    std::cout << std::chrono::duration<double>(end-start).count() << " s.\n";
+
+    start = std::chrono::high_resolution_clock::now();
+    out = inputSeries.reindexAsync(newIndex);
+    end = std::chrono::high_resolution_clock::now();
+
+    std::cout << std::chrono::duration<double>(end-start).count() << " s.\n";
 }
 
 TEST_CASE("Test reindex function", "[reindex]")
@@ -2011,8 +2015,153 @@ TEST_CASE("Test reindex function", "[reindex]")
     REQUIRE(outputSeries.indexArray()->Equals(newIndex));
 
     // Check that the values are correct
-    auto expectedValues = arrow::ArrayT<::int64_t>::Make({1, 2, 4, 5, 0}, {true, 1, 1, 1, 0});
+    auto expectedValues = arrow::ArrayT<::int64_t>::Make({1, 2, 4, 5, 0}, {true, true, 1, 1, 0});
     REQUIRE(outputSeries.array()->Equals(expectedValues));
+}
+
+TEST_CASE("Test resample on series", "[Resample]")
+{
+    auto index = pd::date_range(ptime(date(2000, 1, 1)), 9);
+    auto series = pd::Series(pd::range(0L, 9L), index);
+
+    SECTION("Downsample series into 3 minute bins  and sum")
+    {
+        auto resampler = pd::resample(series, time_duration(0, 3, 0));
+
+        auto group_index = resampler.index();
+        REQUIRE(
+            pd::ReturnOrThrowOnFailure(group_index->GetScalar(0))->ToString() ==
+            "2000-01-01 00:00:00.000000000");
+        REQUIRE(
+            pd::ReturnOrThrowOnFailure(group_index->GetScalar(1))->ToString() ==
+            "2000-01-01 00:03:00.000000000");
+        REQUIRE(
+            pd::ReturnOrThrowOnFailure(group_index->GetScalar(2))->ToString() ==
+            "2000-01-01 00:06:00.000000000");
+
+        auto sum = pd::ReturnOrThrowOnFailure(resampler.sum());
+        REQUIRE(sum.at(0, 0) == 3L);
+        REQUIRE(sum.at(1, 0) == 12L);
+        REQUIRE(sum.at(2, 0) == 21L);
+    }
+
+    SECTION(
+        "Downsample series into 3 minute bins  and sum, "
+        "label with right")
+    {
+        auto resampler =
+            pd::resample(series, time_duration(0, 3, 0), false, true);
+
+        auto group_index = resampler.index();
+        REQUIRE(
+            pd::ReturnOrThrowOnFailure(group_index->GetScalar(0))->ToString() ==
+            "2000-01-01 00:03:00.000000000");
+        REQUIRE(
+            pd::ReturnOrThrowOnFailure(group_index->GetScalar(1))->ToString() ==
+            "2000-01-01 00:06:00.000000000");
+        REQUIRE(
+            pd::ReturnOrThrowOnFailure(group_index->GetScalar(2))->ToString() ==
+            "2000-01-01 00:09:00.000000000");
+
+        auto sum = pd::ReturnOrThrowOnFailure(resampler.sum());
+        REQUIRE(sum.at(0, 0) == 3L);
+        REQUIRE(sum.at(1, 0) == 12L);
+        REQUIRE(sum.at(2, 0) == 21L);
+    }
+
+    SECTION(
+        "Downsample series into 3 minute bins  and sum, "
+        "label and close right")
+    {
+        auto resampler =
+            pd::resample(series, time_duration(0, 3, 0), true, true);
+
+        auto group_index = resampler.index();
+
+        REQUIRE(group_index->length() == 4);
+
+        REQUIRE(
+            pd::ReturnOrThrowOnFailure(group_index->GetScalar(0))->ToString() ==
+            "2000-01-01 00:00:00.000000000");
+        REQUIRE(
+            pd::ReturnOrThrowOnFailure(group_index->GetScalar(1))->ToString() ==
+            "2000-01-01 00:03:00.000000000");
+        REQUIRE(
+            pd::ReturnOrThrowOnFailure(group_index->GetScalar(2))->ToString() ==
+            "2000-01-01 00:06:00.000000000");
+        REQUIRE(
+            pd::ReturnOrThrowOnFailure(group_index->GetScalar(3))->ToString() ==
+            "2000-01-01 00:09:00.000000000");
+
+        auto sum = pd::ReturnOrThrowOnFailure(resampler.sum());
+        REQUIRE(sum.at(0, 0) == 0L);
+        REQUIRE(sum.at(1, 0) == 6L);
+        REQUIRE(sum.at(2, 0) == 15L);
+        REQUIRE(sum.at(3, 0) == 15L);
+    }
+}
+
+
+TEST_CASE("Test resample on series with custom function", "[Resample]")
+{
+    auto index = pd::date_range(ptime(date(2000, 1, 1)), 9);
+    auto series = pd::Series(pd::range(0L, 9L), index);
+
+    auto custom_resampler = [](DataFrame const& df)
+    { return (df.sum() + 5).scalar; };
+
+    ASSIGN_OR_ABORT(Series result,
+                    series.resample("3T").apply(custom_resampler));
+
+    REQUIRE(result.size() == 3);
+    REQUIRE(result[0] == 8L);
+    REQUIRE(result[1] == 17L);
+    REQUIRE(result[2] == 26L);
+}
+
+TEST_CASE("Upsample the series into 30 second bins.")
+{
+    auto index = pd::date_range(ptime(date(2000, 1, 1)), 9);
+    auto series = pd::Series(pd::range(0L, 9L), index);
+
+    auto resampler = pd::resample(series, time_duration(0, 0, 30));
+
+    auto group_index = resampler.index();
+
+    REQUIRE(group_index->length() == 17);
+
+    REQUIRE(
+        pd::ReturnOrThrowOnFailure(group_index->GetScalar(0))->ToString() ==
+        "2000-01-01 00:00:00.000000000");
+    REQUIRE(
+        pd::ReturnOrThrowOnFailure(group_index->GetScalar(1))->ToString() ==
+        "2000-01-01 00:00:30.000000000");
+    REQUIRE(
+        pd::ReturnOrThrowOnFailure(group_index->GetScalar(2))->ToString() ==
+        "2000-01-01 00:01:00.000000000");
+    REQUIRE(
+        pd::ReturnOrThrowOnFailure(group_index->GetScalar(3))->ToString() ==
+        "2000-01-01 00:01:30.000000000");
+    REQUIRE(
+        pd::ReturnOrThrowOnFailure(group_index->GetScalar(4))->ToString() ==
+        "2000-01-01 00:02:00.000000000");
+
+    auto df = resampler.data();
+    REQUIRE(df.num_rows() == 17);
+
+    REQUIRE(df.at(0, 0) == 0L);
+    REQUIRE_FALSE(df.at(1, 0).isValid());
+    REQUIRE(df.at(2, 0) == 1l);
+    REQUIRE_FALSE(df.at(3, 0).isValid());
+    REQUIRE(df.at(4, 0) == 2l);
+
+    df = df.ffill();
+    INFO(df);
+    REQUIRE(df.at(0, 0) == 0L);
+    REQUIRE(df.at(1, 0) == 0L);
+    REQUIRE(df.at(2, 0) == 1l);
+    REQUIRE(df.at(3, 0) == 1l);
+    REQUIRE(df.at(4, 0) == 2l);
 }
 
 using int64 = int64_t;
@@ -2111,6 +2260,29 @@ TEST_CASE("Test DateTimeLike", "[core]")
 //    REQUIRE(year_month_day_result.at(0, 0) == 2022);
 //    REQUIRE(year_month_day_result.at(0, 1) == 1);
 //    REQUIRE(year_month_day_result.at(0, 2) == 1);
+}
+
+TEST_CASE("Test toFrame", "[to_frame]")
+{
+    auto series =
+        pd::Series{ std::vector<std::string>{ "a", "b", "c" }, "vals" };
+
+    auto df = series.toFrame();
+
+    auto expected =
+        pd::DataFrame{ pd::ArrayPtr{ nullptr },
+                       std::pair{ "vals"s, std::vector{ "a"s, "b"s, "c"s } } };
+
+    REQUIRE(df.equals_(expected));
+
+    df = series.toFrame("val");
+
+    expected =
+        pd::DataFrame{ pd::ArrayPtr{ nullptr },
+                       std::pair{ "val"s, std::vector{ "a"s, "b"s, "c"s } } };
+
+    REQUIRE(df.equals_(expected));
+
 }
 
 //TEST_CASE("Test DateTimeLike between functions", "[datetime]")

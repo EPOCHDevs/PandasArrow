@@ -20,11 +20,25 @@ using namespace boost::gregorian;
 
 namespace pd {
 
+const auto NULL_INDEX = std::shared_ptr<arrow::Array>{nullptr};
 using ScalarPtr = std::shared_ptr<arrow::Scalar>;
 using ArrayPtr = std::shared_ptr<arrow::Array>;
 
+template<class T>
+using TableWithType = std::map<std::string, std::vector<T>>;
+
+using ArrayTable = std::map<std::string, ArrayPtr>;
+using TablePtr = std::shared_ptr<arrow::Table>;
+
 typedef boost::date_time::subsecond_duration<time_duration,1000000000> nanosec;
 typedef boost::date_time::subsecond_duration<time_duration,1000000000> nanoseconds;
+
+enum class FillMethod
+{
+    BFill,
+    FFill,
+    Nearest
+};
 
 enum class CorrelationType
 {
@@ -45,6 +59,15 @@ enum class JoinType
 {
     Inner,
     Outer
+};
+
+enum class TimeGrouperOrigin
+{
+    Epoch, // origin is 1970-01-01
+    Start, // origin is the first value of the timeseries
+    StartDay, // origin is the first day at midnight of the timeseries
+    End, // origin is the last value of the timeseries
+    EndDay, // origin is the ceiling midnight of the last day
 };
 
 enum class AxisType
@@ -88,10 +111,23 @@ struct StringSlice
     std::optional<std::string> end = {};
 };
 
-class Series ValidateHelper(auto&& result);
+template<class T>
+__always_inline T ReturnOrThrowOnFailure(arrow::Result<T>&& result)
+{
+    if (result.ok()) return result.MoveValueUnsafe();
+    throw std::runtime_error(result.status().ToString());
+}
+
+__always_inline void ThrowOnFailure(arrow::Status&& status)
+{
+    if (status.ok()) return;
+    throw std::runtime_error(status.ToString());
+}
+
+class Series ReturnSeriesOrThrowOnError(arrow::Result<arrow::Datum>&& result);
 
 template<class RetT>
-inline auto ValidateHelperScalar(auto&& result)
+inline auto ReturnScalarOrThrowOnError(auto&& result)
 {
     if (result.ok())
     {
@@ -150,7 +186,7 @@ static inline auto toDate(int64_t timeStampNanoSec)
 inline int64_t toTimestampNS(const std::string& date_string)
 {
     boost::posix_time::ptime date_time =
-        boost::posix_time::from_iso_string(date_string);
+        boost::posix_time::from_iso_extended_string(date_string);
     boost::posix_time::ptime epoch(boost::gregorian::date(1970, 1, 1));
     boost::posix_time::time_duration duration = date_time - epoch;
     return duration.total_nanoseconds();
@@ -254,6 +290,7 @@ std::shared_ptr<arrow::TimestampArray> date_range(
     std::string const& tz = "");
 
 std::shared_ptr<arrow::Int64Array> range(int64_t start, int64_t end);
+std::shared_ptr<arrow::UInt64Array> range(::uint64_t start, uint64_t end);
 
 inline std::shared_ptr<arrow::TimestampScalar> fromDateTime(date const& dt)
 {
@@ -269,38 +306,8 @@ inline std::shared_ptr<arrow::TimestampScalar> fromDateTime(ptime const& dt)
         arrow::TimeUnit::NANO);
 }
 
-class DataFrame concat(
-    std::vector<pd::DataFrame> const& objs,
-    AxisType axis,
-    JoinType join,
-    bool ignore_index,
-    bool sort);
-
-pd::DataFrame concatRows(
-    std::vector<pd::DataFrame> const& objs,
-    JoinType join = pd::JoinType::Outer,
-    bool ignore_index = false,
-    bool sort = false);
-
-pd::DataFrame concatColumns(
-    std::vector<pd::DataFrame> const& objs,
-    JoinType join = pd::JoinType::Outer,
-    bool ignore_index = false,
-    bool sort = false);
-
-pd::DataFrame concatColumnsUnsafe(std::vector<pd::DataFrame> const& objs);
-
-std::vector<std::shared_ptr<arrow::Field>> mergeColumns(
-    std::vector<pd::DataFrame> const& objs,
-    JoinType join);
-
-std::shared_ptr<arrow::Array> mergeRows(
-    std::vector<pd::DataFrame> const& objs,
-    JoinType join);
-
-std::shared_ptr<arrow::Array> combineIndexes(
-    std::vector<std::shared_ptr<arrow::Array>> const& indexes,
-    bool ignore_index);
+std::shared_ptr<arrow::DataType> promoteTypes(
+    std::vector<std::shared_ptr<arrow::DataType>> const& types);
 
 const std::shared_ptr<arrow::DataType> TimestampTypePtr =
     std::make_shared<arrow::TimestampType>(arrow::TimeUnit::NANO, "");
@@ -424,7 +431,6 @@ struct DateTimeArray : ArrayT<ptime>
 template<class T>
 std::shared_ptr<arrow::Array> ArrayFromJSON(std::string_view json)
 {
-
         rapidjson::Document doc;
         doc.Parse(json.data());
         if (!doc.IsArray())
@@ -438,32 +444,68 @@ std::shared_ptr<arrow::Array> ArrayFromJSON(std::string_view json)
         {
             if (val.IsNull())
             {
-                builder.AppendNull();
+            pd::ThrowOnFailure(builder.AppendNull());
             }
             else if (val.IsInt())
             {
-                builder.Append(val.GetInt());
+            if constexpr (std::is_integral_v<T>)
+                pd::ThrowOnFailure(builder.Append(val.GetInt()));
+            else
+                throw std::runtime_error("Unsupported data type");
+            }
+            else if (val.IsBool())
+            {
+                pd::ThrowOnFailure(builder.Append(val.GetBool()));
             }
             else if (val.IsInt64())
             {
-                builder.Append(val.GetInt64());
+            if constexpr (std::is_integral_v<T>)
+                pd::ThrowOnFailure(builder.Append(val.GetInt64()));
+            else
+                throw std::runtime_error("Unsupported data type");
+            }
+            else if (val.IsUint64())
+            {
+            if constexpr (std::is_integral_v<T>)
+                pd::ThrowOnFailure(builder.Append(val.GetUint64()));
+            else
+                throw std::runtime_error("Unsupported data type");
+            }
+            else if (val.IsUint())
+            {
+            if constexpr (std::is_integral_v<T>)
+                pd::ThrowOnFailure(builder.Append(val.GetUint()));
+            else
+                throw std::runtime_error("Unsupported data type");
+            }
+            else if (val.IsFloat())
+            {
+            if constexpr (std::is_floating_point_v<T>)
+                pd::ThrowOnFailure(builder.Append(val.GetFloat()));
+            else
+                throw std::runtime_error("Unsupported data type");
             }
             else if (val.IsDouble())
             {
-                builder.Append(val.GetDouble());
+            if constexpr (std::is_floating_point_v<T>)
+                pd::ThrowOnFailure(builder.Append(val.GetDouble()));
+            else
+                throw std::runtime_error("Unsupported data type");
             }
-            //        else if (val.IsString())
-            //        {
-            //            builder.Append(val.GetString());
-            //        }
+            else if (val.IsString())
+            {
+            if constexpr (std::is_same<T, std::string>::value)
+                pd::ThrowOnFailure(builder.Append(val.GetString()));
+            else
+                throw std::runtime_error("Unsupported data type");
+            }
             else
             {
-                throw std::runtime_error("Unsupported data type in JSON array");
+            throw std::runtime_error("Unsupported data type in JSON array");
             }
         }
-        std::shared_ptr<arrow::Array> array;
-        builder.Finish(&array);
-        return array;
+
+        return pd::ReturnOrThrowOnFailure(builder.Finish());
 }
 
 }

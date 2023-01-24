@@ -60,3 +60,54 @@ TEST_CASE("Scalar MinMax struct") {
     REQUIRE(minMax.min.as<int>() == 5);
     REQUIRE(minMax.max.as<int>() == 10);
 }
+
+TEST_CASE("Scalar arithmetic operator overloads", "[scalar]") {
+
+    using namespace pd;
+    Scalar a(2);
+    Scalar b(3);
+    Scalar c(4.5);
+    Scalar d(1.5);
+
+    SECTION("Addition") {
+        REQUIRE(a + b == Scalar(5));
+        REQUIRE(a + 3 == Scalar(5));
+        REQUIRE(2 + b == Scalar(5));
+        REQUIRE(c + d == Scalar(6.0));
+    }
+
+    SECTION("Subtraction") {
+        REQUIRE(a - b == Scalar(-1));
+        REQUIRE(b - a == Scalar(1));
+        REQUIRE(c - d == Scalar(3.0));
+        REQUIRE(d - c == Scalar(-3.0));
+    }
+
+    SECTION("Multiplication") {
+        REQUIRE(a * b == Scalar(6));
+        REQUIRE(b * 3 == Scalar(9));
+        REQUIRE(2 * b == Scalar(6));
+        REQUIRE(c * d == Scalar(6.75));
+    }
+
+    SECTION("Division") {
+        REQUIRE( (b / a.cast<double>()) == Scalar(1.5) );
+        REQUIRE(b / a == Scalar(1));
+        REQUIRE(c / d == Scalar(3.0));
+        REQUIRE(d / c == Scalar(1 / 3.0));
+    }
+
+    SECTION("Comparison") {
+        REQUIRE(a < b);
+        REQUIRE(a <= b);
+        REQUIRE(b > a);
+        REQUIRE(b >= a);
+        REQUIRE(c == Scalar(4.5));
+        REQUIRE(d != Scalar(4.5));
+    }
+
+    SECTION("Logical") {
+        REQUIRE( (a.cast<bool>() && b.cast<bool>()).as<bool>() == true);
+        REQUIRE( (!a.cast<bool>() || b.cast<bool>()).as<bool>() == true);
+    }
+}

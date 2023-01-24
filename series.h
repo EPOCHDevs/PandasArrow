@@ -3,20 +3,20 @@
 //
 #pragma once
 
-#include <iostream>
-#include <vector>
-#include <cmath>
 #include <algorithm>
 #include <arrow/util/checked_cast.h>
+#include <cmath>
+#include <iostream>
 #include <span>
-#include "ndarray.h"
+#include <vector>
+#include "ndframe.h"
 
 
 namespace pd {
 
 using namespace std;
 
-class Series : public NDArray<Series>
+class Series : public NDFrame<Series>
 {
 
 public:
@@ -49,28 +49,28 @@ public:
         arrow::ScalarVector const& arr,
         std::shared_ptr<arrow::DataType> const& dataType,
         std::string const& name = "",
-        std::shared_ptr<arrow::Array> const& index = nullptr):
-          NDArray<Series>(index),
+        std::shared_ptr<arrow::Array> const& index = nullptr): NDFrame<Series>(index),
               m_name(name)
     {
-        auto builder = pd::ValidateAndReturn(arrow::MakeBuilder(dataType));
-        throwOnNotOkStatus(builder->AppendScalars(arr));
-        m_array = pd::ValidateAndReturn(builder->Finish());
+        auto builder = pd::ReturnOrThrowOnFailure(arrow::MakeBuilder(dataType));
+        ThrowOnFailure(builder->AppendScalars(arr));
+        m_array = pd::ReturnOrThrowOnFailure(builder->Finish());
 
     }
 
+    // Check if the Series object is an index array.
     inline bool IsIndexArray() const noexcept
     {
         return isIndex;
     }
 
+    // Get the indexer for the Series object.
     inline auto getIndexer() const noexcept
     {
         return indexer;
     }
 
-    template<typename T>
-        requires std::is_scalar_v<T>
+    template<typename T> requires std::is_scalar_v<T>
     static Series MakeScalar(
         T const& v,
         std::string const& name = "",
@@ -79,9 +79,7 @@ public:
         return { std::vector<T>{ v }, name, index };
     }
 
-    template<
-        typename T,
-        typename BuilderT = typename arrow::CTypeTraits<T>::BuilderType>
+    template<typename T, typename BuilderT = typename arrow::CTypeTraits<T>::BuilderType>
     [[nodiscard]] static Series Make(
         std::vector<T> const& arr,
         std::string _name = "series",
@@ -286,8 +284,20 @@ public:
     [[nodiscard]] std::shared_ptr<arrow::DictionaryArray> dictionary_encode()
         const;
 
-    pd::Series reindex(std::shared_ptr<arrow::Array> const&newIndex) const noexcept;
-    pd::Series reindexAsync(std::shared_ptr<arrow::Array> const&newIndex) const noexcept;
+    pd::Series reindex(std::shared_ptr<arrow::Array> const&newIndex,
+                       std::optional< std::unordered_map<int64_t, int64_t>>  indexer=std::nullopt) const noexcept;
+    pd::Series reindexAsync(std::shared_ptr<arrow::Array> const &newIndex,
+                            std::optional< std::unordered_map<int64_t, int64_t>>  indexer=std::nullopt) const noexcept;
+
+    class Resampler resample(std::string const& rule,
+                             bool closed_right = false,
+                             bool label_right = false,
+                             std::variant<ptime, TimeGrouperOrigin> const& origin =
+                                 TimeGrouperOrigin::StartDay,
+                             time_duration const& offset = time_duration(),
+                             std::string const& tz = "") const;
+
+    DataFrame toFrame(std::optional<std::string> const& name={}) const;
 
     [[nodiscard]] Series unique() const;
     [[nodiscard]] Series drop_na() const;
@@ -407,14 +417,14 @@ template<typename T>
     requires(not std::same_as<Series, T>)
 inline bool Series::equals(std::vector<T> const& a) const
 {
-    return NDArray<Series>::equals_(Series(a));
+    return NDFrame<Series>::equals_(Series(a));
 }
 
 template<typename T>
     requires(not std::same_as<Series, T>)
 bool Series::approx_equals(std::vector<T> const& a) const
 {
-    return NDArray<Series>::approx_equals_(Series(a));
+    return NDFrame<Series>::approx_equals_(Series(a));
 }
 
 template<typename T, typename BuilderT>

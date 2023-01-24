@@ -619,7 +619,7 @@ TEST_CASE("Test DataFrame coalesce", "[DataFrame]")
 TEST_CASE("makeGroups() works with a single column key", "[makeGroups]") {
     // Create a DataFrame with a single column key
     auto df = pd::DataFrame{
-        pd::range(0, 10),
+        pd::range(0L, 10L),
         std::pair{"id"s, std::vector{"allen"s, "victor"s, "hannah"s, "allen"s,
                                        "victor"s, "hannah"s, "allen"s,
                                        "victor"s, "hannah"s, "allen"s}},
@@ -679,7 +679,7 @@ TEST_CASE("makeGroups() works on dataframe with more than two column keys", "[ma
 {
     // Create a DataFrame with multiple column keys
     auto df = pd::DataFrame{
-        pd::range(0, 10),
+        pd::range(0L, 10L),
         std::pair{ "id"s,
                    std::vector{ "allen"s,
                                 "victor"s,
@@ -803,14 +803,14 @@ TEST_CASE("makeGroups() works on dataframe with more than two column keys", "[ma
 
     SECTION("grouper computes mean of each groups and merge")
     {
-        auto age_mean = pd::ValidateAndReturn(groupby.mean("age"));
+        auto age_mean = pd::ReturnOrThrowOnFailure(groupby.mean("age"));
         REQUIRE(
             age_mean[0].as<double>() == Catch::Approx(25.857).epsilon(1e-3));
         REQUIRE(
             age_mean[1].as<double>() == Catch::Approx(21.667).epsilon(1e-3));
 
         auto age_height_mean =
-            pd::ValidateAndReturn(groupby.mean({ "age"s, "height"s }));
+            pd::ReturnOrThrowOnFailure(groupby.mean({ "age"s, "height"s }));
         INFO(age_height_mean);
         REQUIRE(age_height_mean["age"][0].as<double>() == 25.857142857142858);
         REQUIRE(age_height_mean["age"][1].as<double>() == 21.666666666666668);
@@ -822,7 +822,7 @@ TEST_CASE("makeGroups() works on dataframe with more than two column keys", "[ma
     SECTION("grouper computes min_max of each groups and merge")
     {
         pd::GroupBy groupby1("gender", df);
-        auto age_max = pd::ValidateAndReturn(groupby1.min_max("age"));
+        auto age_max = pd::ReturnOrThrowOnFailure(groupby1.min_max("age"));
 
         INFO(age_max);
         REQUIRE(age_max["min"][MALE].as<int32_t>() == 10);
@@ -832,7 +832,7 @@ TEST_CASE("makeGroups() works on dataframe with more than two column keys", "[ma
         REQUIRE(age_max["max"][FEMALE].as<int32_t>() == 30);
 
         auto age_height_max =
-            pd::ValidateAndReturn(groupby.min_max({ "age"s, "height"s }));
+            pd::ReturnOrThrowOnFailure(groupby.min_max({ "age"s, "height"s }));
         INFO(age_height_max);
         REQUIRE(age_height_max["age_min"][MALE].as<int32_t>() == 10);
         REQUIRE(age_height_max["age_min"][FEMALE].as<int32_t>() == 10);
@@ -849,12 +849,12 @@ TEST_CASE("makeGroups() works on dataframe with more than two column keys", "[ma
 
     SECTION("grouper computes max of each groups and merge")
     {
-        auto age_max = pd::ValidateAndReturn(groupby.max("age"));
+        auto age_max = pd::ReturnOrThrowOnFailure(groupby.max("age"));
         REQUIRE(age_max[0].as<int32_t>() == 45);
         REQUIRE(age_max[1].as<int32_t>() == 30);
 
         auto age_height_max =
-            pd::ValidateAndReturn(groupby.max({ "age"s, "height"s }));
+            pd::ReturnOrThrowOnFailure(groupby.max({ "age"s, "height"s }));
 
         REQUIRE(age_height_max["age"][0].as<int32_t>() == 45);
         REQUIRE(age_height_max["age"][1].as<int32_t>() == 30);
@@ -865,19 +865,19 @@ TEST_CASE("makeGroups() works on dataframe with more than two column keys", "[ma
 
     SECTION("grouper computes min of each groups and merge")
     {
-        auto age_min = pd::ValidateAndReturn(groupby.min("age"));
+        auto age_min = pd::ReturnOrThrowOnFailure(groupby.min("age"));
         REQUIRE(age_min[0].as<int32_t>() == 10);
         REQUIRE(age_min[1].as<int32_t>() == 10);
     }
 
     SECTION("grouper computes sum of each groups and merge")
     {
-        auto age_sum = pd::ValidateAndReturn(groupby.sum("age"));
+        auto age_sum = pd::ReturnOrThrowOnFailure(groupby.sum("age"));
         REQUIRE(age_sum[0].as<int64_t>() == 181);
         REQUIRE(age_sum[1].as<int64_t>() == 65);
 
         auto age_height_sum =
-            pd::ValidateAndReturn(groupby.sum({ "age"s, "height"s }));
+            pd::ReturnOrThrowOnFailure(groupby.sum({ "age"s, "height"s }));
 
         REQUIRE(age_height_sum["age"][0].as<int64_t>() == 181);
         REQUIRE(age_height_sum["age"][1].as<int64_t>() == 65);
@@ -888,7 +888,7 @@ TEST_CASE("makeGroups() works on dataframe with more than two column keys", "[ma
 
     SECTION("grouper computes count of each groups and merge")
     {
-        auto age_count = pd::ValidateAndReturn(groupby.count("age"));
+        auto age_count = pd::ReturnOrThrowOnFailure(groupby.count("age"));
         REQUIRE(age_count[0].as<::int64_t>() == 7);
         REQUIRE(age_count[1].as<::int64_t>() == 3);
     }
@@ -910,7 +910,7 @@ TEST_CASE("makeGroups() works on dataframe with more than two column keys", "[ma
         };
 
         auto day_info = bardata.index().dt().day();
-        pd::DataFrame new_df = pd::ValidateAndReturn(
+        pd::DataFrame new_df = pd::ReturnOrThrowOnFailure(
             bardata.array()->AddColumn(5, "day", day_info.array()));
 
         auto grouper = new_df.group_by("day");
@@ -1031,7 +1031,7 @@ TEST_CASE("Test apply method with DataFrame input", "[GroupBy]")
 
 TEST_CASE("generate_bins", "[Core]")
 {
-    auto value = pd::range(1, 7);
+    auto value = pd::range(1L, 7L);
     std::vector<
         std::tuple<std::vector<::int64_t>, bool, std::vector<::int64_t>>>
         params{ { { 0, 3, 6, 9 }, false, { 2, 5, 6 } },
@@ -1105,90 +1105,169 @@ TEST_CASE("Test groupinfo upsampling", "[Resample]")
     REQUIRE(info.upsampling());
 }
 
-TEST_CASE("Test resample on series", "[Resample]")
+TEST_CASE("Test reindex vs reindex_async benchmark", "[reindex]")
 {
-    auto index = pd::date_range(ptime(date(2000, 1, 1)), 9);
-    auto series = pd::Series(pd::range(0, 9), index);
+    // Create a test input Series
+    auto rand = pd::random::RandomState(100);
 
-    SECTION("Downsample series into 3 minute bins  and sum")
+    for (auto [length, message] :
+         std::vector{ std::pair{ 1e4, "Small Data" }, { 5e6, "Big Data" } })
     {
-        auto resampler = pd::resample(series,
-                                      time_duration(0, 3, 0));
+        std::cout << message << "\n";
+        DYNAMIC_SECTION(message)
+        {
+            auto inputIndex = pd::date_range(ptime(), length);
+            pd::DataFrame inputDataFrame(
+                std::map<std::string, std::vector<int64_t>>{
+                    { "col1", rand.randint(length, 0, 100) },
+                    { "col2", rand.randint(length, 0, 100) },
+                    { "col3", rand.randint(length, 0, 100) } ,
+                    { "col4", rand.randint(length, 0, 100) } ,
+                    { "col5", rand.randint(length, 0, 100) } ,
+                    { "col6", rand.randint(length, 0, 100) } ,
+                    { "col7", rand.randint(length, 0, 100) } ,
+                    { "col8", rand.randint(length, 0, 100) } ,
+                    { "col9", rand.randint(length, 0, 100) } ,
+                    { "col10", rand.randint(length, 0, 100) } ,
+                    { "col11", rand.randint(length, 0, 100) } ,
+                    { "col12", rand.randint(length, 0, 100) } ,
+                    { "col13", rand.randint(length, 0, 100) } ,
+                },
+                inputIndex);
 
-        auto group_index = resampler.index();
-        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(0))->ToString() == "2000-01-01 00:00:00.000000000");
-        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(1))->ToString() == "2000-01-01 00:03:00.000000000");
-        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(2))->ToString() == "2000-01-01 00:06:00.000000000");
+            auto newIndex =
+                pd::date_range(ptime() + minutes(1), int(length / 5));
+            pd::DataFrame sortedOut{ nullptr, nullptr },
+                out{ nullptr, nullptr };
 
-        auto sum = pd::ValidateAndReturn(resampler.sum());
-        REQUIRE(sum.at(0, 0) == 3L);
-        REQUIRE(sum.at(1, 0) == 12L);
-        REQUIRE(sum.at(2, 0) == 21L);
+            auto start = std::chrono::high_resolution_clock::now();
+            sortedOut = inputDataFrame.reindex(newIndex);
+            auto end = std::chrono::high_resolution_clock::now();
+
+            std::cout << "SINGLE THREAD: "
+                      << std::chrono::duration<double>(end - start).count()
+                      << " s.\n";
+
+            start = std::chrono::high_resolution_clock::now();
+            out = inputDataFrame.reindexAsync(newIndex);
+            end = std::chrono::high_resolution_clock::now();
+
+            std::cout << "MULTI THREAD: "
+                      << std::chrono::duration<double>(end - start).count()
+                      << " s.\n";
+        }
     }
-
-//    SECTION("Downsample series into 3 minute bins  and sum, "
-//        "label with right")
-//    {
-//        auto resampler = pd::resample(series,
-//                                      time_duration(0, 3, 0), false, true);
-//
-//        auto group_index = resampler.index();
-//        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(0))->ToString() == "2000-01-01 00:03:00.000000000");
-//        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(1))->ToString() == "2000-01-01 00:06:00.000000000");
-//        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(2))->ToString() == "2000-01-01 00:09:00.000000000");
-//
-//        auto sum = pd::ValidateAndReturn(resampler.sum());
-//        REQUIRE(sum.at(0, 0) == 3L);
-//        REQUIRE(sum.at(1, 0) == 12L);
-//        REQUIRE(sum.at(2, 0) == 21L);
-//    }
-//
-//    SECTION("Downsample series into 3 minute bins  and sum, "
-//        "label and close right")
-//    {
-//        auto resampler = pd::resample(series,
-//                                      time_duration(0, 3, 0), true, true);
-//
-//        auto group_index = resampler.index();
-//
-//        REQUIRE(group_index->length() == 4);
-//
-//        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(0))->ToString() == "2000-01-01 00:00:00.000000000");
-//        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(1))->ToString() == "2000-01-01 00:03:00.000000000");
-//        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(2))->ToString() == "2000-01-01 00:06:00.000000000");
-//        REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(3))->ToString() == "2000-01-01 00:09:00.000000000");
-//
-//        auto sum = pd::ValidateAndReturn(resampler.sum());
-//        REQUIRE(sum.at(0, 0) == 0L);
-//        REQUIRE(sum.at(1, 0) == 6L);
-//        REQUIRE(sum.at(2, 0) == 15L);
-//        REQUIRE(sum.at(3, 0) == 15L);
-//    }
 }
 
-TEST_CASE("Upsample the series into 30 second bins.")
+TEST_CASE("Test reindex function for DataFrame", "[reindex]")
 {
-    auto index = pd::date_range(ptime(date(2000, 1, 1)), 9);
-    auto series = pd::Series(pd::range(0, 9), index);
+    // Create a test input DataFrame
+    auto inputIndex = arrow::ArrayT<::int64_t>::Make({ 1, 2, 3, 4, 5 });
+    pd::DataFrame inputDataFrame(std::map<std::string, std::vector<int64_t>>{
+                                     {"col1", { 1, 2, 3, 4, 5 }},
+                                     {"col2", { 5, 4, 3, 2, 1 }}
+                                 }, inputIndex);
 
-    auto resampler = pd::resample(series, time_duration(0, 0, 30));
+    // Create a new index array
+    auto newIndex = arrow::ArrayT<::int64_t>::Make({ 1, 2, 4, 5, 6 });
 
-    auto group_index = resampler.index();
+    // Reindex the input DataFrame
+    pd::DataFrame outputDataFrame = inputDataFrame.reindex(newIndex);
 
-    REQUIRE(group_index->length() == 17);
+    // Check that the new index is correct
+    INFO(outputDataFrame);
+    INFO(newIndex->ToString());
+    REQUIRE(outputDataFrame.indexArray()->Equals(newIndex));
 
-//    REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(0))->ToString() == "2000-01-01 00:00:00.000000000");
-//    REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(1))->ToString() == "2000-01-01 00:00:30.000000000");
-//    REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(2))->ToString() == "2000-01-01 00:01:00.000000000");
-//    REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(3))->ToString() == "2000-01-01 00:01:30.000000000");
-//    REQUIRE(pd::ValidateAndReturn(group_index->GetScalar(4))->ToString() == "2000-01-01 00:02:00.000000000");
-//
-//    auto df = resampler.data();
-//    REQUIRE(df.num_rows() == 17);
-//    INFO(df);
-//    REQUIRE(df.at(0, 0) == 0L);
-//    REQUIRE_FALSE(df.at(1, 0).isValid());
-//    REQUIRE(df.at(2, 0) == 15L);
-//    REQUIRE_FALSE(df.at(3, 0).isValid());
-//    REQUIRE(df.at(4, 0) == 15L);
+    // Check that the values of the first column are correct
+    auto expectedValues1 =
+        arrow::ArrayT<::int64_t>::Make({ 1, 2, 4, 5, 0 }, { true, 1, 1, 1, 0 });
+    REQUIRE(outputDataFrame["col1"].array()->Equals(expectedValues1));
+
+    // Check that the values of the second column are correct
+    auto expectedValues2 =
+        arrow::ArrayT<::int64_t>::Make({ 5, 4, 2, 1, 0 }, { true, 1, 1, 1, 0 });
+    REQUIRE(outputDataFrame["col2"].array()->Equals(expectedValues2));
+}
+
+TEST_CASE("Test reindex on datetime index", "[reindex]")
+{
+    // Create a test input Series
+    pd::DataFrame df2(
+        pd::date_range(date(2010, 1, 1), 6),
+        std::pair{ "prices"s,
+                   std::vector<double>{ 100, 101, NAN, 100, 89, 88 } });
+
+    pd::DataFrame expected{
+        pd::date_range(date(2009, 12, 29), 10),
+        std::pair{
+            "prices"s,
+            std::vector<
+                double>{ NAN, NAN, NAN, 100, 101, NAN, 100, 89, 88, NAN } }
+    };
+
+    auto output = df2.reindex(pd::date_range(date(2009, 12, 29), 10));
+
+    INFO(output << " != " << expected);
+    REQUIRE(output.equals_(expected));
+}
+
+TEST_CASE("Test drop_na function for DataFrame", "[drop_na]")
+{
+    using namespace std::string_literals;
+    auto df = pd::DataFrame{
+        arrow::ArrayT<::int64_t>::Make({1, 4, 5}),
+            std::pair{"name"s, std::vector{"Alfred"s, "Batman"s, "Catwoman"s}},
+            std::pair{"toy"s, std::vector{""s, "Batman"s, "Bullwhip"s}},
+            std::pair{"born"s, std::vector{""s, "1940-04-25"s, ""s}},
+    };
+
+    df["born"] = df["born"].to_datetime();
+
+    df = df.drop_na();
+
+    INFO(df);
+
+    REQUIRE(df.shape() == pd::DataFrame::Shape {1, 3});
+
+    REQUIRE(df.at(0, 0).scalar->ToString() == "Batman");
+    REQUIRE(df.at(0, 1).scalar->ToString() == "Batman");
+    REQUIRE(df.at(0, 2).scalar->ToString() == "1940-04-25");
+    REQUIRE(df.index()[0] == 4L);
+
+}
+
+TEST_CASE("Test Transpose function", "[transpose]")
+{
+    using namespace pd;
+    using std::pair;
+
+    SECTION("Square DataFrame with homogeneous dtype", "[transpose]")
+    {
+        DataFrame df1(
+            std::map<std::string, std::vector<int>>{ { "col1", { 1, 2 } },
+                                                     { "col2", { 3, 4 } } });
+
+        REQUIRE(df1.transpose().equals_(DataFrame{
+            std::map<std::string, std::vector<int>>{ { "0", { 1, 3 } },
+                                                     { "1", { 2, 4 } } },
+            arrow::ArrayT<std::string>::Make({ "col1", "col2" }) }));
+    }
+
+    SECTION("Non-square DataFrame with mixed dtypes", "[transpose]")
+    {
+        DataFrame df1(
+            pd::ArrayPtr{ nullptr },
+            pair{ "name"s, std::vector{ "Alice"s, "Bob"s } },
+            pair{ "score"s, std::vector{ 9.5, 8.0 } },
+            pair{ "employed"s, std::vector{ false, true } },
+            pair{ "kids"s, std::vector{ 0L, 0L } });
+
+        REQUIRE(df1.transpose().equals_(
+            DataFrame{ std::map<std::string, std::vector<std::string>>{
+                           { "0", { "Alice", "9.5", "false", "0" } },
+                           { "1", { "Bob", "8", "true", "0" } } },
+                       arrow::ArrayT<std::string>::Make(
+                           { "name", "score", "employed", "kids" }) }));
+    }
 }

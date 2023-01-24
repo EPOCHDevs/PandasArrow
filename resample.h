@@ -49,15 +49,6 @@ struct GroupInfo
     }
 };
 
-enum class TimeGrouperOrigin
-{
-    Epoch, // origin is 1970-01-01
-    Start, // origin is the first value of the timeseries
-    StartDay, // origin is the first day at midnight of the timeseries
-    End, // origin is the last value of the timeseries
-    EndDay, // origin is the ceiling midnight of the last day
-};
-
 template<class T>
 std::vector<int64_t> generate_bins_dt64(
     std::shared_ptr<T> timestamps_array,
@@ -82,6 +73,56 @@ extern template std::vector<int64_t> generate_bins_dt64(
 template<class DataFrameOrSeries>
 Resampler resample(
     DataFrameOrSeries const& df,
+    std::string const& rule,
+    bool closed_right = false,
+    bool label_right = false,
+    std::variant<ptime, TimeGrouperOrigin> const& origin =
+        TimeGrouperOrigin::StartDay,
+    time_duration const& offset = time_duration(),
+    std::string const& tz = "")
+{
+    auto [freq_unit, freq_value] = splitTimeSpan(rule);
+    time_duration duration{};
+    if (freq_unit == "T" or freq_unit == "min")
+    {
+        duration = minutes(freq_value);
+    }
+    else if (freq_unit == "S")
+    {
+        duration = seconds(freq_value);
+    }
+    else if (freq_unit == "L" or freq_unit == "ms")
+    {
+        duration = milliseconds(freq_value);
+    }
+    else if (freq_unit == "U" or freq_unit == "us")
+    {
+        duration = microseconds(freq_value);
+    }
+    else if (freq_unit == "N" or freq_unit == "ns")
+    {
+        duration = nanoseconds(freq_value);
+    }
+    else
+    {
+        throw std::runtime_error(
+            "date_range with start:ptime_type is only compatible with "
+            "[T/min S L/ms U/us N/ns] freq_unit");
+    }
+
+    return resample(
+        df,
+        duration,
+        closed_right,
+        label_right,
+        origin,
+        offset,
+        tz);
+}
+
+template<class DataFrameOrSeries>
+Resampler resample(
+    DataFrameOrSeries const& df,
     time_duration const& rule,
     bool closed_right = false,
     bool label_right = false,
@@ -98,9 +139,28 @@ Resampler resample(
         origin,
         offset,
         tz);
-    return { df,
-             group_info.upsampling() ? group_info.labels :
-                                         toDateTime(group_info.downsample()) };
+
+    bool reindex = group_info.upsampling();
+    auto new_index = group_info.upsampling() ?
+        group_info.labels :
+        toDateTime(group_info.downsample());
+
+    DataFrame new_df{nullptr, nullptr};
+    if constexpr (std::same_as<DataFrameOrSeries, Series>)
+    {
+        new_df =
+            DataFrame{ arrow::schema({ arrow::field(df.name(), df.dtype()) }),
+                       new_index->length(),
+                       { df.array() },
+                       df.indexArray() };
+    }
+    else
+    {
+        new_df = df;
+    }
+
+    new_df = reindex ? new_df.reindex(new_index) : new_df.setIndex(new_index);
+    return { new_df };
 }
 
 arrow::TimestampArray adjustBinEdges(

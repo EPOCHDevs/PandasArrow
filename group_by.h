@@ -59,7 +59,7 @@ struct GroupBy
 
     inline std::shared_ptr<arrow::Scalar> GetKeyByIndex(::int64_t i) const
     {
-        return ValidateAndReturn(uniqueKeys->GetScalar(i));
+        return ReturnOrThrowOnFailure(uniqueKeys->GetScalar(i));
     }
 
     arrow::Result<pd::Series> apply(
@@ -243,23 +243,8 @@ private:
 
 struct Resampler : protected GroupBy
 {
-    Resampler(
-        DataFrame const& _df,
-        std::shared_ptr<arrow::Array> const& new_index)
-        : GroupBy("__resampler_idx__", _df.setIndex(new_index))
-    {
-    }
-
-    Resampler(
-        Series const& series,
-        std::shared_ptr<arrow::Array> const& new_index)
-        : GroupBy(
-              "__resampler_idx__",
-              DataFrame{ arrow::schema(
-                             { arrow::field(series.name(), series.dtype()) }),
-                         series.size(),
-                         { series.array() },
-                         new_index })
+    Resampler(DataFrame const& _df)
+        : GroupBy("__resampler_idx__", _df )
     {
     }
 
@@ -296,6 +281,10 @@ struct Resampler : protected GroupBy
     RESAMPLE_GROUP_BY_FUNCTION(stddev)
     RESAMPLE_GROUP_BY_FUNCTION(variance)
     RESAMPLE_GROUP_BY_FUNCTION(tdigest)
+
+    using GroupBy::apply_async;
+    using GroupBy::apply;
+
 };
 
 }

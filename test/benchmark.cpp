@@ -19,7 +19,7 @@ int main()
         data[std::to_string(i)] = random.randint(1e6, 10, 20);
     }
 
-    auto df = pd::DataFrame(data, range(0, 1e6));
+    auto df = pd::DataFrame(data, range(0l, 1e6l));
 
     auto start = std::chrono::high_resolution_clock::now();
 

@@ -5,6 +5,7 @@
 
 
 #include "core.h"
+#include "concat.h"
 #include "resample.h"
 #include "group_by.h"
 #include "stringlike.h"
