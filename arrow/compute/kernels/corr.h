@@ -2,8 +2,7 @@
 #include "cov.h"
 
 namespace arrow {
-namespace compute {
-namespace internal {
+namespace compute::internal {
 
 template<typename ArrowType>
 struct CorrelationState
@@ -252,7 +251,6 @@ static void RegisterScalarAggregateCorrelation(FunctionRegistry* registry)
     DCHECK_OK(registry->AddFunction(AddCorrelationKernels()));
 }
 
-}
 }
 
 static Result<arrow::Datum> Correlation(

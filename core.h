@@ -331,7 +331,7 @@ struct ArrayT
         {
         auto builder =
             std::make_shared<typename arrow::CTypeTraits<T>::BuilderType>();
-        builder->AppendValues(x);
+        pd::ThrowOnFailure(builder->AppendValues(x));
         return std::dynamic_pointer_cast<
             typename arrow::CTypeTraits<T>::ArrayType>(
             builder->Finish().MoveValueUnsafe());
@@ -341,7 +341,7 @@ struct ArrayT
         {
             auto builder =
                 std::make_shared<typename arrow::CTypeTraits<T>::BuilderType>();
-            builder->AppendValues(x, map);
+            pd::ThrowOnFailure(builder->AppendValues(x, map));
             return std::dynamic_pointer_cast<
                 typename arrow::CTypeTraits<T>::ArrayType>(
                 builder->Finish().MoveValueUnsafe());
@@ -421,7 +421,7 @@ struct DateTimeArray : ArrayT<ptime>
                 ts.begin(),
                 [](auto const& t) { return pd::fromPTime(t); });
 
-            builder.AppendValues(ts, map);
+            pd::ThrowOnFailure(builder.AppendValues(ts, map));
 
             return std::dynamic_pointer_cast<arrow::TimestampArray>(
                 builder.Finish().MoveValueUnsafe());

@@ -59,7 +59,7 @@ public:
         auto builder = arrow::MakeBuilder(x->type()).MoveValueUnsafe();
 
         int64_t N = x->length();
-        builder->Reserve(N);
+        RETURN_NOT_OK(builder->Reserve(N));
         int64_t shift_len = std::abs(shift_value_);
 
         if (shift_value_ > 0)
@@ -75,14 +75,14 @@ public:
 
             for (int i = 0; i < N-shift_len; i++)
             {
-                builder->AppendScalar(*x->GetScalar(i).MoveValueUnsafe());
+                RETURN_NOT_OK(builder->AppendScalar(*x->GetScalar(i).MoveValueUnsafe()));
             }
         }
         else
         {
             for (int64_t i = shift_len; i < N; i++)
             {
-                builder->AppendScalar(*x->GetScalar(i).MoveValueUnsafe());
+                RETURN_NOT_OK(builder->AppendScalar(*x->GetScalar(i).MoveValueUnsafe()));
             }
 
             arrow::Status s;

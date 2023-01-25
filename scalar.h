@@ -79,7 +79,7 @@ namespace pd{
 
         /// template function "as()" that allows the user to cast the Scalar object to a specified type.
         template<class T>
-        T as()
+        T as() const
         {
             using ArrowType = arrow::CTypeTraits<T>::ScalarType;
             auto res = std::dynamic_pointer_cast<ArrowType>(scalar);

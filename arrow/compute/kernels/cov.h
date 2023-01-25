@@ -118,7 +118,7 @@ enable_if_t<std::is_floating_point<SumType>::value, SumType> SumArray2WithCovari
     return sum[root_level];
 }
 
-namespace {
+
 template<typename ArrowType>
 struct IntegerCovariance
 {
@@ -166,8 +166,7 @@ struct CovarianceState
     using CType = typename TypeTraits<ArrowType>::CType;
     using ThisType = CovarianceState<ArrowType>;
 
-    CovarianceState(int32_t decimal_scale,
-                    VarianceOptions options)
+    CovarianceState(int32_t decimal_scale, VarianceOptions options)
         : count(0),
           mean_x(0),
           mean_y(0),
@@ -319,15 +318,13 @@ struct CovarianceState
             return;
         }
         auto count1 = this->count;
-        auto count2 =  other.count;
+        auto count2 = other.count;
 
         this->count = count1 + count2;
 
-        auto MergeMean = [this, count1, count2]
-            (double mean1, double mean2) mutable
-        {
-            return (mean1 * count1 + mean2 * count2) / double(this->count);
-        };
+        auto MergeMean =
+            [this, count1, count2](double mean1, double mean2) mutable
+        { return (mean1 * count1 + mean2 * count2) / double(this->count); };
 
         double _mean_x = MergeMean(this->mean_x, other.mean_x);
         double _mean_y = MergeMean(this->mean_y, other.mean_y);
@@ -394,7 +391,8 @@ struct CovarianceImpl : public ScalarAggregator
         }
         else
         {
-            double covar = state.m_xy / double (state.count - state.options.ddof);
+            double covar =
+                state.m_xy / double(state.count - state.options.ddof);
             out->value = std::make_shared<DoubleScalar>(covar);
         }
         return Status::OK();
@@ -463,7 +461,7 @@ struct CovarianceInitState
     }
 };
 
-Result<std::unique_ptr<KernelState>> CovarianceInit(
+inline Result<std::unique_ptr<KernelState>> CovarianceInit(
     KernelContext* ctx,
     const KernelInitArgs& args)
 {
@@ -476,7 +474,7 @@ Result<std::unique_ptr<KernelState>> CovarianceInit(
     return visitor.Create();
 }
 
-void AddCovarianceKernels(
+static void AddCovarianceKernels(
     KernelInit init,
     const std::vector<std::shared_ptr<DataType>>& types,
     ScalarAggregateFunction* func)
@@ -528,12 +526,12 @@ static void RegisterScalarAggregateCovariance(FunctionRegistry* registry)
 }
 
 }
-}
+
 
 static Result<arrow::Datum> Covariance(
     std::shared_ptr<arrow::Array> const& arrayx,
     std::shared_ptr<arrow::Array> const& arrayy,
-    VarianceOptions const& options=VarianceOptions(1))
+    VarianceOptions const& options = VarianceOptions(1))
 {
     return CallFunction("cov", { arrayx, arrayy }, &options);
 }

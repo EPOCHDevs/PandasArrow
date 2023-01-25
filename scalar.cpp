@@ -16,7 +16,7 @@ Scalar::operator bool()
 {
     if (scalar)
     {
-        ASSIGN_OR_ABORT(auto boolScalar, scalar->CastTo(arrow::boolean()));
+        auto boolScalar = pd::ReturnOrThrowOnFailure(scalar->CastTo(arrow::boolean()));
         return std::dynamic_pointer_cast<arrow::BooleanScalar>(boolScalar)
             ->value;
     }
