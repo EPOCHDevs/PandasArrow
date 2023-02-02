@@ -23,9 +23,9 @@ namespace pd {
 
 struct GroupBy
 {
-    GroupBy(std::string key, pd::DataFrame  df) : df(std::move(df))
+    GroupBy(const std::string& key, pd::DataFrame  df) : df(std::move(df))
     {
-        auto result = makeGroups(std::move(key));
+        auto result = makeGroups(key);
         if (not result.ok())
         {
             throw std::runtime_error(result.ToString());
@@ -243,6 +243,7 @@ private:
 
 struct Resampler : protected GroupBy
 {
+    std::vector<std::string> group_keys;
     Resampler(DataFrame const& _df)
         : GroupBy("__resampler_idx__", _df )
     {
@@ -281,6 +282,8 @@ struct Resampler : protected GroupBy
     RESAMPLE_GROUP_BY_FUNCTION(stddev)
     RESAMPLE_GROUP_BY_FUNCTION(variance)
     RESAMPLE_GROUP_BY_FUNCTION(tdigest)
+    RESAMPLE_GROUP_BY_FUNCTION(first)
+    RESAMPLE_GROUP_BY_FUNCTION(last)
 
     using GroupBy::apply_async;
     using GroupBy::apply;

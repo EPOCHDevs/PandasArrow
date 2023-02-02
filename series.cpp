@@ -1324,7 +1324,7 @@ namespace pd
         return if_else(cond, other);
     }
     pd::Series Series::reindex(const shared_ptr<arrow::Array>& newIndex,
-                               std::optional< std::unordered_map<int64_t, int64_t>>  indexer) const noexcept
+                               std::optional< std::unordered_map<int64_t, int64_t>>  indexer) const
     {
         if (newIndex->type()->id() != m_index->type()->id())
         {
@@ -1377,7 +1377,7 @@ namespace pd
     }
 
     pd::Series Series::reindexAsync(std::shared_ptr<arrow::Array> const&newIndex,
-                                    std::optional< std::unordered_map<int64_t, int64_t>>  indexer) const noexcept
+                                    std::optional< std::unordered_map<int64_t, int64_t>>  indexer) const
     {
         if (newIndex->type()->id() != m_index->type()->id())
         {

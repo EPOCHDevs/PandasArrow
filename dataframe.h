@@ -20,7 +20,11 @@ namespace pd {
         template<class MapType>
         size_t GetTableRowSize(MapType const &table);
 
-        DataFrame()=default;
+        DataFrame()
+        {
+            m_index = pd::ReturnOrThrowOnFailure(
+                arrow::MakeEmptyArray(arrow::null()));
+        }
 
         DataFrame(std::shared_ptr<arrow::RecordBatch> const &table,
                   std::shared_ptr<arrow::Array> const& _index=nullptr);
@@ -140,7 +144,7 @@ namespace pd {
         // indexer
         class Series operator[](std::string const &column) const;
         DataFrame operator[](std::vector<std::string> const &columns) const;
-        std::unordered_map<std::string, pd::Scalar> operator[](int64_t row) const;
+        DataFrame operator[](int64_t row) const;
 
         Scalar at(int64_t row, int64_t col) const;
 

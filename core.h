@@ -320,6 +320,8 @@ const std::shared_ptr<arrow::DataType> DoubleTypePtr =
     std::make_shared<arrow::DoubleType>();
 const std::shared_ptr<arrow::DataType> Int64TypePtr =
     std::make_shared<arrow::Int64Type>();
+
+class Scalar;
 }
 
 
@@ -360,6 +362,9 @@ struct ScalarArray
             ABORT_NOT_OK(builder->AppendScalars(x));
             return builder->Finish().MoveValueUnsafe();
         }
+
+        static std::shared_ptr<arrow::Array> Make(std::vector<pd::Scalar> const& x);
+
 };
 
 struct DateArray : ArrayT<date>

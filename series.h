@@ -285,9 +285,9 @@ public:
         const;
 
     pd::Series reindex(std::shared_ptr<arrow::Array> const&newIndex,
-                       std::optional< std::unordered_map<int64_t, int64_t>>  indexer=std::nullopt) const noexcept;
+                       std::optional< std::unordered_map<int64_t, int64_t>>  indexer=std::nullopt) const;
     pd::Series reindexAsync(std::shared_ptr<arrow::Array> const &newIndex,
-                            std::optional< std::unordered_map<int64_t, int64_t>>  indexer=std::nullopt) const noexcept;
+                            std::optional< std::unordered_map<int64_t, int64_t>>  indexer=std::nullopt) const ;
 
     class Resampler resample(std::string const& rule,
                              bool closed_right = false,

@@ -253,6 +253,10 @@ DataFrame DataFrame::readParquet(std::filesystem::path const& path)
 std::ostream& operator<<(std::ostream& os, DataFrame const& df)
 {
     tabulate::Table table;
+    if(not df.m_array)
+    {
+        return os;
+    }
 
     int64_t nRows = df.m_array->num_rows();
     int64_t nCols = df.m_array->num_columns();
@@ -318,10 +322,10 @@ Series DataFrame::operator[](const std::string& column) const
     throw std::runtime_error(column + " is not a valid column");
 }
 
-std::unordered_map<std::string, pd::Scalar> DataFrame::operator[](
+DataFrame DataFrame::operator[](
     int64_t row) const
 {
-    std::unordered_map<std::string, pd::Scalar> result;
+    std::map<std::string, pd::ArrayPtr> result;
     auto columns = columnNames();
     std::transform(
         columns.begin(),
@@ -329,13 +333,17 @@ std::unordered_map<std::string, pd::Scalar> DataFrame::operator[](
         std::inserter(result, std::end(result)),
         [this, row](std::string const& column)
         {
-            return std::pair{
-                column,
-                pd::ReturnOrThrowOnFailure(
-                    this->m_array->GetColumnByName(column)->GetScalar(row))
-            };
+            auto scalar = this->m_array->GetColumnByName(column)
+                              ->GetScalar(row)
+                              .MoveValueUnsafe();
+            return std::pair{ column,
+                              pd::ReturnOrThrowOnFailure(
+                                  arrow::MakeArrayFromScalar(*scalar, 1)) };
         });
-    return result;
+    auto index = m_index->GetScalar(row).MoveValueUnsafe();
+    return DataFrame{ result,
+                      pd::ReturnOrThrowOnFailure(
+                          arrow::MakeArrayFromScalar(*index, 1)) };
 }
 
 DataFrame DateTimeLike::iso_calendar() const
@@ -1080,7 +1088,7 @@ arrow::Result<pd::DataFrame> GroupBy::apply_async(std::function<ScalarPtr (Serie
                 ReturnOrThrowOnFailure(buildData(result));
         });
 
-    return pd::DataFrame(schema, numGroups, resultForEachColumn);
+    return pd::DataFrame(schema, numGroups, resultForEachColumn, uniqueKeys);
 }
 
 arrow::Result<pd::Series> GroupBy::apply_async(std::function<ScalarPtr (DataFrame const&)> fn)
@@ -1103,7 +1111,7 @@ arrow::Result<pd::Series> GroupBy::apply_async(std::function<ScalarPtr (DataFram
         });
 
     ARROW_ASSIGN_OR_RAISE(auto finalArray, buildArray(result));
-    return pd::Series(finalArray, nullptr);
+    return pd::Series(finalArray, uniqueKeys);
 }
 
 arrow::Result<pd::DataFrame> GroupBy::apply(std::function<ScalarPtr (Series const&)> fn)
@@ -1166,7 +1174,7 @@ arrow::Result<pd::DataFrame> GroupBy::apply(std::function<ScalarPtr (Series cons
         });
 
     ARROW_ASSIGN_OR_RAISE(auto finalArray, buildArray(result));
-    return pd::Series(finalArray, nullptr);
+    return pd::Series(finalArray, uniqueKeys);
  }
 
 GROUPBY_NUMERIC_AGG(mean, double)
@@ -1413,7 +1421,7 @@ arrow::Result<pd::DataFrame> GroupBy::first(
             }
         });
 
-    return pd::DataFrame(arrow::schema(fv), long(N), arr);
+    return pd::DataFrame(arrow::schema(fv), long(N), arr, uniqueKeys);
 }
 
 arrow::Result<pd::Series> GroupBy::first(std::string const& arg)
@@ -1508,7 +1516,7 @@ arrow::Result<pd::Series> GroupBy::last(
         });
 
     ARROW_ASSIGN_OR_RAISE(auto data, buildArray(result));
-    return pd::Series(data, nullptr);
+    return pd::Series(data, uniqueKeys);
 }
 
 arrow::Result<pd::DataFrame> GroupBy::mode(
@@ -1580,7 +1588,7 @@ arrow::Result<pd::Series> GroupBy::mode(std::string const& arg)
         });
 
     ARROW_ASSIGN_OR_RAISE(auto data, buildArray(result));
-    return pd::Series(data, nullptr);
+    return pd::Series(data, uniqueKeys);
 }
 
 arrow::Result<pd::DataFrame> GroupBy::quantile(
@@ -1659,6 +1667,6 @@ arrow::Result<pd::Series> GroupBy::quantile(std::string const& arg, double q)
         });
 
     ARROW_ASSIGN_OR_RAISE(auto data, buildArray(result));
-    return pd::Series(data, nullptr);
+    return pd::Series(data, uniqueKeys);
 }
 }

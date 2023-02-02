@@ -356,3 +356,21 @@ std::shared_ptr<arrow::DataType> promoteTypes(const std::vector<std::shared_ptr<
     return common_type;
 }
 }
+std::shared_ptr<arrow::Array> arrow::ScalarArray::Make(
+    const std::vector<pd::Scalar>& x)
+{
+    if (x.empty())
+    {
+        return { nullptr };
+    }
+    auto builder = arrow::MakeBuilder(x.back().value()->type).MoveValueUnsafe();
+
+    ABORT_NOT_OK(builder->Reserve(x.size()));
+
+    for(auto const& sc : x)
+    {
+        ABORT_NOT_OK(builder->AppendScalar(*sc.value()));
+    }
+
+    return builder->Finish().MoveValueUnsafe();
+}

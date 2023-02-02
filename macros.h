@@ -105,7 +105,7 @@ arrow::Result<pd::DataFrame> GroupBy:: func(std::vector<std::string> const& args
                     arr[i] = data; \
                 } \
     \
-        return pd::DataFrame(arrow::schema(fv), long(N), arr); \
+        return pd::DataFrame(arrow::schema(fv), long(N), arr, uniqueKeys); \
 } \
 \
 arrow::Result<pd::Series> GroupBy:: func(std::string const& arg) \
@@ -144,7 +144,7 @@ std::vector<T> result(L); \
 std::shared_ptr<arrow::Array> data; \
 builder.Finish(&data); \
 \
-return pd::Series(data, nullptr); \
+return pd::Series(data, uniqueKeys); \
 }
 
 #define GROUPBY_AGG(func) \
@@ -180,7 +180,7 @@ arrow::Result<pd::DataFrame> GroupBy:: func(std::vector<std::string> const& args
     ARROW_ASSIGN_OR_RAISE(arr[i], buildData(result));\
     }\
         \
-        return pd::DataFrame(arrow::schema(fv), long(num_groups), arr);\
+        return pd::DataFrame(arrow::schema(fv), long(num_groups), arr, uniqueKeys);\
 }\
 \
 arrow::Result<pd::Series> GroupBy:: func(std::string const& arg) \
@@ -222,7 +222,7 @@ std::shared_ptr<arrow::ArrayBuilder> builder;\
         std::shared_ptr<arrow::Array> data; \
         RETURN_NOT_OK(builder->Finish(&data)); \
         \
-        return pd::Series(data, nullptr); \
+        return pd::Series(data, uniqueKeys); \
 }
 
 
