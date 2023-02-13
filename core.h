@@ -219,7 +219,7 @@ inline std::shared_ptr<arrow::TimestampArray> toDateTime(
  * Converts date to nanoseconds since Unix epoch.
  */
 template<class T = int64_t>
-static inline int64_t fromDate(date const& day)
+static inline T fromDate(date const& day)
 {
     return fromPTime<T>(ptime(day));
 }
