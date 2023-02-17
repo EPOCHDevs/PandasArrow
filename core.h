@@ -359,7 +359,7 @@ struct ScalarArray
             return { nullptr };
             }
             auto builder = arrow::MakeBuilder(x.back()->type).MoveValueUnsafe();
-            ABORT_NOT_OK(builder->AppendScalars(x));
+            pd::ThrowOnFailure(builder->AppendScalars(x));
             return builder->Finish().MoveValueUnsafe();
         }
 
@@ -393,7 +393,7 @@ struct DateArray : ArrayT<date>
                 ts.begin(),
                 [](auto const& t) { return pd::fromDate(t); });
 
-            ABORT_NOT_OK(builder.AppendValues(ts, map));
+            pd::ThrowOnFailure(builder.AppendValues(ts, map));
 
             return std::dynamic_pointer_cast<arrow::TimestampArray>(
                 builder.Finish().MoveValueUnsafe());
