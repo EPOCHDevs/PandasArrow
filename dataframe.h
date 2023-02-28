@@ -9,7 +9,7 @@
 namespace pd {
 
     constexpr int PD_MAX_ROW_TO_PRINT = {100};
-    constexpr int PD_MAX_COL_TO_PRINT = {10};
+    constexpr int PD_MAX_COL_TO_PRINT = {100};
 
     class DataFrame : public NDFrame<DataFrame>{
     public:
@@ -111,9 +111,11 @@ namespace pd {
 
         bool contains(std::string const& column) const;
 
-        void add_prefix(std::string const& prefix);
+        void add_prefix(std::string const& prefix,
+                        std::set<std::string> const& excludes={});
 
-        void add_suffix(std::string const &suffix);
+        void add_suffix(std::string const &suffix,
+                        std::set<std::string> const& excludes={});
 
         static std::vector<std::string> makeDefaultColumnNames(size_t N);
 
@@ -151,7 +153,12 @@ namespace pd {
         Scalar at(int64_t row,
                   std::string const& col) const
         {
-            return at(row, m_array->schema()->GetFieldIndex(col));
+            auto idx =  m_array->schema()->GetFieldIndex(col);
+            if(idx == -1)
+            {
+                throw std::runtime_error(col + " is not a valid column");
+            }
+            return at(row, idx);
         }
 
         pd::DataFrame reindex(std::shared_ptr<arrow::Array> const&newIndex) const noexcept;

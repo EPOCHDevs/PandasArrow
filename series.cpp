@@ -1342,7 +1342,8 @@ namespace pd
         // Build the new values array
         auto newValuesBuilder = ReturnOrThrowOnFailure(
             arrow::MakeBuilder(m_array->type()));
-        newValuesBuilder->Reserve(newIndexLen);
+
+        ThrowOnFailure(newValuesBuilder->Reserve(newIndexLen));
 
         // Create a hashmap to store the index-value pairs of the current series
         if(not indexer)
@@ -1362,10 +1363,11 @@ namespace pd
             if (indexer->count(newIndexValue) == 1)
             {
                 int64_t valueIndex = (*indexer)[newIndexValue];
-                newValuesBuilder->AppendScalar(*m_array->GetScalar(valueIndex).MoveValueUnsafe());
+                ThrowOnFailure(
+newValuesBuilder->AppendScalar(*m_array->GetScalar(valueIndex).MoveValueUnsafe()));
             }
             else{
-                newValuesBuilder->AppendNull();
+                ThrowOnFailure(newValuesBuilder->AppendNull());
             }
         }
 

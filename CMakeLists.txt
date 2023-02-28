@@ -21,6 +21,7 @@ target_link_libraries(pandas_arrow PRIVATE
 
 target_include_directories(pandas_arrow PUBLIC .
         ${Boost_INCLUDE_DIRS})
+target_compile_options(pandas_arrow PRIVATE -Werror)
 
 add_subdirectory(arrow)
 

@@ -138,22 +138,30 @@ DataFrame& DataFrame::rename(
     return *this;
 }
 
-void DataFrame::add_prefix(std::string const& prefix)
+void DataFrame::add_prefix(std::string const& prefix,
+                           std::set<std::string> const& excludes)
 {
     std::unordered_map<std::string, std::string> new_columns;
     for (auto const& name : m_array->schema()->field_names())
     {
-        new_columns[name] = prefix + name;
+        if (not excludes.contains(name))
+        {
+            new_columns[name] = prefix + name;
+        }
     }
     rename(new_columns);
 }
 
-void DataFrame::add_suffix(std::string const& suffix)
+void DataFrame::add_suffix(std::string const& suffix,
+                           std::set<std::string> const& excludes)
 {
     std::unordered_map<std::string, std::string> new_columns;
     for (auto const& name : m_array->schema()->field_names())
     {
-        new_columns[name] = name + suffix;
+        if (not excludes.contains(name))
+        {
+            new_columns[name] = name + suffix;
+        }
     }
     rename(new_columns);
 }
@@ -333,14 +341,13 @@ DataFrame DataFrame::operator[](
         std::inserter(result, std::end(result)),
         [this, row](std::string const& column)
         {
-            auto scalar = this->m_array->GetColumnByName(column)
-                              ->GetScalar(row)
-                              .MoveValueUnsafe();
+            auto series = this->m_array->GetColumnByName(column);
+            auto scalar = pd::ReturnOrThrowOnFailure(series->GetScalar(row));
             return std::pair{ column,
                               pd::ReturnOrThrowOnFailure(
                                   arrow::MakeArrayFromScalar(*scalar, 1)) };
         });
-    auto index = m_index->GetScalar(row).MoveValueUnsafe();
+    auto index = pd::ReturnOrThrowOnFailure(m_index->GetScalar(row));
     return DataFrame{ result,
                       pd::ReturnOrThrowOnFailure(
                           arrow::MakeArrayFromScalar(*index, 1)) };
@@ -366,10 +373,14 @@ DataFrame DateTimeLike::year_month_day() const
 
 Scalar DataFrame::at(int64_t row, int64_t col) const
 {
-
     if (row < 0)
     {
         throw std::runtime_error("@DataFrame::at() row must be >= 0");
+    }
+
+    if (col < 0)
+    {
+        throw std::runtime_error("@DataFrame::at() col must be >= 0");
     }
 
     if (col < num_columns())
@@ -446,6 +457,10 @@ DataFrame DataFrame::slice(Slice slice, std::vector<std::string> const& columns)
     for (auto const& column : columns)
     {
         auto idx = schema->GetFieldIndex(column);
+        if (idx == -1)
+        {
+            throw std::runtime_error("Invalid column: " + column);
+        }
         arrays.emplace_back(
             m_array->column(idx)->data()->Slice(slice.start, length));
         fieldVector.emplace_back(schema->field(idx));
@@ -521,6 +536,10 @@ DataFrame DataFrame::slice(int offset, std::vector<std::string> const& columns)
     for (auto const& column : columns)
     {
         auto idx = schema->GetFieldIndex(column);
+        if (idx == -1)
+        {
+            throw std::runtime_error("Invalid column: " + column);
+        }
         arrays.emplace_back(
             m_array->column(idx)->data()->Slice(offset, length));
         fieldVector.emplace_back(schema->field(idx));
@@ -544,6 +563,10 @@ DataFrame DataFrame::operator[](std::vector<std::string> const& columns) const
     for (auto const& column : columns)
     {
         auto idx = schema->GetFieldIndex(column);
+        if (idx == -1)
+        {
+            throw std::runtime_error("Invalid column: " + column);
+        }
         arrays.emplace_back(m_array->column(idx)->data());
         fieldVector.emplace_back(schema->field(idx));
     }
@@ -768,12 +791,13 @@ std::vector<std::string> DataFrame::columns() const
 
 DataFrame DataFrame::head(int length) const
 {
-    return m_array->Slice(0, length);
+    return {m_array->Slice(0, length), m_index->Slice(0, length)};
 }
 
 DataFrame DataFrame::tail(int length) const
 {
-    return m_array->Slice(m_array->num_rows() - length, length);
+    return { m_array->Slice(m_array->num_rows() - length, length),
+             m_index->Slice(m_array->num_rows() - length, length) };
 }
 
 DataFrame DataFrame::sort_index(bool ascending, bool ignore_index)
@@ -1412,12 +1436,11 @@ arrow::Result<pd::DataFrame> GroupBy::first(
                         auto key =
                             uniqueKeys->GetScalar(long(j)).MoveValueUnsafe();
                         auto& group = groups.at(key);
-                        ARROW_ASSIGN_OR_RAISE(
-                            result[j],
-                            group[index]->GetScalar(0));
+                        result[j] =
+                            ReturnOrThrowOnFailure(group[index]->GetScalar(0));
                     });
 
-                ARROW_ASSIGN_OR_RAISE(arr[i], buildData(result));
+                arr[i] = ReturnOrThrowOnFailure(buildData(result));
             }
         });
 
@@ -1435,10 +1458,7 @@ arrow::Result<pd::Series> GroupBy::first(std::string const& arg)
     int index = schema->GetFieldIndex(arg);
 
     arrow::ScalarVector result(L);
-    //    tbb::parallel_for(
     tbb::blocked_range<size_t> r(0, L);
-    //        [&](const tbb::blocked_range<size_t>& r)
-    //        {
     for (size_t j = r.begin(); j != r.end(); ++j)
     {
         auto key = uniqueKeys->GetScalar(long(j)).MoveValueUnsafe();
@@ -1446,7 +1466,6 @@ arrow::Result<pd::Series> GroupBy::first(std::string const& arg)
 
         ARROW_ASSIGN_OR_RAISE(result[j], group[index]->GetScalar(0));
     }
-    //        });
 
     ARROW_ASSIGN_OR_RAISE(auto data, buildArray(result));
     return pd::Series(data, nullptr);
@@ -1480,12 +1499,11 @@ arrow::Result<pd::DataFrame> GroupBy::last(
                     auto& group = groups.at(key);
                     auto groupLength = group[index]->length();
                     auto lastIndex = groupLength - 1;
-                    ARROW_ASSIGN_OR_RAISE(
-                        result[j],
+                    result[j] = ReturnOrThrowOnFailure(
                         group[index]->GetScalar(lastIndex));
                 });
 
-            ARROW_ASSIGN_OR_RAISE(arr[i], buildData(result));
+            arr[i] = ReturnOrThrowOnFailure(buildData(result));
         });
 
     return pd::DataFrame(arrow::schema(fv), long(N), arr);
@@ -1554,7 +1572,7 @@ arrow::Result<pd::DataFrame> GroupBy::mode(
                             result[j] = d.scalar();
                         }
                     });
-                ARROW_ASSIGN_OR_RAISE(arr[i], buildData(result));
+                arr[i] = pd::ReturnOrThrowOnFailure(buildData(result));
             }
         });
 
@@ -1631,7 +1649,7 @@ arrow::Result<pd::DataFrame> GroupBy::quantile(
                             result[j] = d.scalar();
                         }
                     });
-                ARROW_ASSIGN_OR_RAISE(arr[i], buildData(result));
+                arr[i] = ReturnOrThrowOnFailure(buildData(result));
             }
         });
 
@@ -1647,6 +1665,10 @@ arrow::Result<pd::Series> GroupBy::quantile(std::string const& arg, double q)
 
     long L = uniqueKeys->length();
     int index = schema->GetFieldIndex(arg);
+    if (index == -1)
+    {
+        throw std::runtime_error("Invalid column: " + arg);
+    }
 
     arrow::compute::QuantileOptions option(q);
 

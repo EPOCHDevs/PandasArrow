@@ -98,10 +98,10 @@ arrow::Result<pd::DataFrame> GroupBy:: func(std::vector<std::string> const& args
                         }); \
     \
                     auto builder = arrow::CTypeTraits<T>::BuilderType(); \
-                        builder.AppendValues(result); \
+                        ThrowOnFailure(builder.AppendValues(result)); \
     \
                     std::shared_ptr<arrow::ArrayData> data; \
-                        builder.FinishInternal(&data); \
+                        ThrowOnFailure(builder.FinishInternal(&data)); \
                     arr[i] = data; \
                 } \
     \
@@ -139,10 +139,10 @@ std::vector<T> result(L); \
         }); \
 \
     auto builder = arrow::CTypeTraits<T>::BuilderType(); \
-    builder.AppendValues(result); \
+    ThrowOnFailure(builder.AppendValues(result)); \
 \
 std::shared_ptr<arrow::Array> data; \
-builder.Finish(&data); \
+ThrowOnFailure(builder.Finish(&data)); \
 \
 return pd::Series(data, uniqueKeys); \
 }
