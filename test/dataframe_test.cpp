@@ -93,9 +93,9 @@ TEST_CASE("Test DataFrame operator[]", "[DataFrame]") {
 
     // Test operator[] with single row
     auto row = df[1];
-    REQUIRE(row.size() == 2);
-    REQUIRE(row["a"].as<int32_t>() == 2);
-    REQUIRE(row["b"].as<int32_t>() == 5);
+    REQUIRE(row.num_columns() == 2);
+    REQUIRE(row.at(0, "a").as<int32_t>() == 2);
+    REQUIRE(row.at(0, "b").as<int32_t>() == 5);
 
     // Test at method
     REQUIRE(df.at(1, 0).as<int32_t>() == 2);

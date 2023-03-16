@@ -76,63 +76,63 @@ inline DataFrame concat(
     return Concatenator(objs, join, ignore_index, sort)(axis);
 }
 
-inline pd::DataFrame concat(
-    std::vector<pd::Series> const& objs,
-    AxisType axis = AxisType::Index,
-    JoinType join = JoinType::Outer,
-    bool ignore_index = false,
-    bool sort = false)
-{
-    // create a vector of DataFrames from the Series
-    std::vector<pd::DataFrame> dfs;
-    int i = 0;
-    for (auto const& obj : objs)
-    {
-        auto name = axis == AxisType::Index ?
-            "" :
-            (obj.name().empty() ? std::to_string(i++) : obj.name());
-        dfs.push_back(obj.toFrame(name));
-    }
-    // call the existing DataFrame concatenation function
-    return Concatenator(dfs, join, ignore_index, sort)(axis);
-}
+//inline pd::DataFrame concat(
+//    std::vector<pd::Series> const& objs,
+//    AxisType axis = AxisType::Index,
+//    JoinType join = JoinType::Outer,
+//    bool ignore_index = false,
+//    bool sort = false)
+//{
+//    // create a vector of DataFrames from the Series
+//    std::vector<pd::DataFrame> dfs;
+//    int i = 0;
+//    for (auto const& obj : objs)
+//    {
+//        auto name = axis == AxisType::Index ?
+//            "" :
+//            (obj.name().empty() ? std::to_string(i++) : obj.name());
+//        dfs.push_back(obj.toFrame(name));
+//    }
+//    // call the existing DataFrame concatenation function
+//    return Concatenator(dfs, join, ignore_index, sort)(axis);
+//}
 
-inline pd::DataFrame concat(
-    std::vector<std::variant<pd::DataFrame, pd::Series>> const& objs,
-    AxisType axis = AxisType::Index,
-    JoinType join = JoinType::Outer,
-    bool ignore_index = false,
-    bool sort = false) {
-    // create a vector of DataFrames from the variant objects
-    int i = 0;
-    std::vector<pd::DataFrame> dfs;
-    dfs.emplace_back();
-    std::vector<pd::Series> series;
-
-    for (auto const& obj : objs) {
-        if (auto df = std::get_if<pd::DataFrame>(&obj)) {
-            dfs.push_back(*df);
-        } else {
-            auto s = std::get<pd::Series>(obj);
-            series.emplace_back(s);
-        }
-    }
-
-    if(series.empty())
-    {
-        dfs = std::vector(dfs.begin()+1, dfs.end());
-    }
-    else
-    {
-        dfs[0] = concat(series, axis, join,ignore_index,sort);
-        if(axis == AxisType::Index)
-        {
-            dfs[0] = dfs[0].rename({ { "", "0" } });
-        }
-    }
-    // call the existing DataFrame concatenation function
-    return Concatenator(dfs, join, ignore_index, sort)(axis);
-}
+//inline pd::DataFrame concat(
+//    std::vector<std::variant<pd::DataFrame, pd::Series>> const& objs,
+//    AxisType axis = AxisType::Index,
+//    JoinType join = JoinType::Outer,
+//    bool ignore_index = false,
+//    bool sort = false) {
+//    // create a vector of DataFrames from the variant objects
+//    int i = 0;
+//    std::vector<pd::DataFrame> dfs;
+//    dfs.emplace_back();
+//    std::vector<pd::Series> series;
+//
+//    for (auto const& obj : objs) {
+//        if (auto df = std::get_if<pd::DataFrame>(&obj)) {
+//            dfs.push_back(*df);
+//        } else {
+//            auto s = std::get<pd::Series>(obj);
+//            series.emplace_back(s);
+//        }
+//    }
+//
+//    if(series.empty())
+//    {
+//        dfs = std::vector(dfs.begin()+1, dfs.end());
+//    }
+//    else
+//    {
+//        dfs[0] = concat(series, axis, join,ignore_index,sort);
+//        if(axis == AxisType::Index)
+//        {
+//            dfs[0] = dfs[0].rename({ { "", "0" } });
+//        }
+//    }
+//    // call the existing DataFrame concatenation function
+//    return Concatenator(dfs, join, ignore_index, sort)(axis);
+//}
 
 DataFrame concatColumnsUnsafe(std::vector<pd::DataFrame> const& objs);
 

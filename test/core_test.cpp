@@ -957,162 +957,162 @@ TEST_CASE("ConcatenateColumns", "[concatenateColumns]")
     }
 }
 
-TEST_CASE("Concatenate with Series", "[concat]")
-{
-    SECTION(
-        "Concatenating multiple Series with different indexes,"
-        " axis = 0, join = outer, ignore_index = false, sort = false")
-    {
-        auto s1 =
-            pd::Series(std::vector{ 1L, 2L, 3L }, "s1", pd::range(0UL, 3UL));
-        auto s2 =
-            pd::Series(std::vector{ 4L, 5L, 6L }, "", pd::range(3UL, 6UL));
-        auto s3 =
-            pd::Series(std::vector{ 7L, 8L, 9L }, "", pd::range(6UL, 9UL));
-        auto result = pd::concat(
-            std::vector<pd::Series>{ s1, s2, s3 },
-            AxisType::Index,
-            JoinType::Outer,
-            false,
-            false);
-        auto expected = pd::DataFrame(
-            std::array<std::string, 1>{ "" },
-            pd::ArrayPtr{ nullptr },
-            std::vector<long>{ 1, 2, 3, 4, 5, 6, 7, 8, 9 },
-            std::vector<::uint64_t>{ 0, 1, 2, 3, 4, 5, 6, 7, 8 });
-        INFO(result << "\n!=\n" << expected);
-        REQUIRE(result.equals_(expected));
-    }
+//TEST_CASE("Concatenate with Series", "[concat]")
+//{
+//    SECTION(
+//        "Concatenating multiple Series with different indexes,"
+//        " axis = 0, join = outer, ignore_index = false, sort = false")
+//    {
+//        auto s1 =
+//            pd::Series(std::vector{ 1L, 2L, 3L }, "s1", pd::range(0UL, 3UL));
+//        auto s2 =
+//            pd::Series(std::vector{ 4L, 5L, 6L }, "", pd::range(3UL, 6UL));
+//        auto s3 =
+//            pd::Series(std::vector{ 7L, 8L, 9L }, "", pd::range(6UL, 9UL));
+//        auto result = pd::concat(
+//            std::vector<pd::Series>{ s1, s2, s3 },
+//            AxisType::Index,
+//            JoinType::Outer,
+//            false,
+//            false);
+//        auto expected = pd::DataFrame(
+//            std::array<std::string, 1>{ "" },
+//            pd::ArrayPtr{ nullptr },
+//            std::vector<long>{ 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+//            std::vector<::uint64_t>{ 0, 1, 2, 3, 4, 5, 6, 7, 8 });
+//        INFO(result << "\n!=\n" << expected);
+//        REQUIRE(result.equals_(expected));
+//    }
 
-    SECTION(
-        "Concatenating multiple Series with different indexes, axis = 1, join = outer, ignore_index = true, sort = true")
-    {
-        auto s1 =
-            pd::Series(std::vector{ 1L, 2L, 3L }, "s1", pd::range(0UL, 3UL));
-        auto s2 =
-            pd::Series(std::vector{ 4L, 5L, 6L }, "s2", pd::range(3UL, 6UL));
-        auto s3 =
-            pd::Series(std::vector{ 7L, 8L, 9L }, "s3", pd::range(6UL, 9UL));
-        auto result = pd::concat(
-            std::vector<pd::Series>{ s1, s2, s3 },
-            AxisType::Columns,
-            JoinType::Outer,
-            true,
-            true);
-        auto expected = pd::DataFrame(
-            ArrayTable{ { "s1",
-                          arrow::ArrayFromJSON<::int64_t>(
-                              "[1,2,3,null,null,null,null,null,null]") },
-                        { "s2",
-                          arrow::ArrayFromJSON<::int64_t>(
-                              "[null,null,null,4,5,6,null,null,null]") },
-                        { "s3",
-                          arrow::ArrayFromJSON<::int64_t>(
-                              "[null,null,null,null,null,null,7,8,9]") } });
-        INFO(result << "\n!=\n" << expected);
-        REQUIRE(result.equals_(expected));
-    }
+//    SECTION(
+//        "Concatenating multiple Series with different indexes, axis = 1, join = outer, ignore_index = true, sort = true")
+//    {
+//        auto s1 =
+//            pd::Series(std::vector{ 1L, 2L, 3L }, "s1", pd::range(0UL, 3UL));
+//        auto s2 =
+//            pd::Series(std::vector{ 4L, 5L, 6L }, "s2", pd::range(3UL, 6UL));
+//        auto s3 =
+//            pd::Series(std::vector{ 7L, 8L, 9L }, "s3", pd::range(6UL, 9UL));
+//        auto result = pd::concat(
+//            std::vector<pd::Series>{ s1, s2, s3 },
+//            AxisType::Columns,
+//            JoinType::Outer,
+//            true,
+//            true);
+//        auto expected = pd::DataFrame(
+//            ArrayTable{ { "s1",
+//                          arrow::ArrayFromJSON<::int64_t>(
+//                              "[1,2,3,null,null,null,null,null,null]") },
+//                        { "s2",
+//                          arrow::ArrayFromJSON<::int64_t>(
+//                              "[null,null,null,4,5,6,null,null,null]") },
+//                        { "s3",
+//                          arrow::ArrayFromJSON<::int64_t>(
+//                              "[null,null,null,null,null,null,7,8,9]") } });
+//        INFO(result << "\n!=\n" << expected);
+//        REQUIRE(result.equals_(expected));
+//    }
 
-    SECTION(
-        "Concatenating multiple Series with different indexes, axis = 1, join = outer, ignore_index = true, sort = true")
-    {
-        auto s1 =
-            pd::Series(std::vector{ 1L, 2L, 3L }, "s1", pd::range(0UL, 3UL));
-        auto s2 =
-            pd::Series(std::vector{ 4L, 5L, 6L }, "s2", pd::range(3UL, 6UL));
-        auto s3 =
-            pd::Series(std::vector{ 7L, 8L, 9L }, "s3", pd::range(6UL, 9UL));
-        auto result = pd::concat(
-            std::vector<pd::Series>{ s1, s2, s3 },
-            AxisType::Columns,
-            JoinType::Outer,
-            true,
-            true);
-        auto expected = pd::DataFrame(
-            ArrayTable{ { "s1",
-                          arrow::ArrayFromJSON<::int64_t>(
-                              "[1,2,3,null,null,null,null,null,null]") },
-                        { "s2",
-                          arrow::ArrayFromJSON<::int64_t>(
-                              "[null,null,null,4,5,6,null,null,null]") },
-                        { "s3",
-                          arrow::ArrayFromJSON<::int64_t>(
-                              "[null,null,null,null,null,null,7,8,9]") } });
-        INFO(result << "\n!=\n" << expected);
-        REQUIRE(result.equals_(expected));
-    }
-
-    SECTION(
-        "Concatenating multiple Series with duplicate keys,"
-        " axis = 0, join = inner, ignore_index = false, sort = false")
-    {
-        auto s1 =
-            pd::Series(std::vector{ 1L, 2L, 3L }, "a", pd::range(0UL, 3UL));
-        auto s2 =
-            pd::Series(std::vector{ 4L, 5L, 6L }, "b", pd::range(3UL, 6UL));
-        auto s3 =
-            pd::Series(std::vector{ 7L, 8L, 9L }, "a", pd::range(6UL, 9UL));
-        auto result = pd::concat(
-            std::vector<pd::Series>{ s1, s2, s3 },
-            AxisType::Index,
-            JoinType::Inner,
-            false,
-            false);
-        auto expected = pd::DataFrame(
-            std::array<std::string, 1>{ "" },
-            pd::ArrayPtr{ nullptr },
-            std::vector<long>{ 1, 2, 3, 4, 5, 6, 7, 8, 9 },
-            std::vector<::uint64_t>{ 0, 1, 2, 6, 7, 8 });
-        INFO(result << "\n!=\n" << expected);
-        REQUIRE(result.equals_(expected));
-    }
-
-    SECTION(
-        "Concatenating multiple Series with duplicate keys,"
-        " axis = 0, join = inner, ignore_index = false, sort = false")
-    {
-        auto s1 =
-            pd::Series(std::vector{ 1L, 2L, 3L }, "a", pd::range(0UL, 3UL));
-        auto s2 =
-            pd::Series(std::vector{ 4L, 5L, 6L }, "b", pd::range(3UL, 6UL));
-        auto s3 =
-            pd::Series(std::vector{ 7L, 8L, 9L }, "a", pd::range(6UL, 9UL));
-        auto result = pd::concat(
-            std::vector<pd::Series>{ s1, s2, s3 },
-            AxisType::Index,
-            JoinType::Inner,
-            false,
-            false);
-        auto expected = pd::DataFrame(
-            std::array<std::string, 1>{ "" },
-            pd::ArrayPtr{ nullptr },
-            std::vector<long>{ 1, 2, 3, 4, 5, 6, 7, 8, 9 });
-        INFO(result << "\n!=\n" << expected);
-        REQUIRE(result.equals_(expected));
-    }
-    SECTION(
-        "Concatenating multiple Series with duplicate keys,"
-        " axis = 0, join = inner, ignore_index = false, sort = true")
-    {
-        auto s1 =
-            pd::Series(std::vector{ 1L, 2L, 3L }, "a", pd::range(0UL, 3UL));
-        auto s2 =
-            pd::Series(std::vector{ 4L, 5L, 6L }, "b", pd::range(3UL, 6UL));
-        auto s3 =
-            pd::Series(std::vector{ 7L, 8L, 9L }, "a", pd::range(6UL, 9UL));
-        auto result = pd::concat(
-            std::vector<pd::Series>{ s1, s2, s3 },
-            AxisType::Index,
-            JoinType::Inner,
-            false,
-            true);
-        auto expected = pd::DataFrame(
-            std::array<std::string, 1>{ "a" },
-            pd::ArrayPtr{ nullptr },
-            std::vector<long>{ 1, 2, 3, 4, 5, 6, 7, 8, 9 });
-        INFO(result << "\n!=\n" << expected);
-        REQUIRE(result.equals_(expected));
-    }
+//    SECTION(
+//        "Concatenating multiple Series with different indexes, axis = 1, join = outer, ignore_index = true, sort = true")
+//    {
+//        auto s1 =
+//            pd::Series(std::vector{ 1L, 2L, 3L }, "s1", pd::range(0UL, 3UL));
+//        auto s2 =
+//            pd::Series(std::vector{ 4L, 5L, 6L }, "s2", pd::range(3UL, 6UL));
+//        auto s3 =
+//            pd::Series(std::vector{ 7L, 8L, 9L }, "s3", pd::range(6UL, 9UL));
+//        auto result = pd::concat(
+//            std::vector<pd::Series>{ s1, s2, s3 },
+//            AxisType::Columns,
+//            JoinType::Outer,
+//            true,
+//            true);
+//        auto expected = pd::DataFrame(
+//            ArrayTable{ { "s1",
+//                          arrow::ArrayFromJSON<::int64_t>(
+//                              "[1,2,3,null,null,null,null,null,null]") },
+//                        { "s2",
+//                          arrow::ArrayFromJSON<::int64_t>(
+//                              "[null,null,null,4,5,6,null,null,null]") },
+//                        { "s3",
+//                          arrow::ArrayFromJSON<::int64_t>(
+//                              "[null,null,null,null,null,null,7,8,9]") } });
+//        INFO(result << "\n!=\n" << expected);
+//        REQUIRE(result.equals_(expected));
+//    }
+//
+//    SECTION(
+//        "Concatenating multiple Series with duplicate keys,"
+//        " axis = 0, join = inner, ignore_index = false, sort = false")
+//    {
+//        auto s1 =
+//            pd::Series(std::vector{ 1L, 2L, 3L }, "a", pd::range(0UL, 3UL));
+//        auto s2 =
+//            pd::Series(std::vector{ 4L, 5L, 6L }, "b", pd::range(3UL, 6UL));
+//        auto s3 =
+//            pd::Series(std::vector{ 7L, 8L, 9L }, "a", pd::range(6UL, 9UL));
+//        auto result = pd::concat(
+//            std::vector<pd::Series>{ s1, s2, s3 },
+//            AxisType::Index,
+//            JoinType::Inner,
+//            false,
+//            false);
+//        auto expected = pd::DataFrame(
+//            std::array<std::string, 1>{ "" },
+//            pd::ArrayPtr{ nullptr },
+//            std::vector<long>{ 1, 2, 3, 4, 5, 6, 7, 8, 9 },
+//            std::vector<::uint64_t>{ 0, 1, 2, 6, 7, 8 });
+//        INFO(result << "\n!=\n" << expected);
+//        REQUIRE(result.equals_(expected));
+//    }
+//
+//    SECTION(
+//        "Concatenating multiple Series with duplicate keys,"
+//        " axis = 0, join = inner, ignore_index = false, sort = false")
+//    {
+//        auto s1 =
+//            pd::Series(std::vector{ 1L, 2L, 3L }, "a", pd::range(0UL, 3UL));
+//        auto s2 =
+//            pd::Series(std::vector{ 4L, 5L, 6L }, "b", pd::range(3UL, 6UL));
+//        auto s3 =
+//            pd::Series(std::vector{ 7L, 8L, 9L }, "a", pd::range(6UL, 9UL));
+//        auto result = pd::concat(
+//            std::vector<pd::Series>{ s1, s2, s3 },
+//            AxisType::Index,
+//            JoinType::Inner,
+//            false,
+//            false);
+//        auto expected = pd::DataFrame(
+//            std::array<std::string, 1>{ "" },
+//            pd::ArrayPtr{ nullptr },
+//            std::vector<long>{ 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+//        INFO(result << "\n!=\n" << expected);
+//        REQUIRE(result.equals_(expected));
+//    }
+//    SECTION(
+//        "Concatenating multiple Series with duplicate keys,"
+//        " axis = 0, join = inner, ignore_index = false, sort = true")
+//    {
+//        auto s1 =
+//            pd::Series(std::vector{ 1L, 2L, 3L }, "a", pd::range(0UL, 3UL));
+//        auto s2 =
+//            pd::Series(std::vector{ 4L, 5L, 6L }, "b", pd::range(3UL, 6UL));
+//        auto s3 =
+//            pd::Series(std::vector{ 7L, 8L, 9L }, "a", pd::range(6UL, 9UL));
+//        auto result = pd::concat(
+//            std::vector<pd::Series>{ s1, s2, s3 },
+//            AxisType::Index,
+//            JoinType::Inner,
+//            false,
+//            true);
+//        auto expected = pd::DataFrame(
+//            std::array<std::string, 1>{ "a" },
+//            pd::ArrayPtr{ nullptr },
+//            std::vector<long>{ 1, 2, 3, 4, 5, 6, 7, 8, 9 });
+//        INFO(result << "\n!=\n" << expected);
+//        REQUIRE(result.equals_(expected));
+//    }
 
 //    SECTION("Concatenating a mix of DataFrames and Series with different indexes and types,"
 //        " axis = 1, join = inner, ignore_index = false, sort = false") {
@@ -1143,7 +1143,7 @@ TEST_CASE("Concatenate with Series", "[concat]")
 //        INFO(result << "\n!=\n" << expected);
 //        REQUIRE(result.equals_(expected));
 //    }
-}
+// }
 
 //TEST_CASE("Concatenate Benchmark", "[concat]")
 //{
