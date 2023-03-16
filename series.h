@@ -380,15 +380,18 @@ public:
     [[nodiscard]] double cov(Series const& S2) const;
 
     [[nodiscard]] Series ewm(
+        EWMAgg agg,
         double value,
         EWMAlphaType type,
         bool adjust = true,
         bool ignore_na = false,
-        int min_periods = 0) const;
+        int min_periods = 0,
+        bool bias = false) const;
 
     [[nodiscard]] Series strftime(
         std::string const& format,
         std::string const& locale = "C") const;
+
     [[nodiscard]] Series strptime(
         std::string const& format,
         arrow::TimeUnit::type unit,
@@ -402,14 +405,26 @@ private:
     std::vector<std::shared_ptr<arrow::Scalar>> get_indexed_values() const;
 
     static vector<double> ewm(
-        const arrow::DoubleArray::IteratorType & vals,
-        size_t N,
+        const std::shared_ptr<arrow::DoubleArray> & vals,
+        const std::vector<int64_t>& start,
+        const std::vector<int64_t>& end,
         int minp=1,
         double com=1,
         bool adjust=true,
         bool ignore_na=false,
         const vector<double>& deltas = {},
         bool normalize = true);
+
+    static vector<double> ewmcov(
+        const std::shared_ptr<arrow::DoubleArray>& input_x,
+        std::vector<int64_t> start,
+        std::vector<int64_t> end,
+        const std::shared_ptr<arrow::DoubleArray>& input_y,
+        int minp=1,
+        double com=9.5,
+        bool adjust=true,
+        bool ignore_na=false,
+        bool bias=false);
 };
 
 // Template Implementation

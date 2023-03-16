@@ -1028,11 +1028,13 @@ namespace pd
     }
 
     Series
-    Series::ewm(double value,
+    Series::ewm(EWMAgg agg,
+                double value,
                 EWMAlphaType type,
                 bool adjust,
                 bool ignore_na,
-                int min_periods) const
+                int min_periods,
+                bool bias) const
     {
         min_periods = std::max(min_periods, 1);
         double comass{};
@@ -1065,8 +1067,7 @@ namespace pd
                     double decay = 1 - std::exp(std::log(0.5) / value);
                     comass = 1 / decay - 1;
                 }
-                    throw std::runtime_error(
-                        "EWM is not supported");
+                throw std::runtime_error("EWM is not supported");
                 break;
             case EWMAlphaType::Alpha:
                 if (value > 0 and value <= 1)
@@ -1087,15 +1088,44 @@ namespace pd
         auto doubleArray =
             arrow::internal::checked_pointer_cast<arrow::DoubleArray>(casted);
 
-        return { ewm(doubleArray->begin(),
-                     doubleArray->length(),
-                     min_periods,
-                     comass,
-                     adjust,
-                     ignore_na,
-                     {}),
-                 m_name,
-                 m_index };
+        std::vector<double> output;
+
+        const std::vector<int64_t> begin{ 0 }, end{ doubleArray->length() };
+        switch (agg)
+        {
+            case EWMAgg::Mean:
+                output =
+                    ewm(doubleArray,
+                        begin,
+                        end,
+                        min_periods,
+                        comass,
+                        adjust,
+                        ignore_na,
+                        {});
+                break;
+            case EWMAgg::Var:
+            case EWMAgg::StdDev:
+                output = ewmcov(
+                    doubleArray,
+                    begin,
+                    end,
+                    doubleArray,
+                    min_periods,
+                    comass,
+                    adjust,
+                    ignore_na,
+                    bias);
+                if (agg == EWMAgg::StdDev)
+                {
+                    std::ranges::transform(
+                        output,
+                        output.begin(),
+                        [](auto const& x) { return x < 0 ? 0 : std::sqrt(x); });
+                }
+                break;
+        }
+        return { output, m_name, m_index };
     }
 
     Series Series::nth_element(int n) const {
@@ -1194,8 +1224,9 @@ namespace pd
     }
 
     vector<double> Series::ewm(
-        const arrow::DoubleArray::IteratorType& vals,
-        size_t N,
+        const std::shared_ptr<arrow::DoubleArray>& vals,
+        const std::vector<int64_t>& start,
+        const std::vector<int64_t>& end,
         int minp,
         double com,
         bool adjust,
@@ -1203,80 +1234,249 @@ namespace pd
         const vector<double>& deltas,
         bool normalize)
     {
+        const size_t N = vals->length();
+        const int64_t M = start.size();
+
         vector<double> output(N);
         if (N == 0)
         {
             return output;
         }
+
         bool use_deltas = !deltas.empty();
         double alpha = 1. / (1. + com);
         double old_wt_factor = 1. - alpha;
         double new_wt = adjust ? 1. : alpha;
 
-        auto weighted = vals[0];
-        bool is_observation = weighted.has_value();
-        int nobs = (is_observation);
-        output[0] = (nobs >= minp and weighted.has_value()) ? *weighted : NAN;
-        double old_wt = 1.;
-
-        for (int i = 1; i < N; i++)
+        for (int64_t j : std::views::iota(0L, M))
         {
-            auto cur = vals[i];
-            is_observation = cur.has_value();
-            nobs += is_observation;
-            if (weighted.has_value())
+            const int64_t s = start[j];
+            const int64_t e = end[j];
+
+            const int64_t win_size = e - s;
+            const auto sub_vals =
+                arrow::checked_pointer_cast<arrow::DoubleArray>(vals->Slice(s, win_size));
+
+            std::span<double> sub_output(output.begin() + s, output.begin() + e);
+            double mean_x{ std::nan("") }, mean_y{ std::nan("") };
+
+            auto weighted = (*vals)[0];
+            bool is_observation = weighted.has_value();
+            int nobs = int(is_observation);
+            sub_output[0] = (nobs >= minp) ? *weighted : NAN;
+            double old_wt = 1.;
+
+            for (int i = 1; i < N; i++)
             {
-                if (is_observation || not ignore_na)
+                auto cur = (*vals)[i];
+                is_observation = cur.has_value();
+                nobs += is_observation;
+                if (weighted.has_value())
                 {
-                    if (normalize)
+                    if (is_observation || not ignore_na)
                     {
-                        if (use_deltas)
+                        if (normalize)
                         {
-                            old_wt *= std::pow(old_wt_factor, deltas[i - 1]);
+                            if (use_deltas)
+                            {
+                                old_wt *=
+                                    std::pow(old_wt_factor, deltas[i - 1]);
+                            }
+                            else
+                            {
+                                old_wt *= old_wt_factor;
+                            }
                         }
                         else
                         {
-                            old_wt *= old_wt_factor;
+                            weighted = old_wt_factor * weighted.value();
+                        }
+                        if (is_observation)
+                        {
+                            if (normalize)
+                            {
+                                // avoid numerical errors on constant series
+                                if (weighted != cur)
+                                {
+                                    weighted = old_wt * weighted.value() +
+                                        new_wt * cur.value();
+                                    weighted.value() /= (old_wt + new_wt);
+                                }
+                                if (adjust)
+                                {
+                                    old_wt += new_wt;
+                                }
+                                else
+                                {
+                                    old_wt = 1.0;
+                                }
+                            }
+                            else
+                            {
+                                weighted.value() += cur.value();
+                            }
+                        }
+                    }
+                }
+                else if (is_observation)
+                {
+                    weighted = cur;
+                }
+                sub_output[i] = (nobs >= minp) ?
+                    *weighted :
+                    std::numeric_limits<double>::quiet_NaN();
+            }
+        }
+        return output;
+    }
+
+    vector<double> Series::ewmcov(
+        const std::shared_ptr<arrow::DoubleArray>& input_x,
+        std::vector<int64_t> start,
+        std::vector<int64_t> end,
+        const std::shared_ptr<arrow::DoubleArray>& input_y,
+        int minp,
+        double com,
+        bool adjust,
+        bool ignore_na,
+        bool bias)
+    {
+        const size_t N = input_x->length();
+        const size_t M = input_y->length();
+
+        if (M != N)
+        {
+            std::stringstream ss;
+            ss << "arrays are of different lengths (" << N << " and " << M
+               << ")";
+            throw std::runtime_error(ss.str());
+        }
+
+        vector<double> output(N);
+        if (N == 0)
+        {
+            return output;
+        }
+
+        const double alpha = 1.0 / (1.0 + com);
+        const double old_wt_factor = 1.0 - alpha;
+        const double new_wt = adjust ? 1.0 : alpha;
+
+        const size_t L = start.size();
+        for(size_t j : std::views::iota(0UL, L))
+        {
+            const int64_t s = start[j];
+            const int64_t e = end[j];
+
+            const int64_t win_size = e - s;
+            const auto sub_x_vals =
+                arrow::checked_pointer_cast<arrow::DoubleArray>(input_x->Slice(s, win_size));
+            const auto sub_y_vals =
+                arrow::checked_pointer_cast<arrow::DoubleArray>(input_y->Slice(s, win_size));
+
+            std::span<double> sub_out(output.begin() + s, output.begin() + e);
+            double mean_x{ std::nan("") }, mean_y{ std::nan("") };
+
+            const std::optional<double> mean_x_check = (*sub_x_vals)[0];
+            const std::optional<double> mean_y_check = (*sub_y_vals)[0];
+            bool is_observation = mean_x_check and mean_y_check;
+            int nobs = int(is_observation);
+            if (is_observation)
+            {
+                mean_x = *mean_x_check;
+                mean_y = *mean_y_check;
+            }
+
+            sub_out[0] =
+                (nobs >= minp) ? (bias ? 0.0 : std::nan("")) : std::nan("");
+
+            double cov = 0., sum_wt = 1., sum_wt2 = 1., old_wt = 1.;
+            double old_mean_x{}, old_mean_y{};
+            for(int64_t i : std::views::iota(1L, win_size))
+            {
+                std::optional<double> cur_x_check = (*sub_x_vals)[i], cur_y_check = (*sub_y_vals)[i];
+                is_observation = (cur_x_check and cur_y_check);
+                nobs += is_observation;
+
+                if (mean_x_check)
+                {
+                    if (is_observation or not ignore_na)
+                    {
+                        double cur_x = cur_x_check.value(), cur_y = cur_y_check.value();
+
+                        sum_wt *= old_wt_factor;
+                        sum_wt2 *= (old_wt_factor * old_wt_factor);
+                        old_wt *= old_wt_factor;
+
+                        if (is_observation)
+                        {
+                            old_mean_x = mean_x;
+                            old_mean_y = mean_y;
+
+                            if (mean_x != cur_x)
+                            {
+                                mean_x =
+                                    ((old_wt * old_mean_x) + (new_wt * cur_x)) /
+                                    (old_wt + new_wt);
+                            }
+
+                            if (mean_y != cur_y)
+                            {
+                                mean_y =
+                                    ((old_wt * old_mean_y) + (new_wt * cur_y)) /
+                                    (old_wt + new_wt);
+                            }
+
+                            cov = ((old_wt *
+                                    (cov +
+                                     ((old_mean_x - mean_x) *
+                                      (old_mean_y - mean_y)))) +
+                                   (new_wt *
+                                    ((cur_x - mean_x) * (cur_y - mean_y)))) /
+                                (old_wt + new_wt);
+                            sum_wt += new_wt;
+                            sum_wt2 += (new_wt * new_wt);
+                            old_wt += new_wt;
+
+                            if (not adjust)
+                            {
+                                sum_wt /= old_wt;
+                                sum_wt2 /= (old_wt * old_wt);
+                                old_wt = 1.;
+                            }
+
+                        }
+                    }
+                }
+
+                else if (is_observation)
+                {
+                    mean_x = cur_x_check.value();
+                    mean_y = cur_y_check.value();
+                }
+
+                if (nobs >= minp)
+                {
+                    if (not bias)
+                    {
+                        const double numerator = sum_wt * sum_wt;
+                        const double denominator = numerator - sum_wt2;
+
+                        if (denominator > 0)
+                        {
+                            sub_out[i] = (numerator / denominator) * cov;
+                        }
+                        else
+                        {
+                            sub_out[i] = std::nan("");
                         }
                     }
                     else
                     {
-                        weighted = old_wt_factor * weighted.value();
-                    }
-                    if (is_observation)
-                    {
-                        if (normalize)
-                        {
-                            // avoid numerical errors on constant series
-                            if (weighted != cur)
-                            {
-                                weighted = old_wt * weighted.value() +
-                                    new_wt * cur.value();
-                                weighted.value() /= (old_wt + new_wt);
-                            }
-                            if (adjust)
-                            {
-                                old_wt += new_wt;
-                            }
-                            else
-                            {
-                                old_wt = 1.0;
-                            }
-                        }
-                        else
-                        {
-                            weighted.value() += cur.value();
-                        }
+                        sub_out[i] = cov;
                     }
                 }
             }
-            else if (is_observation)
-            {
-                weighted = cur;
-            }
-            output[i] = (nobs >= minp and weighted.has_value()) ?
-                *weighted :
-                std::numeric_limits<double>::quiet_NaN();
         }
         return output;
     }

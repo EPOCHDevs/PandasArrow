@@ -1815,10 +1815,10 @@ TEST_CASE("Test Series::cov() and Series::corr() functions") {
     REQUIRE_THROWS_AS(s1.corr(s2, CorrelationType::Spearman), std::runtime_error);
 }
 
-TEST_CASE("Test Series::ewm")
+TEST_CASE("Test Series::ewm with mean")
 {
     auto result = Series(std::vector{ 1.0, 2.0, 3.0, 4.0, 5.0 })
-                      .ewm(0.5, pd::EWMAlphaType::CenterOfMass, true);
+                      .ewm(pd::EWMAgg::Mean, 0.5, pd::EWMAlphaType::CenterOfMass, true);
 
     REQUIRE(result.size() == 5);
     INFO(result);
@@ -1829,7 +1829,7 @@ TEST_CASE("Test Series::ewm")
     REQUIRE(result.at(4).as<double>() == Catch::Approx(4.53).epsilon(0.01));
 
     result = Series(std::vector{ 1.0, 2.0, 3.0, 4.0, 5.0 })
-                      .ewm(0.5, pd::EWMAlphaType::CenterOfMass, false);
+                      .ewm(pd::EWMAgg::Mean, 0.5, pd::EWMAlphaType::CenterOfMass, false);
 
     REQUIRE(result.size() == 5);
     INFO(result);
@@ -1840,7 +1840,7 @@ TEST_CASE("Test Series::ewm")
     REQUIRE(result.at(4).as<double>() == Catch::Approx(4.506173).epsilon(0.01));
 
     result = Series(std::vector<double>{ 2.0, 3.0, NAN, 5.0, 6.0 })
-                 .ewm(0.5, pd::EWMAlphaType::CenterOfMass, false, true);
+                 .ewm(pd::EWMAgg::Mean, 0.5, pd::EWMAlphaType::CenterOfMass, false, true);
 
     REQUIRE(result.size() == 5);
     INFO(result);
@@ -1851,7 +1851,7 @@ TEST_CASE("Test Series::ewm")
     REQUIRE(result.at(4).as<double>() == Catch::Approx(5.407407).epsilon(0.01));
 
     result = Series(std::vector<double>{ 2.0, 3.0, NAN, 5.0, 6.0  })
-                 .ewm(0.5, pd::EWMAlphaType::CenterOfMass, true, true);
+                 .ewm(pd::EWMAgg::Mean, 0.5, pd::EWMAlphaType::CenterOfMass, true, true);
 
     REQUIRE(result.size() == 5);
     INFO(result);
@@ -1862,13 +1862,13 @@ TEST_CASE("Test Series::ewm")
     REQUIRE(result.at(4).as<double>() == Catch::Approx(5.450000).epsilon(0.01));
 }
 
-TEST_CASE("Testing series::ewm2", "[series]")
+TEST_CASE("Testing series::ewm2 with mean", "[series]")
 {
     Series s(std::vector<double>{ 1, 2, 3, 4, 5 });
 
     SECTION("Testing ewm with center of mass")
     {
-        auto result = s.ewm(2, EWMAlphaType::CenterOfMass, true, true, 2).values<double>();
+        auto result = s.ewm(pd::EWMAgg::Mean, 2, EWMAlphaType::CenterOfMass, true, true, 2).values<double>();
         REQUIRE(std::isnan(result[0]));
         result = {result.begin()+1, result.end()};
 
@@ -1882,7 +1882,7 @@ TEST_CASE("Testing series::ewm2", "[series]")
 
     SECTION("Testing ewm with span")
     {
-        auto result = s.ewm(3, EWMAlphaType::Span, true, true, 2).values<double>();
+        auto result = s.ewm(pd::EWMAgg::Mean, 3, EWMAlphaType::Span, true, true, 2).values<double>();
         REQUIRE(std::isnan(result[0]));
         result = {result.begin()+1, result.end()};
         std::vector<double> expected_result = { 1.6666666666666667,
@@ -1895,7 +1895,7 @@ TEST_CASE("Testing series::ewm2", "[series]")
 
     SECTION("Testing ewm with alpha")
     {
-        auto result = s.ewm(0.5, EWMAlphaType::Alpha, true, true, 2).values<double>();
+        auto result = s.ewm(pd::EWMAgg::Mean, 0.5, EWMAlphaType::Alpha, true, true, 2).values<double>();
         std::vector<double> expected_result = { 1.6666666666666667,
                                                 2.4285714285714284,
                                                 3.2666666666666666,
@@ -1909,23 +1909,61 @@ TEST_CASE("Testing series::ewm2", "[series]")
     SECTION("Testing ewm with invalid center of mass value")
     {
         REQUIRE_THROWS_AS(
-            s.ewm(-1, EWMAlphaType::CenterOfMass, true, true, 2),
+            s.ewm(pd::EWMAgg::Mean, -1, EWMAlphaType::CenterOfMass, true, true, 2),
             std::runtime_error);
     }
 
     SECTION("Testing ewm with invalid span value")
     {
         REQUIRE_THROWS_AS(
-            s.ewm(0, EWMAlphaType::Span, true, true, 2),
+            s.ewm(pd::EWMAgg::Mean, 0, EWMAlphaType::Span, true, true, 2),
             std::runtime_error);
     }
 
     SECTION("Testing ewm with invalid alpha value")
     {
         REQUIRE_THROWS_AS(
-            s.ewm(2, EWMAlphaType::Alpha, true, true, 2),
+            s.ewm(pd::EWMAgg::Mean, 2, EWMAlphaType::Alpha, true, true, 2),
             std::runtime_error);
     }
+}
+
+TEST_CASE("Testing series::ewm2_var with span", "[series]")
+{
+    Series s(std::vector<double>{ 2.0, 5.1, 73, 2.2, 6.0, 8.0, 13.6, 11.3 });
+    auto result =
+        s.ewm(pd::EWMAgg::Var, 20, EWMAlphaType::Span).values<double>();
+    REQUIRE(std::isnan(result[0]));
+    result = { result.begin() + 1, result.end() };
+
+    std::vector<double> expected_result = { 4.805,
+                                            1685.270199833472,
+                                            1265.4065758221016,
+                                            954.2772626304347,
+                                            742.059923661829,
+                                            586.235828531947,
+                                            477.9199212836199 };
+    REQUIRE_THAT(
+        result,
+        Catch::Matchers::Approx(expected_result).epsilon(0.001));
+}
+
+TEST_CASE("Testing series::ewm2_stddev with span", "[series]")
+{
+    Series s(std::vector<double>{ 2.0, 5.1, 73, 2.2, 6.0, 8.0, 13.6, 11.3 });
+    auto result =
+        s.ewm(pd::EWMAgg::StdDev, 20, EWMAlphaType::Span).values<double>();
+    REQUIRE(std::isnan(result[0]));
+    result = { result.begin() + 1, result.end() };
+
+    std::vector<double> expected_result = {
+        2.1920310216782974, 41.05204257809192, 35.57255368710688,
+        30.891378451445554, 27.24077685496192, 24.21230737728123,
+        21.861379674751085
+    };
+    REQUIRE_THAT(
+        result,
+        Catch::Matchers::Approx(expected_result).epsilon(0.001));
 }
 
 TEST_CASE("Test reindex vs reindex_async benchmark small data", "[reindex]")

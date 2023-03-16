@@ -55,6 +55,13 @@ enum struct EWMAlphaType
     Alpha
 };
 
+enum struct EWMAgg
+{
+    Mean,
+    Var,
+    StdDev,
+};
+
 enum class JoinType
 {
     Inner,

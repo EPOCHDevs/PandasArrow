@@ -327,7 +327,14 @@ Series DataFrame::operator[](const std::string& column) const
     auto ptr = m_array->GetColumnByName(column);
     if (ptr)
         return { ptr, m_index, column };
-    throw std::runtime_error(column + " is not a valid column");
+    auto columns = columnNames();
+    std::stringstream ss;
+    ss << column + " is not a valid column, Valid Columns: ";
+    for (auto const& c: columns)
+    {
+        ss << c << " ";
+    }
+    throw std::runtime_error(ss.str());
 }
 
 DataFrame DataFrame::operator[](
