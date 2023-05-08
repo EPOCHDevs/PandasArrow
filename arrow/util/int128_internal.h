@@ -41,5 +41,5 @@ using boost::multiprecision::int128_t;
 using boost::multiprecision::uint128_t;
 #endif
 
-}  // namespace internal
-}  // namespace arrow
+} // namespace internal
+} // namespace arrow

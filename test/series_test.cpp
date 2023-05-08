@@ -6,8 +6,7 @@
 #include "pandas_arrow.h"
 #include "stdexcept"
 
-bool operator==(std::shared_ptr<arrow::DataType> const& a,
-                std::shared_ptr<arrow::DataType> const& b)
+bool operator==(std::shared_ptr<arrow::DataType> const& a, std::shared_ptr<arrow::DataType> const& b)
 {
     return a->Equals(b);
 }
@@ -15,7 +14,8 @@ using namespace std::string_literals;
 using namespace Catch;
 using namespace pd;
 
-TEST_CASE("Test Series constructor with arrow array and boolean input") {
+TEST_CASE("Test Series constructor with arrow array and boolean input")
+{
     // Create an Arrow array to pass as input
     auto arr = arrow::ArrayFromJSON<int>("[1, 2, 3, 4, 5]");
 
@@ -63,11 +63,11 @@ TEST_CASE("Test Series Initialization", "[series]")
     REQUIRE(int_array_series.size() == 5);
     REQUIRE(int_array_series.dtype() == arrow::int64());
     REQUIRE(int_array_series.name() == "");
-    REQUIRE(int_array_series.at(0).scalar->Equals( arrow::MakeScalar(int_array[0]) ) );
-    REQUIRE(int_array_series.at(1).scalar->Equals( arrow::MakeScalar(int_array[1]) ) );
-    REQUIRE(int_array_series.at(2).scalar->Equals( arrow::MakeScalar(int_array[2]) ) );
-    REQUIRE(int_array_series.at(3).scalar->Equals( arrow::MakeScalar(int_array[3]) ) );
-    REQUIRE(int_array_series.at(4).scalar->Equals( arrow::MakeScalar(int_array[4]) ) );
+    REQUIRE(int_array_series.at(0).scalar->Equals(arrow::MakeScalar(int_array[0])));
+    REQUIRE(int_array_series.at(1).scalar->Equals(arrow::MakeScalar(int_array[1])));
+    REQUIRE(int_array_series.at(2).scalar->Equals(arrow::MakeScalar(int_array[2])));
+    REQUIRE(int_array_series.at(3).scalar->Equals(arrow::MakeScalar(int_array[3])));
+    REQUIRE(int_array_series.at(4).scalar->Equals(arrow::MakeScalar(int_array[4])));
 
     // Test 4: Initialize Series with an arrow array and a name
     auto double_array = pd::random::RandomState(1).rand(5);
@@ -75,27 +75,26 @@ TEST_CASE("Test Series Initialization", "[series]")
     REQUIRE(double_array_series.size() == 5);
     REQUIRE(double_array_series.dtype() == arrow::float64());
     REQUIRE(double_array_series.name() == "my_name");
-    REQUIRE(double_array_series.at(0).scalar->Equals( arrow::MakeScalar(double_array[0]) ) );
-    REQUIRE(double_array_series.at(1).scalar->Equals( arrow::MakeScalar(double_array[1]) ) );
-    REQUIRE(double_array_series.at(2).scalar->Equals( arrow::MakeScalar(double_array[2]) ) );
-    REQUIRE(double_array_series.at(3).scalar->Equals( arrow::MakeScalar(double_array[3]) ) );
-    REQUIRE(double_array_series.at(4).scalar->Equals( arrow::MakeScalar(double_array[4]) ) );
+    REQUIRE(double_array_series.at(0).scalar->Equals(arrow::MakeScalar(double_array[0])));
+    REQUIRE(double_array_series.at(1).scalar->Equals(arrow::MakeScalar(double_array[1])));
+    REQUIRE(double_array_series.at(2).scalar->Equals(arrow::MakeScalar(double_array[2])));
+    REQUIRE(double_array_series.at(3).scalar->Equals(arrow::MakeScalar(double_array[3])));
+    REQUIRE(double_array_series.at(4).scalar->Equals(arrow::MakeScalar(double_array[4])));
 
     // Test 5: Initialize Series with a scalar value
     pd::Series scalar_series = pd::Series::MakeScalar(5L);
     REQUIRE(scalar_series.size() == 1);
     REQUIRE(scalar_series.dtype()->Equals(arrow::int64()));
     REQUIRE(scalar_series.name() == "");
-    REQUIRE(scalar_series.at(0).scalar->Equals( arrow::MakeScalar(5L) ) );
-    REQUIRE_FALSE(scalar_series.at(0).scalar->Equals( arrow::MakeScalar(5) ) );
+    REQUIRE(scalar_series.at(0).scalar->Equals(arrow::MakeScalar(5L)));
+    REQUIRE_FALSE(scalar_series.at(0).scalar->Equals(arrow::MakeScalar(5)));
 
     // Test 6: Initialize Series with a scalar value and a name
     pd::Series scalar_series_name = pd::Series::MakeScalar(5.5, "my_name");
     REQUIRE(scalar_series_name.size() == 1);
     REQUIRE(scalar_series_name.dtype()->Equals(arrow::float64()));
     REQUIRE(scalar_series_name.name() == "my_name");
-    REQUIRE(scalar_series_name.at(0).scalar->Equals( arrow::MakeScalar(5.5) ) );
-
+    REQUIRE(scalar_series_name.at(0).scalar->Equals(arrow::MakeScalar(5.5)));
 }
 
 TEST_CASE("Test Series Math Functions", "[series]")
@@ -207,7 +206,8 @@ TEST_CASE("Test Series Math Functions", "[series]")
     }
 }
 
-TEST_CASE("Test Series values() and const_ptr() functions") {
+TEST_CASE("Test Series values() and const_ptr() functions")
+{
     // Create an Arrow array to pass as input
     auto arr = arrow::ArrayFromJSON<int>("[1, 2, 3, 4, 5]");
     // Create a Series object with the array
@@ -215,14 +215,15 @@ TEST_CASE("Test Series values() and const_ptr() functions") {
 
     // Test values() function
     auto vals = s.values<int>();
-    REQUIRE(vals == std::vector<int>({1, 2, 3, 4, 5}));
+    REQUIRE(vals == std::vector<int>({ 1, 2, 3, 4, 5 }));
 
     // Test const_ptr() function
     auto ptr = s.const_ptr<int>();
     REQUIRE(ptr[3] == 4);
 }
 
-TEST_CASE("Test Series view() function") {
+TEST_CASE("Test Series view() function")
+{
     // Create an Arrow array to pass as input
     auto arr = arrow::ArrayFromJSON<float>("[1.1, 2.2, 3.3, 4.4, 5.5]");
     // Create a Series object with the array
@@ -294,21 +295,23 @@ TEST_CASE("Test basic operations of Series")
     REQUIRE_FALSE(s3.approx_equals(vec4));
 }
 
-TEST_CASE("Test Series equals method", "[series]") {
-    std::vector<int> vec1 = {1, 2, 3, 4, 5};
-    std::vector<int> vec2 = {1, 2, 3, 4, 5};
-    std::vector<int> vec3 = {1, 2, 3, 4};
-    std::vector<int> vec4 = {1, 2, 3, 4, 6};
+TEST_CASE("Test Series equals method", "[series]")
+{
+    std::vector<int> vec1 = { 1, 2, 3, 4, 5 };
+    std::vector<int> vec2 = { 1, 2, 3, 4, 5 };
+    std::vector<int> vec3 = { 1, 2, 3, 4 };
+    std::vector<int> vec4 = { 1, 2, 3, 4, 6 };
     Series s1(vec1);
     REQUIRE(s1.equals(vec2));
     REQUIRE_FALSE(s1.equals(vec3));
     REQUIRE_FALSE(s1.equals(vec4));
 }
 
-TEST_CASE("Test Series approx_equals method", "[series]") {
-    std::vector<double> vec1 = {1.0, 2.0, 3.0, 4.0, 5.0};
-    std::vector<double> vec2 = {1.0, 2.0, 3.0, 4.0, 5.1};
-    std::vector<double> vec3 = {1.0, 2.0, 3.0, 4.0, 5.5};
+TEST_CASE("Test Series approx_equals method", "[series]")
+{
+    std::vector<double> vec1 = { 1.0, 2.0, 3.0, 4.0, 5.0 };
+    std::vector<double> vec2 = { 1.0, 2.0, 3.0, 4.0, 5.1 };
+    std::vector<double> vec3 = { 1.0, 2.0, 3.0, 4.0, 5.5 };
     Series s1(vec1);
     REQUIRE_FALSE(s1.approx_equals(vec2));
     REQUIRE_FALSE(s1.approx_equals(vec3));
@@ -316,25 +319,27 @@ TEST_CASE("Test Series approx_equals method", "[series]") {
 
 TEST_CASE("Test Series all() method")
 {
-    std::vector<bool> mask = {false, true, true, false, true};
+    std::vector<bool> mask = { false, true, true, false, true };
     Series s1(mask);
     REQUIRE(s1.all() == false);
 
-    std::vector<bool> mask2 = {true, true, true, true, true};
+    std::vector<bool> mask2 = { true, true, true, true, true };
     Series s2(mask2);
     REQUIRE(s2.all() == true);
 }
 
-TEST_CASE("Test Series::where() function") {
-    std::vector<int> vec1 = {1, 2, 3, 4, 5};
+TEST_CASE("Test Series::where() function")
+{
+    std::vector<int> vec1 = { 1, 2, 3, 4, 5 };
     auto array1 = arrow::ArrayT<int>::Make(vec1);
     Series s1(array1, true);
 
-    std::vector<bool> mask = {true, false, true, false, true};
+    std::vector<bool> mask = { true, false, true, false, true };
     auto array2 = arrow::ArrayT<bool>::Make(mask);
     Series mask_series(array2, true);
 
-    SECTION("Test where() with a mask array") {
+    SECTION("Test where() with a mask array")
+    {
         auto result = s1.where(mask_series);
 
         REQUIRE(result.size() == 3);
@@ -344,17 +349,17 @@ TEST_CASE("Test Series::where() function") {
     }
 
     // Test where() with a mask series of different size
-    std::vector<bool> short_mask = {true, false};
+    std::vector<bool> short_mask = { true, false };
     auto short_mask_array = arrow::ArrayT<bool>::Make(short_mask);
     Series short_mask_series(short_mask_array, true);
     REQUIRE_THROWS_AS(s1.where(short_mask_series), std::runtime_error);
 
     SECTION("Test where() with a mask array and a series of different size")
     {
-        std::vector<int> vec1 = {1, 2, 3, 4, 5};
+        std::vector<int> vec1 = { 1, 2, 3, 4, 5 };
         Series s1(vec1);
 
-        std::vector<bool> mask = {false, true, true};
+        std::vector<bool> mask = { false, true, true };
         Series mask_s(mask);
 
         REQUIRE_THROWS_AS(s1.where(mask_s), std::runtime_error);
@@ -362,10 +367,10 @@ TEST_CASE("Test Series::where() function") {
 
     SECTION("Test where() with a mask array and a scalar value")
     {
-        std::vector<int> vec1 = {1, 2, 3, 4, 5};
+        std::vector<int> vec1 = { 1, 2, 3, 4, 5 };
         Series s1(vec1);
 
-        std::vector<bool> mask = {false, true, true, true, false};
+        std::vector<bool> mask = { false, true, true, true, false };
         Series mask_s(mask);
 
         Scalar scalar(3);
@@ -409,7 +414,7 @@ TEST_CASE("Test Series::take() function")
     SECTION("Test take() with a index array")
     {
         std::vector<int32_t> index = { 1, 3, 4 };
-        Series result = s1.take( index );
+        Series result = s1.take(index);
 
         REQUIRE(result.size() == 3);
         REQUIRE(result.at(0) == 2);
@@ -454,8 +459,8 @@ TEST_CASE("Test Series::operator[] (slice) function")
     // Test slice with out of bounds index
     SECTION("Test slice with out of bounds index")
     {
-        REQUIRE_THROWS_AS( (s1[Slice{ -6, -1 }]), std::runtime_error);
-        REQUIRE_THROWS_AS( (s1[Slice{ 6, 10 }]), std::runtime_error);
+        REQUIRE_THROWS_AS((s1[Slice{ -6, -1 }]), std::runtime_error);
+        REQUIRE_THROWS_AS((s1[Slice{ 6, 10 }]), std::runtime_error);
     }
 }
 
@@ -497,7 +502,6 @@ TEST_CASE("Test Series::operator")
     // Test with both start and end
     DateTimeSlice slicer4 = { date(2022, 1, 2), date(2022, 1, 7) };
     REQUIRE_THROWS_AS(s1[slicer4], std::runtime_error);
-
 }
 
 TEST_CASE("Test Series::operator[] with StringSlice")
@@ -532,17 +536,14 @@ TEST_CASE("Test Series::operator[] with StringSlice")
     REQUIRE(result3.at(0) == 2);
     REQUIRE(result3.at(1) == 3);
 
-    REQUIRE_THROWS_AS(
-        (s1[StringSlice{ std::string("b"), std::string("g") }]),
-        std::runtime_error);
+    REQUIRE_THROWS_AS((s1[StringSlice{ std::string("b"), std::string("g") }]), std::runtime_error);
 
-    REQUIRE_THROWS_AS(
-        (s1[StringSlice{ std::string("k"), std::string("b") }]),
-        std::runtime_error);
+    REQUIRE_THROWS_AS((s1[StringSlice{ std::string("k"), std::string("b") }]), std::runtime_error);
 }
 
-TEST_CASE("Test Series::any() function") {
-    std::vector<int> vec1 = {1, 2, 3, 4, 5};
+TEST_CASE("Test Series::any() function")
+{
+    std::vector<int> vec1 = { 1, 2, 3, 4, 5 };
     auto array1 = arrow::ArrayT<int>::Make(vec1);
     Series s1(array1, true);
 
@@ -550,20 +551,21 @@ TEST_CASE("Test Series::any() function") {
     REQUIRE_THROWS_AS(s1.any(), std::runtime_error);
 
     // Test with some null values
-    std::vector<bool> mask = {true, false, true, true, false};
+    std::vector<bool> mask = { true, false, true, true, false };
     auto array2 = arrow::ArrayT<bool>::Make(mask);
     Series s2(array2, true);
     REQUIRE(s2.any() == true);
 
     // Test with all null values
-    std::vector<bool> mask2 = {false, false, false, false, false};
+    std::vector<bool> mask2 = { false, false, false, false, false };
     auto array3 = arrow::ArrayT<bool>::Make(mask2);
     Series s3(array3, true);
     REQUIRE(s3.any() == false);
 }
 
-TEST_CASE("Test Series::index() function") {
-    std::vector<int> vec1 = {1, 2, 3, 4, 5};
+TEST_CASE("Test Series::index() function")
+{
+    std::vector<int> vec1 = { 1, 2, 3, 4, 5 };
 
     SECTION("Series as non-index")
     {
@@ -582,7 +584,7 @@ TEST_CASE("Test Series::index() function") {
 
     SECTION("Series as index")
     {
-        vec1 = {1, 2, 3, 6, 7};
+        vec1 = { 1, 2, 3, 6, 7 };
         auto array1 = arrow::ArrayT<int>::Make(vec1);
         Series s1(array1, true);
 
@@ -596,55 +598,56 @@ TEST_CASE("Test Series::index() function") {
         REQUIRE(s1.index(scalar) == 2);
         REQUIRE(s1.index(scalar1) == -1);
     }
-
 }
 
-TEST_CASE("Test Series::count() function") {
-    std::vector<int> vec1 = {1, 2, 3, 4, 5};
+TEST_CASE("Test Series::count() function")
+{
+    std::vector<int> vec1 = { 1, 2, 3, 4, 5 };
     auto array1 = arrow::ArrayT<int>::Make(vec1);
     Series s1(array1, true);
 
     REQUIRE(s1.count() == 5);
 
-    std::vector<int> vec2 = {1, 2, 3, 4, 5, 6, 7};
+    std::vector<int> vec2 = { 1, 2, 3, 4, 5, 6, 7 };
     auto array2 = arrow::ArrayT<int>::Make(vec2);
     Series s2(array2, true);
     REQUIRE(s2.count() == 7);
 
-    std::vector<int> vec3 = {1, 2, 3, 4, 5, 0, 7};
+    std::vector<int> vec3 = { 1, 2, 3, 4, 5, 0, 7 };
     auto array3 = arrow::ArrayT<int>::Make(vec3);
     Series s3(array3, true);
     REQUIRE(s3.count() == 7);
 }
 
-TEST_CASE("Test Series::count_na() function") {
-    std::vector<int> vec1 = {1, 2, 3, 4, 5};
+TEST_CASE("Test Series::count_na() function")
+{
+    std::vector<int> vec1 = { 1, 2, 3, 4, 5 };
     auto array1 = arrow::ArrayT<int>::Make(vec1);
     Series s1(array1, true);
 
     REQUIRE(s1.count_na() == 0);
 
-    std::vector<int> vec2 = {1, 2, 3, 4, 5, 6, 7};
-    std::vector<bool> mask = {true, true, true, true, true, true, false};
+    std::vector<int> vec2 = { 1, 2, 3, 4, 5, 6, 7 };
+    std::vector<bool> mask = { true, true, true, true, true, true, false };
     auto array2 = arrow::ArrayT<int>::Make(vec2, mask);
     Series s2(array2, true);
     REQUIRE(s2.count_na() == 1);
 
-    std::vector<int> vec3 = {1, 2, 3, 4, 5, 0, 7};
-    std::vector<bool> mask2 = {true, true, true, true, true,false, true};
+    std::vector<int> vec3 = { 1, 2, 3, 4, 5, 0, 7 };
+    std::vector<bool> mask2 = { true, true, true, true, true, false, true };
     auto array3 = arrow::ArrayT<int>::Make(vec3, mask2);
     Series s3(array3, true);
 
     REQUIRE(s3.count() == 6);
     REQUIRE(s3.count_na() == 1);
 
-    std::vector<int> vec4 = {1, 2, 3, 4, 5, 0, 7, 1, 2, 3, 4, 5};
+    std::vector<int> vec4 = { 1, 2, 3, 4, 5, 0, 7, 1, 2, 3, 4, 5 };
     auto array4 = arrow::ArrayT<int>::Make(vec4);
     Series s4(array4, true);
 
     REQUIRE(s4.nunique() == 7);
 
-    std::vector<int> vec5 = {1, 2, 3, 4, 5, 0, 7, 1, 2, 3, 4, 5, -1};
+    std::vector<int> vec5 = { 1, 2, 3, 4, 5, 0, 7, 1, 2, 3, 4, 5, -1 };
     mask.clear();
     mask.resize(vec5.size(), true);
     mask.back() = false;
@@ -668,15 +671,16 @@ TEST_CASE("Test Series::is_unique() function")
     REQUIRE(s2.is_unique() == false);
 }
 
-TEST_CASE("Test Series::is_unique() and value_counts() functions") {
-    std::vector<int> vec1 = {1, 2, 3, 2, 5, 2, 7};
+TEST_CASE("Test Series::is_unique() and value_counts() functions")
+{
+    std::vector<int> vec1 = { 1, 2, 3, 2, 5, 2, 7 };
     auto array1 = arrow::ArrayT<int>::Make(vec1);
     Series s1(array1, true);
 
     REQUIRE(s1.is_unique() == false);
 
     auto result = s1.value_counts();
-    REQUIRE(result.shape() == std::array<int64_t, 2>{5, 2});
+    REQUIRE(result.shape() == std::array<int64_t, 2>{ 5, 2 });
 
     REQUIRE(result["values"][0] == 1);
     REQUIRE(result["counts"][0] == 1L);
@@ -704,9 +708,9 @@ TEST_CASE("Test Series::is_unique() and value_counts() functions") {
     REQUIRE(result.at(4, 0) == 7);
     REQUIRE(result.at(4, 1) == 1L);
 
-    REQUIRE_THROWS_AS(result.at(1, 4), std::runtime_error );
-    REQUIRE_THROWS_AS(result.at(5, 1), std::runtime_error );
-    REQUIRE_THROWS_AS(result.at(5, 5), std::runtime_error );
+    REQUIRE_THROWS_AS(result.at(1, 4), std::runtime_error);
+    REQUIRE_THROWS_AS(result.at(5, 1), std::runtime_error);
+    REQUIRE_THROWS_AS(result.at(5, 5), std::runtime_error);
 
     auto dict_result = s1.dictionary_encode();
     REQUIRE(dict_result->type_id() == arrow::Type::DICTIONARY);
@@ -734,20 +738,8 @@ TEST_CASE("Test Series unique(), drop_na(), and indices_nonzero() methods")
     }
 
     std::vector<int> vec2 = { 1, 2, 3, 4, 5, 1, 2, 3, 4, 5, 6, -1 };
-    auto array2 = arrow::ArrayT<int>::Make(
-        vec2,
-        { true,
-          true,
-          true,
-          true,
-          true,
-          true,
-          true,
-          true,
-          true,
-          true,
-          true,
-          false });
+    auto array2 =
+        arrow::ArrayT<int>::Make(vec2, { true, true, true, true, true, true, true, true, true, true, true, false });
     Series s2(array2, true);
 
     SECTION("Test drop_na() method")
@@ -787,14 +779,15 @@ TEST_CASE("Test Series unique(), drop_na(), and indices_nonzero() methods")
     }
 }
 
-TEST_CASE("Test Series::ffill() and Series::bfill() functions") {
-    std::vector<int> vec1 = {1, 2, 3, 4, 5, 0, 7};
-    std::vector<bool> mask = {true, true, true, true, true, false, true};
+TEST_CASE("Test Series::ffill() and Series::bfill() functions")
+{
+    std::vector<int> vec1 = { 1, 2, 3, 4, 5, 0, 7 };
+    std::vector<bool> mask = { true, true, true, true, true, false, true };
     auto array1 = arrow::ArrayT<int>::Make(vec1, mask);
     Series s1_masked(array1, true);
 
-        SECTION("Test ffill()")
-        {
+    SECTION("Test ffill()")
+    {
         auto result = s1_masked.ffill();
 
         REQUIRE(result.size() == 7);
@@ -805,7 +798,7 @@ TEST_CASE("Test Series::ffill() and Series::bfill() functions") {
         REQUIRE(result.at(4) == 5);
         REQUIRE(result.at(5) == 5); // should fill with last valid value
         REQUIRE(result.at(6) == 7);
-        }
+    }
 
     SECTION("Test bfill()")
     {
@@ -865,9 +858,7 @@ TEST_CASE("Test Series::replace_with_mask() function")
         auto array3 = arrow::ArrayT<int>::Make(vec2);
         Series other_series(array3, true);
 
-        REQUIRE_THROWS_AS(
-            s1.replace_with_mask(mask_series, other_series),
-            std::runtime_error);
+        REQUIRE_THROWS_AS(s1.replace_with_mask(mask_series, other_series), std::runtime_error);
     }
 
     SECTION("Test with different data types")
@@ -885,9 +876,7 @@ TEST_CASE("Test Series::replace_with_mask() function")
         auto array3 = arrow::ArrayT<float>::Make(vec2);
         Series other_series(array3, true);
 
-        REQUIRE_THROWS_AS(
-            s1.replace_with_mask(mask_series, other_series),
-            std::runtime_error);
+        REQUIRE_THROWS_AS(s1.replace_with_mask(mask_series, other_series), std::runtime_error);
     }
 
     SECTION("Test with same size but mask contains NA")
@@ -897,8 +886,7 @@ TEST_CASE("Test Series::replace_with_mask() function")
         std::vector<int> vec2 = { 10, 20, 30, 40, 50 };
 
         auto array1 = arrow::ArrayT<int>::Make(vec1);
-        auto array2 = arrow::ArrayT<bool>::Make(mask,
-                                                { true, true, false, true, true });
+        auto array2 = arrow::ArrayT<bool>::Make(mask, { true, true, false, true, true });
         auto array3 = arrow::ArrayT<int>::Make(vec2);
 
         Series s1(array1, true);
@@ -929,9 +917,7 @@ TEST_CASE("Test Series::replace_with_mask() function")
         Series mask_series(array2, true);
         Series other_series(array3, true);
 
-        REQUIRE_THROWS_AS(
-            s1.replace_with_mask(mask_series, other_series),
-            std::runtime_error);
+        REQUIRE_THROWS_AS(s1.replace_with_mask(mask_series, other_series), std::runtime_error);
     }
 
     SECTION("Test with different types")
@@ -948,13 +934,12 @@ TEST_CASE("Test Series::replace_with_mask() function")
         Series mask_series(array2, true);
         Series other_series(array3, true);
 
-        REQUIRE_THROWS_AS(
-            s1.replace_with_mask(mask_series, other_series),
-            std::runtime_error);
+        REQUIRE_THROWS_AS(s1.replace_with_mask(mask_series, other_series), std::runtime_error);
     }
 }
 
-TEST_CASE("Test Series::if_else() functions") {
+TEST_CASE("Test Series::if_else() functions")
+{
     std::vector<int> vec1 = { 1, 2, 3, 4, 5 };
     std::vector<bool> mask = { true, true, false, false, true };
     std::vector<int> vec2 = { 10, 20, 30, 40, 50 };
@@ -969,7 +954,8 @@ TEST_CASE("Test Series::if_else() functions") {
 
     Scalar other_scalar(100L);
 
-    SECTION("Test with Series for other values") {
+    SECTION("Test with Series for other values")
+    {
         auto result = s1.if_else(mask_series, other_series);
         INFO(result);
         REQUIRE(result.size() == 5);
@@ -980,7 +966,8 @@ TEST_CASE("Test Series::if_else() functions") {
         REQUIRE(result.at(4) == 5);
     }
 
-    SECTION("Test with Scalar for other values") {
+    SECTION("Test with Scalar for other values")
+    {
         auto result = s1.if_else(mask_series, other_scalar);
         INFO(result);
 
@@ -993,30 +980,35 @@ TEST_CASE("Test Series::if_else() functions") {
     }
 }
 
-TEST_CASE("Test Series::is_null() function") {
+TEST_CASE("Test Series::is_null() function")
+{
 
-    SECTION("Test with no null values") {
-        std::vector<int> vec1 = {1, 2, 3, 4, 5};
-        std::vector<bool> mask = {true, true, true, true, true};
+    SECTION("Test with no null values")
+    {
+        std::vector<int> vec1 = { 1, 2, 3, 4, 5 };
+        std::vector<bool> mask = { true, true, true, true, true };
         auto array1 = arrow::ArrayT<int>::Make(vec1, mask);
         Series s1(array1, true);
 
         auto result = s1.is_null();
         REQUIRE(result.size() == 5);
-        for (int i = 0; i < result.size(); i++) {
+        for (int i = 0; i < result.size(); i++)
+        {
             REQUIRE_FALSE(result.at(i).as<bool>());
         }
     }
 
-    SECTION("Test with null values") {
-        std::vector<int> vec2 = {1, 2, 3, 4, 5};
-        std::vector<bool> mask2 = {true, true, true, true, false};
+    SECTION("Test with null values")
+    {
+        std::vector<int> vec2 = { 1, 2, 3, 4, 5 };
+        std::vector<bool> mask2 = { true, true, true, true, false };
         auto array2 = arrow::ArrayT<int>::Make(vec2, mask2);
         Series s2(array2, true);
 
         auto result = s2.is_null();
         REQUIRE(result.size() == 5);
-        for (int i = 0; i < result.size() - 1; i++) {
+        for (int i = 0; i < result.size() - 1; i++)
+        {
             INFO(i << result.at(i));
             REQUIRE_FALSE(result.at(i).as<bool>());
         }
@@ -1059,12 +1051,14 @@ TEST_CASE("Test Series::is_finite() function")
     }
 }
 
-TEST_CASE("Test Series::cast() function") {
-    std::vector<double> vec1 = {1.0, 2.0, 3.0, 4.0, 5.0};
+TEST_CASE("Test Series::cast() function")
+{
+    std::vector<double> vec1 = { 1.0, 2.0, 3.0, 4.0, 5.0 };
     auto array1 = arrow::ArrayT<double>::Make(vec1);
     Series s1(array1, true);
 
-    SECTION("Test with casting to int") {
+    SECTION("Test with casting to int")
+    {
         auto result = s1.cast<int>();
         REQUIRE(result.size() == 5);
         REQUIRE(result.at(0) == 1);
@@ -1074,7 +1068,8 @@ TEST_CASE("Test Series::cast() function") {
         REQUIRE(result.at(4) == 5);
     }
 
-    SECTION("Test with casting to bool") {
+    SECTION("Test with casting to bool")
+    {
         auto result = s1.cast<bool>();
         REQUIRE(result.size() == 5);
         REQUIRE(result.at(0) == true);
@@ -1084,7 +1079,8 @@ TEST_CASE("Test Series::cast() function") {
         REQUIRE(result.at(4) == true);
     }
 
-    SECTION("Test with safe casting") {
+    SECTION("Test with safe casting")
+    {
         auto result = s1.cast<bool>(true);
         REQUIRE(result.size() == 5);
         REQUIRE(result.at(0) == true);
@@ -1095,12 +1091,14 @@ TEST_CASE("Test Series::cast() function") {
     }
 }
 
-TEST_CASE("Test Series::shift() and Series::pct_change() functions") {
-    std::vector<double> vec1 = {1.0, 2.0, 3.0, 4.0, 5.0};
+TEST_CASE("Test Series::shift() and Series::pct_change() functions")
+{
+    std::vector<double> vec1 = { 1.0, 2.0, 3.0, 4.0, 5.0 };
     auto array1 = arrow::ArrayT<double>::Make(vec1);
     Series s1(array1, true);
 
-    SECTION("Test shift() with default options") {
+    SECTION("Test shift() with default options")
+    {
         auto result = s1.shift();
         REQUIRE(result.size() == 5);
         REQUIRE_FALSE(result.at(0).isValid());
@@ -1110,7 +1108,8 @@ TEST_CASE("Test Series::shift() and Series::pct_change() functions") {
         REQUIRE(result.at(4) == 4.0);
     }
 
-    SECTION("Test shift() with custom shift value and fill value") {
+    SECTION("Test shift() with custom shift value and fill value")
+    {
         std::shared_ptr<arrow::Scalar> fill_value = arrow::MakeScalar(0.0);
         auto result = s1.shift(-2, fill_value);
         REQUIRE(result.size() == 5);
@@ -1128,13 +1127,12 @@ TEST_CASE("Test Series::shift() and Series::pct_change() functions") {
         REQUIRE_FALSE(result.at(0).isValid());
         REQUIRE(result.at(1) == 1.0);
         REQUIRE(result.at(2).as<double>() == 0.5);
-        REQUIRE(
-            result.at(3).as<double>() ==
-            Catch::Approx(0.3333333333).epsilon(0.01));
+        REQUIRE(result.at(3).as<double>() == Catch::Approx(0.3333333333).epsilon(0.01));
         REQUIRE(result.at(4).as<double>() == Catch::Approx(0.25).epsilon(0.01));
     }
 
-    SECTION("Test with negative shift value") {
+    SECTION("Test with negative shift value")
+    {
         auto result = s1.shift(-1);
 
         REQUIRE(result.size() == 5);
@@ -1145,7 +1143,8 @@ TEST_CASE("Test Series::shift() and Series::pct_change() functions") {
         REQUIRE(result.is_valid(4) == false);
     }
 
-    SECTION("Test with custom fill value") {
+    SECTION("Test with custom fill value")
+    {
         auto fill_value = arrow::MakeScalar(10.0);
         auto result = s1.shift(-1, fill_value);
 
@@ -1177,10 +1176,9 @@ TEST_CASE("Test Series::append() function")
         REQUIRE(result.IsIndexArray() == true);
 
         auto indexer = result.getIndexer();
-        for(int i = 0; i < indexer.size(); i++)
+        for (int i = 0; i < indexer.size(); i++)
         {
-            REQUIRE(indexer.at(
-                        arrow::MakeScalar(vec3[i])->GetSharedPtr()) == i);
+            REQUIRE(indexer.at(arrow::MakeScalar(vec3[i])->GetSharedPtr()) == i);
         }
         for (int i = 0; i < 10; i++)
         {
@@ -1202,9 +1200,10 @@ TEST_CASE("Test Series::append() function")
         CHECK_THROWS_AS(s1.append(s2), std::runtime_error);
     }
 
-    SECTION("Test with different arrays") {
-        std::vector<int> vec1 = {1, 2, 3, 4, 5};
-        std::vector<int> vec2 = {6, 7, 8, 9, 10};
+    SECTION("Test with different arrays")
+    {
+        std::vector<int> vec1 = { 1, 2, 3, 4, 5 };
+        std::vector<int> vec2 = { 6, 7, 8, 9, 10 };
 
         auto array1 = arrow::ArrayT<int>::Make(vec1);
         auto array2 = arrow::ArrayT<int>::Make(vec2);
@@ -1452,9 +1451,10 @@ TEST_CASE("StringLike")
     }
 }
 
-TEST_CASE("Intersection of Two Series Index") {
-    std::vector<int> vec1 = {1, 2, 3, 4, 5};
-    std::vector<int> vec2 = {3, 4, 5, 6, 7};
+TEST_CASE("Intersection of Two Series Index")
+{
+    std::vector<int> vec1 = { 1, 2, 3, 4, 5 };
+    std::vector<int> vec2 = { 3, 4, 5, 6, 7 };
     auto array1 = arrow::ArrayT<int>::Make(vec1);
     auto array2 = arrow::ArrayT<int>::Make(vec2);
     Series s1(array1, true);
@@ -1468,9 +1468,10 @@ TEST_CASE("Intersection of Two Series Index") {
     REQUIRE(result.at(2) == 5);
 }
 
-TEST_CASE("Union of two index series") {
-    std::vector<int> vec1 = {1, 2, 3, 4};
-    std::vector<int> vec2 = {3, 4, 5, 6};
+TEST_CASE("Union of two index series")
+{
+    std::vector<int> vec1 = { 1, 2, 3, 4 };
+    std::vector<int> vec2 = { 3, 4, 5, 6 };
     auto array1 = arrow::ArrayT<int>::Make(vec1);
     auto array2 = arrow::ArrayT<int>::Make(vec2);
     Series s1(array1, true);
@@ -1515,41 +1516,43 @@ TEST_CASE("Test Series::apply() function")
     REQUIRE(result.at(4) == 49);
 }
 
-TEST_CASE("Test min_max function for Series", "[series]") {
-    pd::Series s(std::vector<int>{1, 2, 3, 4, 5});
+TEST_CASE("Test min_max function for Series", "[series]")
+{
+    pd::Series s(std::vector<int>{ 1, 2, 3, 4, 5 });
     auto min_max = s.min_max(false);
     REQUIRE(min_max.min.as<int>() == 1);
     REQUIRE(min_max.max.as<int>() == 5);
 
-    s = pd::Series(
-        arrow::ArrayT<int>::Make({1, 2, 3, 4, 5},
-                                 {true, true, true, true, false}), nullptr);
+    s = pd::Series(arrow::ArrayT<int>::Make({ 1, 2, 3, 4, 5 }, { true, true, true, true, false }), nullptr);
     min_max = s.min_max(true);
     REQUIRE(min_max.min == 1);
     REQUIRE(min_max.max == 4);
 }
 
-TEST_CASE("Test min function for Series", "[series]") {
-    auto array = arrow::ArrayT<int>::Make({1, 2, 3, 4, 5}, {true, true, true, true, false});
+TEST_CASE("Test min function for Series", "[series]")
+{
+    auto array = arrow::ArrayT<int>::Make({ 1, 2, 3, 4, 5 }, { true, true, true, true, false });
     pd::Series s(array, nullptr);
     auto result = s.min();
     REQUIRE(result.as<int>() == 1);
 }
 
-TEST_CASE("Test max function for Series", "[series]") {
-    auto array = arrow::ArrayT<int>::Make({1, 2, 3, 4, 5}, {true, true, true, true, false});
+TEST_CASE("Test max function for Series", "[series]")
+{
+    auto array = arrow::ArrayT<int>::Make({ 1, 2, 3, 4, 5 }, { true, true, true, true, false });
     pd::Series s(array, nullptr);
     auto result = s.max();
     REQUIRE(result.as<int>() == 4);
 }
 
-TEST_CASE("Test product function for Series", "[series]") {
-    auto array = arrow::ArrayT<int>::Make({1, 2, 3, 4, 5}, {true, true, true, true, false});
+TEST_CASE("Test product function for Series", "[series]")
+{
+    auto array = arrow::ArrayT<int>::Make({ 1, 2, 3, 4, 5 }, { true, true, true, true, false });
     pd::Series s(array, nullptr);
     auto result = s.product();
     REQUIRE(result.as<long>() == 24);
 
-    array = arrow::ArrayT<int>::Make({1, 2, 3, 4, 5});
+    array = arrow::ArrayT<int>::Make({ 1, 2, 3, 4, 5 });
     s = pd::Series(array, nullptr);
     result = s.product();
     REQUIRE(result.as<long>() == 120);
@@ -1557,47 +1560,45 @@ TEST_CASE("Test product function for Series", "[series]") {
 
 TEST_CASE("Test median function for Series", "[series]")
 {
-    pd::Series s(std::vector<int>{1, 2, 3, 4, 5});
+    pd::Series s(std::vector<int>{ 1, 2, 3, 4, 5 });
     auto result = s.median();
     REQUIRE(result == 3);
 
-    s = pd::Series(std::vector<int>{1, 2, 3, 4, 5}, {true, true, true, true, false});
+    s = pd::Series(std::vector<int>{ 1, 2, 3, 4, 5 }, { true, true, true, true, false });
     result = s.median(true);
     REQUIRE(result == 3);
 
-    s = pd::Series(std::vector<int>{1, 2, 3, 4, 5}, {false, true, true, true, true});
+    s = pd::Series(std::vector<int>{ 1, 2, 3, 4, 5 }, { false, true, true, true, true });
     result = s.median(true);
     REQUIRE(result == 3);
 
-    s = pd::Series(std::vector<int>{1, 2, 3, 4, 5, 6}, {true, true, true, true, true, false});
+    s = pd::Series(std::vector<int>{ 1, 2, 3, 4, 5, 6 }, { true, true, true, true, true, false });
     result = s.median();
     REQUIRE(result == 3.5);
-
 }
 
-TEST_CASE("Test mean function for Series", "[series]") {
-    pd::Series s(std::vector<int>{1, 2, 3, 4, 5});
+TEST_CASE("Test mean function for Series", "[series]")
+{
+    pd::Series s(std::vector<int>{ 1, 2, 3, 4, 5 });
     auto result = s.mean();
     REQUIRE(result == 3);
 
-    s = pd::Series(
-        arrow::ArrayT<int>::Make({1, 2, 3, 4, 5}, {true, true, true, true, false}), nullptr);
+    s = pd::Series(arrow::ArrayT<int>::Make({ 1, 2, 3, 4, 5 }, { true, true, true, true, false }), nullptr);
     result = s.mean(true);
     REQUIRE(result == 2.5);
 
-    s = pd::Series(
-        arrow::ArrayT<int>::Make({1, 2, 3, 4, 5}, {false, true, true, true, true}), nullptr);
+    s = pd::Series(arrow::ArrayT<int>::Make({ 1, 2, 3, 4, 5 }, { false, true, true, true, true }), nullptr);
     result = s.mean(true);
     REQUIRE(result == 3.5);
 }
 
-TEST_CASE("Test std function for Series", "[series]") {
-    pd::Series s(std::vector<double>{1, 2, 3, 4, 5});
+TEST_CASE("Test std function for Series", "[series]")
+{
+    pd::Series s(std::vector<double>{ 1, 2, 3, 4, 5 });
     auto result = s.std();
     REQUIRE(result == Approx(1.5811388300841898));
 
-    s = pd::Series(
-        arrow::ArrayT<double>::Make({1, 2, 3, 4, 5}, {true, true, true, true, false}), nullptr);
+    s = pd::Series(arrow::ArrayT<double>::Make({ 1, 2, 3, 4, 5 }, { true, true, true, true, false }), nullptr);
     result = s.std(0, true);
     REQUIRE(result == Approx(1.118033988749895).epsilon(1e-6));
 
@@ -1605,13 +1606,13 @@ TEST_CASE("Test std function for Series", "[series]") {
     REQUIRE(std::isnan(result));
 }
 
-TEST_CASE("Test var function for Series", "[series]") {
-    pd::Series s(std::vector<double>{1, 2, 3, 4, 5});
+TEST_CASE("Test var function for Series", "[series]")
+{
+    pd::Series s(std::vector<double>{ 1, 2, 3, 4, 5 });
     auto result = s.var();
     REQUIRE(result == Approx(2.5));
 
-    s = pd::Series(
-        arrow::ArrayT<double>::Make({1, 2, 3, 4, NAN}, {true, true, true, true, false}), nullptr);
+    s = pd::Series(arrow::ArrayT<double>::Make({ 1, 2, 3, 4, NAN }, { true, true, true, true, false }), nullptr);
     result = s.var(0, true);
     REQUIRE(result == Approx(1.25));
 
@@ -1636,9 +1637,7 @@ TEST_CASE("Test mode function for Series", "[series]")
     REQUIRE(df["count"][1] == 2L);
 
     s = pd::Series(
-        arrow::ArrayT<int>::Make(
-            { 1, 1, 3, 4, 5, 2, 2, 2 },
-            { true, true, true, true, false, false, false, true }),
+        arrow::ArrayT<int>::Make({ 1, 1, 3, 4, 5, 2, 2, 2 }, { true, true, true, true, false, false, false, true }),
         nullptr);
     df = s.mode(1, true);
 
@@ -1651,34 +1650,37 @@ TEST_CASE("Test mode function for Series", "[series]")
     REQUIRE(df["count"].empty());
 }
 
-TEST_CASE("Test quantile function for Series", "[series]") {
-    pd::Series s(std::vector<int>{1, 2, 3, 4, 5});
+TEST_CASE("Test quantile function for Series", "[series]")
+{
+    pd::Series s(std::vector<int>{ 1, 2, 3, 4, 5 });
     auto result = s.quantile(0.5);
     REQUIRE(result.as<double>() == 3);
 
-    s = pd::Series(std::vector<int>{1, 2, 3, 4, 5}, {true, true, true, true, false});
+    s = pd::Series(std::vector<int>{ 1, 2, 3, 4, 5 }, { true, true, true, true, false });
     result = s.quantile(0.5);
     REQUIRE(result.as<double>() == 3);
 }
 
-TEST_CASE("Test tdigest function for Series", "[series]") {
-    pd::Series s(std::vector<int>{1, 2, 3, 4, 5});
+TEST_CASE("Test tdigest function for Series", "[series]")
+{
+    pd::Series s(std::vector<int>{ 1, 2, 3, 4, 5 });
     auto result = s.tdigest(0.5);
     REQUIRE(result.as<double>() == 3);
 
-    s = pd::Series(std::vector<int>{1, 2, 3, 4, 5}, {true, true, true, true, false});
+    s = pd::Series(std::vector<int>{ 1, 2, 3, 4, 5 }, { true, true, true, true, false });
     result = s.tdigest(0.5);
     REQUIRE(result.as<double>() == 3);
 }
 
-TEST_CASE("Test agg function for Series", "[series]") {
-    ArrayPtr array = arrow::ArrayT<int>::Make({1, 2, 3, 4, 5});
+TEST_CASE("Test agg function for Series", "[series]")
+{
+    ArrayPtr array = arrow::ArrayT<int>::Make({ 1, 2, 3, 4, 5 });
     pd::Series s(array, nullptr);
 
     auto result = s.agg("sum");
     REQUIRE(result.as<long>() == 15);
 
-    array = arrow::ArrayT<double>::Make({1, 2, 3, 4, NAN}, {true, true, true, true, false});
+    array = arrow::ArrayT<double>::Make({ 1, 2, 3, 4, NAN }, { true, true, true, true, false });
     s = pd::Series(array, nullptr);
 
     result = s.agg("sum", true);
@@ -1706,12 +1708,8 @@ TEST_CASE("Test Series::argmax() and Series::argmin() functions")
 
     SECTION("Test with missing values")
     {
-        std::vector<double> vec1 = {
-            1.0, 2.0, 3.0, 4.0, 5.0, std::numeric_limits<double>::quiet_NaN()
-        };
-        auto array1 = arrow::ArrayT<double>::Make(
-            vec1,
-            { true, true, true, true, true, false });
+        std::vector<double> vec1 = { 1.0, 2.0, 3.0, 4.0, 5.0, std::numeric_limits<double>::quiet_NaN() };
+        auto array1 = arrow::ArrayT<double>::Make(vec1, { true, true, true, true, true, false });
         Series s1(array1, true);
         REQUIRE(s1.argmax() == 4);
         REQUIRE(s1.argmin() == 0);
@@ -1791,10 +1789,10 @@ TEST_CASE("Test Series::nth_element() function")
         REQUIRE(result.at(3) == 3UL);
         REQUIRE(result.at(4) == 4UL);
     }
-
 }
 
-TEST_CASE("Test Series::cov() and Series::corr() functions") {
+TEST_CASE("Test Series::cov() and Series::corr() functions")
+{
     std::vector<double> vec1 = { 1.0, 2.0, 3.0, 4.0, 5.0 };
     std::vector<double> vec2 = { 2.0, 3.0, 4.0, 5.0, 6.0 };
 
@@ -1817,8 +1815,8 @@ TEST_CASE("Test Series::cov() and Series::corr() functions") {
 
 TEST_CASE("Test Series::ewm with mean")
 {
-    auto result = Series(std::vector{ 1.0, 2.0, 3.0, 4.0, 5.0 })
-                      .ewm(pd::EWMAgg::Mean, 0.5, pd::EWMAlphaType::CenterOfMass, true);
+    auto result =
+        Series(std::vector{ 1.0, 2.0, 3.0, 4.0, 5.0 }).ewm(pd::EWMAgg::Mean, 0.5, pd::EWMAlphaType::CenterOfMass, true);
 
     REQUIRE(result.size() == 5);
     INFO(result);
@@ -1829,7 +1827,7 @@ TEST_CASE("Test Series::ewm with mean")
     REQUIRE(result.at(4).as<double>() == Catch::Approx(4.53).epsilon(0.01));
 
     result = Series(std::vector{ 1.0, 2.0, 3.0, 4.0, 5.0 })
-                      .ewm(pd::EWMAgg::Mean, 0.5, pd::EWMAlphaType::CenterOfMass, false);
+                 .ewm(pd::EWMAgg::Mean, 0.5, pd::EWMAlphaType::CenterOfMass, false);
 
     REQUIRE(result.size() == 5);
     INFO(result);
@@ -1850,7 +1848,7 @@ TEST_CASE("Test Series::ewm with mean")
     REQUIRE(result.at(3).as<double>() == Catch::Approx(4.222222).epsilon(0.01));
     REQUIRE(result.at(4).as<double>() == Catch::Approx(5.407407).epsilon(0.01));
 
-    result = Series(std::vector<double>{ 2.0, 3.0, NAN, 5.0, 6.0  })
+    result = Series(std::vector<double>{ 2.0, 3.0, NAN, 5.0, 6.0 })
                  .ewm(pd::EWMAgg::Mean, 0.5, pd::EWMAlphaType::CenterOfMass, true, true);
 
     REQUIRE(result.size() == 5);
@@ -1870,27 +1868,22 @@ TEST_CASE("Testing series::ewm2 with mean", "[series]")
     {
         auto result = s.ewm(pd::EWMAgg::Mean, 2, EWMAlphaType::CenterOfMass, true, true, 2).values<double>();
         REQUIRE(std::isnan(result[0]));
-        result = {result.begin()+1, result.end()};
+        result = { result.begin() + 1, result.end() };
 
-        std::vector<double> expected_result = { 1.6,
-                                                2.2631578947,
-                                                2.9846153846,
-                                                3.7582938389 };
-        REQUIRE_THAT(result,
-                     Catch::Matchers::Approx(expected_result).epsilon(0.001));
+        std::vector<double> expected_result = { 1.6, 2.2631578947, 2.9846153846, 3.7582938389 };
+        REQUIRE_THAT(result, Catch::Matchers::Approx(expected_result).epsilon(0.001));
     }
 
     SECTION("Testing ewm with span")
     {
         auto result = s.ewm(pd::EWMAgg::Mean, 3, EWMAlphaType::Span, true, true, 2).values<double>();
         REQUIRE(std::isnan(result[0]));
-        result = {result.begin()+1, result.end()};
+        result = { result.begin() + 1, result.end() };
         std::vector<double> expected_result = { 1.6666666666666667,
                                                 2.4285714285714284,
                                                 3.2666666666666666,
                                                 4.161290322580645 };
-        REQUIRE_THAT(result,
-                     Catch::Matchers::Approx(expected_result).epsilon(0.001));
+        REQUIRE_THAT(result, Catch::Matchers::Approx(expected_result).epsilon(0.001));
     }
 
     SECTION("Testing ewm with alpha")
@@ -1901,38 +1894,30 @@ TEST_CASE("Testing series::ewm2 with mean", "[series]")
                                                 3.2666666666666666,
                                                 4.161290322580645 };
         REQUIRE(std::isnan(result[0]));
-        result = {result.begin()+1, result.end()};
-        REQUIRE_THAT(result,
-            Catch::Matchers::Approx(expected_result).epsilon(0.001));
+        result = { result.begin() + 1, result.end() };
+        REQUIRE_THAT(result, Catch::Matchers::Approx(expected_result).epsilon(0.001));
     }
 
     SECTION("Testing ewm with invalid center of mass value")
     {
-        REQUIRE_THROWS_AS(
-            s.ewm(pd::EWMAgg::Mean, -1, EWMAlphaType::CenterOfMass, true, true, 2),
-            std::runtime_error);
+        REQUIRE_THROWS_AS(s.ewm(pd::EWMAgg::Mean, -1, EWMAlphaType::CenterOfMass, true, true, 2), std::runtime_error);
     }
 
     SECTION("Testing ewm with invalid span value")
     {
-        REQUIRE_THROWS_AS(
-            s.ewm(pd::EWMAgg::Mean, 0, EWMAlphaType::Span, true, true, 2),
-            std::runtime_error);
+        REQUIRE_THROWS_AS(s.ewm(pd::EWMAgg::Mean, 0, EWMAlphaType::Span, true, true, 2), std::runtime_error);
     }
 
     SECTION("Testing ewm with invalid alpha value")
     {
-        REQUIRE_THROWS_AS(
-            s.ewm(pd::EWMAgg::Mean, 2, EWMAlphaType::Alpha, true, true, 2),
-            std::runtime_error);
+        REQUIRE_THROWS_AS(s.ewm(pd::EWMAgg::Mean, 2, EWMAlphaType::Alpha, true, true, 2), std::runtime_error);
     }
 }
 
 TEST_CASE("Testing series::ewm2_var with span", "[series]")
 {
     Series s(std::vector<double>{ 2.0, 5.1, 73, 2.2, 6.0, 8.0, 13.6, 11.3 });
-    auto result =
-        s.ewm(pd::EWMAgg::Var, 20, EWMAlphaType::Span).values<double>();
+    auto result = s.ewm(pd::EWMAgg::Var, 20, EWMAlphaType::Span).values<double>();
     REQUIRE(std::isnan(result[0]));
     result = { result.begin() + 1, result.end() };
 
@@ -1943,27 +1928,20 @@ TEST_CASE("Testing series::ewm2_var with span", "[series]")
                                             742.059923661829,
                                             586.235828531947,
                                             477.9199212836199 };
-    REQUIRE_THAT(
-        result,
-        Catch::Matchers::Approx(expected_result).epsilon(0.001));
+    REQUIRE_THAT(result, Catch::Matchers::Approx(expected_result).epsilon(0.001));
 }
 
 TEST_CASE("Testing series::ewm2_stddev with span", "[series]")
 {
     Series s(std::vector<double>{ 2.0, 5.1, 73, 2.2, 6.0, 8.0, 13.6, 11.3 });
-    auto result =
-        s.ewm(pd::EWMAgg::StdDev, 20, EWMAlphaType::Span).values<double>();
+    auto result = s.ewm(pd::EWMAgg::StdDev, 20, EWMAlphaType::Span).values<double>();
     REQUIRE(std::isnan(result[0]));
     result = { result.begin() + 1, result.end() };
 
-    std::vector<double> expected_result = {
-        2.1920310216782974, 41.05204257809192, 35.57255368710688,
-        30.891378451445554, 27.24077685496192, 24.21230737728123,
-        21.861379674751085
-    };
-    REQUIRE_THAT(
-        result,
-        Catch::Matchers::Approx(expected_result).epsilon(0.001));
+    std::vector<double> expected_result = { 2.1920310216782974, 41.05204257809192, 35.57255368710688,
+                                            30.891378451445554, 27.24077685496192, 24.21230737728123,
+                                            21.861379674751085 };
+    REQUIRE_THAT(result, Catch::Matchers::Approx(expected_result).epsilon(0.001));
 }
 
 TEST_CASE("Test reindex vs reindex_async benchmark small data", "[reindex]")
@@ -1974,14 +1952,16 @@ TEST_CASE("Test reindex vs reindex_async benchmark small data", "[reindex]")
     pd::Series inputSeries(inputData, "", inputIndex);
 
     auto newIndex = pd::date_range(ptime(), 100, "30S");
-    pd::Series sortedOut{nullptr, nullptr}, out{nullptr, nullptr};
+    pd::Series sortedOut{ nullptr, nullptr }, out{ nullptr, nullptr };
 
-    BENCHMARK("benchmark reindex") {
+    BENCHMARK("benchmark reindex")
+    {
         sortedOut = inputSeries.reindex(newIndex);
         return 1;
     };
 
-    BENCHMARK("benchmark reindex_async") {
+    BENCHMARK("benchmark reindex_async")
+    {
         out = inputSeries.reindexAsync(newIndex);
         return 1;
     };
@@ -1998,19 +1978,19 @@ TEST_CASE("Test reindex vs reindex_async benchmark avg case", "[reindex]")
     pd::Series inputSeries(inputData, "", inputIndex);
 
     auto newIndex = pd::date_range(ptime(), 1e6, "30S");
-    pd::Series sortedOut{nullptr, nullptr}, out{nullptr, nullptr};
+    pd::Series sortedOut{ nullptr, nullptr }, out{ nullptr, nullptr };
 
     auto start = std::chrono::high_resolution_clock::now();
     sortedOut = inputSeries.reindex(newIndex);
     auto end = std::chrono::high_resolution_clock::now();
 
-    std::cout << std::chrono::duration<double>(end-start).count() << " s.\n";
+    std::cout << std::chrono::duration<double>(end - start).count() << " s.\n";
 
     start = std::chrono::high_resolution_clock::now();
     out = inputSeries.reindexAsync(newIndex);
     end = std::chrono::high_resolution_clock::now();
 
-    std::cout << std::chrono::duration<double>(end-start).count() << " s.\n";
+    std::cout << std::chrono::duration<double>(end - start).count() << " s.\n";
 }
 
 TEST_CASE("Test reindex vs reindex_async benchamark big data", "[reindex]")
@@ -2021,30 +2001,30 @@ TEST_CASE("Test reindex vs reindex_async benchamark big data", "[reindex]")
     pd::Series inputSeries(inputData, "", inputIndex);
 
     auto newIndex = pd::date_range(ptime() + minutes(1), 1e6);
-    pd::Series sortedOut{nullptr, nullptr}, out{nullptr, nullptr};
+    pd::Series sortedOut{ nullptr, nullptr }, out{ nullptr, nullptr };
 
     auto start = std::chrono::high_resolution_clock::now();
     sortedOut = inputSeries.reindex(newIndex);
     auto end = std::chrono::high_resolution_clock::now();
 
-    std::cout << std::chrono::duration<double>(end-start).count() << " s.\n";
+    std::cout << std::chrono::duration<double>(end - start).count() << " s.\n";
 
     start = std::chrono::high_resolution_clock::now();
     out = inputSeries.reindexAsync(newIndex);
     end = std::chrono::high_resolution_clock::now();
 
-    std::cout << std::chrono::duration<double>(end-start).count() << " s.\n";
+    std::cout << std::chrono::duration<double>(end - start).count() << " s.\n";
 }
 
 TEST_CASE("Test reindex function", "[reindex]")
 {
     // Create a test input Series
-    auto inputData = arrow::ArrayT<::int64_t>::Make({1, 2, 3, 4, 5});
-    auto inputIndex = arrow::ArrayT<::int64_t>::Make({1, 2, 3, 4, 5});
+    auto inputData = arrow::ArrayT<::int64_t>::Make({ 1, 2, 3, 4, 5 });
+    auto inputIndex = arrow::ArrayT<::int64_t>::Make({ 1, 2, 3, 4, 5 });
     pd::Series inputSeries(inputData, inputIndex);
 
     // Create a new index array
-    auto newIndex = arrow::ArrayT<::int64_t>::Make({1, 2, 4, 5, 6});
+    auto newIndex = arrow::ArrayT<::int64_t>::Make({ 1, 2, 4, 5, 6 });
 
     // Reindex the input Series
     pd::Series outputSeries = inputSeries.reindex(newIndex);
@@ -2053,7 +2033,7 @@ TEST_CASE("Test reindex function", "[reindex]")
     REQUIRE(outputSeries.indexArray()->Equals(newIndex));
 
     // Check that the values are correct
-    auto expectedValues = arrow::ArrayT<::int64_t>::Make({1, 2, 4, 5, 0}, {true, true, 1, 1, 0});
+    auto expectedValues = arrow::ArrayT<::int64_t>::Make({ 1, 2, 4, 5, 0 }, { true, true, 1, 1, 0 });
     REQUIRE(outputSeries.array()->Equals(expectedValues));
 }
 
@@ -2067,15 +2047,9 @@ TEST_CASE("Test resample on series", "[Resample]")
         auto resampler = pd::resample(series, time_duration(0, 3, 0));
 
         auto group_index = resampler.index();
-        REQUIRE(
-            pd::ReturnOrThrowOnFailure(group_index->GetScalar(0))->ToString() ==
-            "2000-01-01 00:00:00.000000000");
-        REQUIRE(
-            pd::ReturnOrThrowOnFailure(group_index->GetScalar(1))->ToString() ==
-            "2000-01-01 00:03:00.000000000");
-        REQUIRE(
-            pd::ReturnOrThrowOnFailure(group_index->GetScalar(2))->ToString() ==
-            "2000-01-01 00:06:00.000000000");
+        REQUIRE(pd::ReturnOrThrowOnFailure(group_index->GetScalar(0))->ToString() == "2000-01-01 00:00:00.000000000");
+        REQUIRE(pd::ReturnOrThrowOnFailure(group_index->GetScalar(1))->ToString() == "2000-01-01 00:03:00.000000000");
+        REQUIRE(pd::ReturnOrThrowOnFailure(group_index->GetScalar(2))->ToString() == "2000-01-01 00:06:00.000000000");
 
         auto sum = pd::ReturnOrThrowOnFailure(resampler.sum());
         REQUIRE(sum.at(0, 0) == 3L);
@@ -2087,19 +2061,12 @@ TEST_CASE("Test resample on series", "[Resample]")
         "Downsample series into 3 minute bins  and sum, "
         "label with right")
     {
-        auto resampler =
-            pd::resample(series, time_duration(0, 3, 0), false, true);
+        auto resampler = pd::resample(series, time_duration(0, 3, 0), false, true);
 
         auto group_index = resampler.index();
-        REQUIRE(
-            pd::ReturnOrThrowOnFailure(group_index->GetScalar(0))->ToString() ==
-            "2000-01-01 00:03:00.000000000");
-        REQUIRE(
-            pd::ReturnOrThrowOnFailure(group_index->GetScalar(1))->ToString() ==
-            "2000-01-01 00:06:00.000000000");
-        REQUIRE(
-            pd::ReturnOrThrowOnFailure(group_index->GetScalar(2))->ToString() ==
-            "2000-01-01 00:09:00.000000000");
+        REQUIRE(pd::ReturnOrThrowOnFailure(group_index->GetScalar(0))->ToString() == "2000-01-01 00:03:00.000000000");
+        REQUIRE(pd::ReturnOrThrowOnFailure(group_index->GetScalar(1))->ToString() == "2000-01-01 00:06:00.000000000");
+        REQUIRE(pd::ReturnOrThrowOnFailure(group_index->GetScalar(2))->ToString() == "2000-01-01 00:09:00.000000000");
 
         auto sum = pd::ReturnOrThrowOnFailure(resampler.sum());
         REQUIRE(sum.at(0, 0) == 3L);
@@ -2111,25 +2078,16 @@ TEST_CASE("Test resample on series", "[Resample]")
         "Downsample series into 3 minute bins  and sum, "
         "label and close right")
     {
-        auto resampler =
-            pd::resample(series, time_duration(0, 3, 0), true, true);
+        auto resampler = pd::resample(series, time_duration(0, 3, 0), true, true);
 
         auto group_index = resampler.index();
 
         REQUIRE(group_index->length() == 4);
 
-        REQUIRE(
-            pd::ReturnOrThrowOnFailure(group_index->GetScalar(0))->ToString() ==
-            "2000-01-01 00:00:00.000000000");
-        REQUIRE(
-            pd::ReturnOrThrowOnFailure(group_index->GetScalar(1))->ToString() ==
-            "2000-01-01 00:03:00.000000000");
-        REQUIRE(
-            pd::ReturnOrThrowOnFailure(group_index->GetScalar(2))->ToString() ==
-            "2000-01-01 00:06:00.000000000");
-        REQUIRE(
-            pd::ReturnOrThrowOnFailure(group_index->GetScalar(3))->ToString() ==
-            "2000-01-01 00:09:00.000000000");
+        REQUIRE(pd::ReturnOrThrowOnFailure(group_index->GetScalar(0))->ToString() == "2000-01-01 00:00:00.000000000");
+        REQUIRE(pd::ReturnOrThrowOnFailure(group_index->GetScalar(1))->ToString() == "2000-01-01 00:03:00.000000000");
+        REQUIRE(pd::ReturnOrThrowOnFailure(group_index->GetScalar(2))->ToString() == "2000-01-01 00:06:00.000000000");
+        REQUIRE(pd::ReturnOrThrowOnFailure(group_index->GetScalar(3))->ToString() == "2000-01-01 00:09:00.000000000");
 
         auto sum = pd::ReturnOrThrowOnFailure(resampler.sum());
         REQUIRE(sum.at(0, 0) == 0L);
@@ -2145,11 +2103,9 @@ TEST_CASE("Test resample on series with custom function", "[Resample]")
     auto index = pd::date_range(ptime(date(2000, 1, 1)), 9);
     auto series = pd::Series(pd::range(0L, 9L), index);
 
-    auto custom_resampler = [](DataFrame const& df)
-    { return (df.sum() + 5).scalar; };
+    auto custom_resampler = [](DataFrame const& df) { return (df.sum() + 5).scalar; };
 
-    ASSIGN_OR_ABORT(Series result,
-                    series.resample("3T").apply(custom_resampler));
+    ASSIGN_OR_ABORT(Series result, series.resample("3T").apply(custom_resampler));
 
     REQUIRE(result.size() == 3);
     REQUIRE(result[0] == 8L);
@@ -2168,21 +2124,11 @@ TEST_CASE("Upsample the series into 30 second bins.")
 
     REQUIRE(group_index->length() == 17);
 
-    REQUIRE(
-        pd::ReturnOrThrowOnFailure(group_index->GetScalar(0))->ToString() ==
-        "2000-01-01 00:00:00.000000000");
-    REQUIRE(
-        pd::ReturnOrThrowOnFailure(group_index->GetScalar(1))->ToString() ==
-        "2000-01-01 00:00:30.000000000");
-    REQUIRE(
-        pd::ReturnOrThrowOnFailure(group_index->GetScalar(2))->ToString() ==
-        "2000-01-01 00:01:00.000000000");
-    REQUIRE(
-        pd::ReturnOrThrowOnFailure(group_index->GetScalar(3))->ToString() ==
-        "2000-01-01 00:01:30.000000000");
-    REQUIRE(
-        pd::ReturnOrThrowOnFailure(group_index->GetScalar(4))->ToString() ==
-        "2000-01-01 00:02:00.000000000");
+    REQUIRE(pd::ReturnOrThrowOnFailure(group_index->GetScalar(0))->ToString() == "2000-01-01 00:00:00.000000000");
+    REQUIRE(pd::ReturnOrThrowOnFailure(group_index->GetScalar(1))->ToString() == "2000-01-01 00:00:30.000000000");
+    REQUIRE(pd::ReturnOrThrowOnFailure(group_index->GetScalar(2))->ToString() == "2000-01-01 00:01:00.000000000");
+    REQUIRE(pd::ReturnOrThrowOnFailure(group_index->GetScalar(3))->ToString() == "2000-01-01 00:01:30.000000000");
+    REQUIRE(pd::ReturnOrThrowOnFailure(group_index->GetScalar(4))->ToString() == "2000-01-01 00:02:00.000000000");
 
     auto df = resampler.data();
     REQUIRE(df.num_rows() == 17);
@@ -2216,114 +2162,108 @@ TEST_CASE("Test DateTimeLike", "[core]")
     auto dt = s.dt();
 
     // Test day() function
-    REQUIRE(dt.day().values<int64>() == std::vector<int64>{1, 2, 3, 4});
+    REQUIRE(dt.day().values<int64>() == std::vector<int64>{ 1, 2, 3, 4 });
 
     // Test day_of_week() function
-    REQUIRE(dt.day_of_week().values<int64>() == std::vector<int64>{5, 6, 0, 1});
+    REQUIRE(dt.day_of_week().values<int64>() == std::vector<int64>{ 5, 6, 0, 1 });
 
     // Test day_of_year() function
-    REQUIRE(dt.day_of_year().values<int64>() == std::vector<int64>{1, 2, 3, 4});
+    REQUIRE(dt.day_of_year().values<int64>() == std::vector<int64>{ 1, 2, 3, 4 });
 
     // Test hour() function
-    REQUIRE(dt.hour().values<int64>() == std::vector<int64>{1, 1, 1, 1});
+    REQUIRE(dt.hour().values<int64>() == std::vector<int64>{ 1, 1, 1, 1 });
 
     // Test is_dst() function
-    REQUIRE_THROWS(dt.is_dst().equals(std::vector<bool>{false, false, false, false}));
+    REQUIRE_THROWS(dt.is_dst().equals(std::vector<bool>{ false, false, false, false }));
 
     // Test iso_week() function
-    REQUIRE(dt.iso_week().values<int64>() == std::vector<int64>{52, 52, 1, 1});
+    REQUIRE(dt.iso_week().values<int64>() == std::vector<int64>{ 52, 52, 1, 1 });
 
     // Test iso_year() function
-    REQUIRE(dt.iso_year().values<int64>() == std::vector<int64>{2021, 2021, 2022, 2022});
+    REQUIRE(dt.iso_year().values<int64>() == std::vector<int64>{ 2021, 2021, 2022, 2022 });
 
     // Test iso_calendar() function
     auto iso_calendar_result = dt.iso_calendar();
 
     REQUIRE(iso_calendar_result.at(0, 0) == 2021L);
-    REQUIRE(iso_calendar_result.at(0, 1)== 52L);
+    REQUIRE(iso_calendar_result.at(0, 1) == 52L);
     REQUIRE(iso_calendar_result.at(0, 2) == 6L);
 
     REQUIRE(iso_calendar_result.at(1, 0) == 2021L);
-    REQUIRE(iso_calendar_result.at(1, 1)== 52L);
+    REQUIRE(iso_calendar_result.at(1, 1) == 52L);
     REQUIRE(iso_calendar_result.at(1, 2) == 7L);
 
     REQUIRE(iso_calendar_result.at(2, 0) == 2022L);
-    REQUIRE(iso_calendar_result.at(2, 1)== 1L);
+    REQUIRE(iso_calendar_result.at(2, 1) == 1L);
     REQUIRE(iso_calendar_result.at(2, 2) == 1L);
 
     REQUIRE(iso_calendar_result.at(3, 0) == 2022L);
-    REQUIRE(iso_calendar_result.at(3, 1)== 1L);
+    REQUIRE(iso_calendar_result.at(3, 1) == 1L);
     REQUIRE(iso_calendar_result.at(3, 2) == 2L);
 
     // Test is_dst() function
-//    REQUIRE(dt.is_dst().values<int32_t>() == std::vector<int32_t>{0, 0, 0, 0});
+    //    REQUIRE(dt.is_dst().values<int32_t>() == std::vector<int32_t>{0, 0, 0, 0});
 
     // Test is_leap_year() function
-    REQUIRE(dt.is_leap_year().equals(std::vector<bool>{false, false, false, false}));
+    REQUIRE(dt.is_leap_year().equals(std::vector<bool>{ false, false, false, false }));
 
     // Test microsecond() function
-    REQUIRE(dt.microsecond().values<int64>() == std::vector<int64>{0, 0, 0, 0});
+    REQUIRE(dt.microsecond().values<int64>() == std::vector<int64>{ 0, 0, 0, 0 });
 
     // Test milliseconds() function
-    REQUIRE(dt.millisecond().values<int64>() == std::vector<int64>{0, 0, 0, 0});
+    REQUIRE(dt.millisecond().values<int64>() == std::vector<int64>{ 0, 0, 0, 0 });
 
     // Test minute() function
-    REQUIRE(dt.minute().values<int64>() == std::vector<int64>{0, 0, 0, 0});
+    REQUIRE(dt.minute().values<int64>() == std::vector<int64>{ 0, 0, 0, 0 });
 
     // Test month() function
-    REQUIRE(dt.month().values<int64>() == std::vector<int64>{1, 1, 1, 1});
+    REQUIRE(dt.month().values<int64>() == std::vector<int64>{ 1, 1, 1, 1 });
 
     // Test nanosecond() function
-    REQUIRE(dt.nanosecond().values<int64>() == std::vector<int64>{0, 0, 0, 0});
+    REQUIRE(dt.nanosecond().values<int64>() == std::vector<int64>{ 0, 0, 0, 0 });
 
     // Test quarter() function
-    REQUIRE(dt.quarter().values<int64>() == std::vector<int64>{1, 1, 1, 1});
+    REQUIRE(dt.quarter().values<int64>() == std::vector<int64>{ 1, 1, 1, 1 });
 
     // Test second() function
-    REQUIRE(dt.second().values<int64>() == std::vector<int64>{0, 0, 0, 0});
+    REQUIRE(dt.second().values<int64>() == std::vector<int64>{ 0, 0, 0, 0 });
 
     // Test subsecond() function
-    REQUIRE(dt.subsecond().values<double>() == std::vector<double>{0, 0, 0, 0});
+    REQUIRE(dt.subsecond().values<double>() == std::vector<double>{ 0, 0, 0, 0 });
 
     // Test us_week() function
-    REQUIRE(dt.us_week().values<int64>() == std::vector<int64>{52, 1, 1, 1});
+    REQUIRE(dt.us_week().values<int64>() == std::vector<int64>{ 52, 1, 1, 1 });
 
     // Test us_year() function
-    REQUIRE(dt.us_year().values<int64>() == std::vector<int64>{2021, 2022, 2022, 2022});
+    REQUIRE(dt.us_year().values<int64>() == std::vector<int64>{ 2021, 2022, 2022, 2022 });
 
     // Test year() function
-    REQUIRE(dt.year().values<int64>() == std::vector<int64>{2022, 2022, 2022, 2022});
+    REQUIRE(dt.year().values<int64>() == std::vector<int64>{ 2022, 2022, 2022, 2022 });
 
-//    auto year_month_day_result = dt.year_month_day();
-//    REQUIRE(year_month_day_result.at(0, 0) == 2022);
-//    REQUIRE(year_month_day_result.at(0, 1) == 1);
-//    REQUIRE(year_month_day_result.at(0, 2) == 1);
+    //    auto year_month_day_result = dt.year_month_day();
+    //    REQUIRE(year_month_day_result.at(0, 0) == 2022);
+    //    REQUIRE(year_month_day_result.at(0, 1) == 1);
+    //    REQUIRE(year_month_day_result.at(0, 2) == 1);
 }
 
 TEST_CASE("Test toFrame", "[to_frame]")
 {
-    auto series =
-        pd::Series{ std::vector<std::string>{ "a", "b", "c" }, "vals" };
+    auto series = pd::Series{ std::vector<std::string>{ "a", "b", "c" }, "vals" };
 
     auto df = series.toFrame();
 
-    auto expected =
-        pd::DataFrame{ pd::ArrayPtr{ nullptr },
-                       std::pair{ "vals"s, std::vector{ "a"s, "b"s, "c"s } } };
+    auto expected = pd::DataFrame{ pd::ArrayPtr{ nullptr }, std::pair{ "vals"s, std::vector{ "a"s, "b"s, "c"s } } };
 
     REQUIRE(df.equals_(expected));
 
     df = series.toFrame("val");
 
-    expected =
-        pd::DataFrame{ pd::ArrayPtr{ nullptr },
-                       std::pair{ "val"s, std::vector{ "a"s, "b"s, "c"s } } };
+    expected = pd::DataFrame{ pd::ArrayPtr{ nullptr }, std::pair{ "val"s, std::vector{ "a"s, "b"s, "c"s } } };
 
     REQUIRE(df.equals_(expected));
-
 }
 
-//TEST_CASE("Test DateTimeLike between functions", "[datetime]")
+// TEST_CASE("Test DateTimeLike between functions", "[datetime]")
 //{
 //    // Create two Series objects with datetime values
 //    Series s1 = Series(std::vector<std::string>{ "2022-01-01 00:00:00",

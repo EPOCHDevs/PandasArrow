@@ -11,12 +11,101 @@
 
 namespace pd {
 
+date DateOffset::add(const date& x, Type type, int n)
+{
+    using namespace boost::gregorian;
+
+    date result = x;
+
+    switch (type)
+    {
+        case MonthEnd:
+            result += months(n);
+            result = result.end_of_month();
+            break;
+
+        case QuarterStart:
+            result += months(3 * n);
+            result = date(result.year(), (result.month() - 1) / 3 * 3 + 1, 1);
+            break;
+
+        case QuarterEnd:
+            result += months(3 * n);
+            result = date(result.year(), (result.month() - 1) / 3 * 3 + 3, 1) - days(1);
+            break;
+
+        case Weekly:
+            result += weeks(n);
+            break;
+
+        case MonthStart:
+            result += months(n);
+            result = date(result.year(), result.month(), 1);
+            break;
+
+        case YearEnd:
+            result += years(n);
+            result = date(result.year(), Dec, 31);
+            break;
+
+        case YearStart:
+            result += years(n);
+            result = date(result.year(), Jan, 1);
+            break;
+
+        default:
+            result += days(n);
+    }
+
+    return result;
+}
+DateOffset DateOffset::FromString(const string& code)
+{
+    const auto [freq_unit, mul] = splitTimeSpan(code);
+    DateOffset::Type type{ DateOffset::Day };
+
+    if (freq_unit == "D")
+    {
+        type = DateOffset::Day;
+    }
+    else if (freq_unit == "W")
+    {
+        type = DateOffset::Weekly;
+    }
+    else if (freq_unit == "MS")
+    {
+        type = DateOffset::MonthStart;
+    }
+    else if (freq_unit == "M")
+    {
+        type = DateOffset::MonthEnd;
+    }
+    else if (freq_unit == "Y")
+    {
+        type = DateOffset::YearEnd;
+    }
+    else if (freq_unit == "YS")
+    {
+        type = DateOffset::YearStart;
+    }
+    else if (freq_unit == "Q")
+    {
+        type = DateOffset::QuarterEnd;
+    }
+    else if (freq_unit == "QS")
+    {
+        type = DateOffset::QuarterStart;
+    }
+    else
+    {
+        throw std::runtime_error("Invalid DateOffset Type: " + freq_unit);
+    }
+    return { type, mul };
+}
+
 std::pair<std::string, int> splitTimeSpan(std::string const& freq)
 {
-    auto it = std::find_if(
-        freq.begin(),
-        freq.end(),
-        [](int x) { return std::isalpha(x); });
+    auto it = std::find_if(freq.begin(), freq.end(), [](int x) { return std::isalpha(x); });
 
     std::ostringstream ss;
     std::string freq_unit, freqValueStr;
@@ -52,8 +141,7 @@ std::shared_ptr<arrow::TimestampArray> date_range(
         throw std::runtime_error("FREQ must be >= 1");
     }
 
-    auto N = size_t(std::round(
-        double(date_period(start, end).length().days()) / double(freq)));
+    auto N = size_t(std::round(double(date_period(start, end).length().days()) / double(freq)));
     std::vector<int64_t> timestamps;
     timestamps.reserve(N);
 
@@ -100,52 +188,32 @@ std::shared_ptr<arrow::TimestampArray> date_range(
 std::shared_ptr<arrow::TimestampArray> switchFunction(
     date const& start,
     auto const& end_or_period,
-    std::string const& freq,
+    const DateOffset& freq,
     std::string const& tz)
 {
-    auto [freq_unit, freq_value] = splitTimeSpan(freq);
-    if (freq_unit == "D")
+    switch (freq.type)
     {
-        return date_range<day_iterator>(start, end_or_period, freq_value, tz);
+        case DateOffset::Day:
+            return date_range<day_iterator>(start, end_or_period, freq.multiplier, tz);
+        case DateOffset::MonthEnd:
+        case DateOffset::MonthStart:
+            return date_range<month_iterator>(start, end_or_period, freq.multiplier, tz);
+        case DateOffset::QuarterStart:
+        case DateOffset::QuarterEnd:
+        {
+            if (start.month() / 3 != 0)
+            {
+                throw std::runtime_error("A quarter freq requires month is on a quarter, +/- with DateOffset");
+            }
+            return date_range<month_iterator>(start, end_or_period, freq.multiplier * 3, tz);
+        }
+        case DateOffset::Weekly:
+            return date_range<week_iterator>(start, end_or_period, freq.multiplier, tz);
+        case DateOffset::YearEnd:
+        case DateOffset::YearStart:
+            return date_range<year_iterator>(start, end_or_period, freq.multiplier, tz);
     }
-    else if (freq_unit == "W")
-    {
-        return date_range<week_iterator>(start, end_or_period, freq_value, tz);
-    }
-    else if (freq_unit == "SM")
-    {
-        return date_range<month_iterator>(
-            firstDateOfMonth(start),
-            end_or_period,
-            freq_value,
-            tz);
-    }
-    else if (freq_unit == "M")
-    {
-        return date_range<month_iterator>(
-            start.end_of_month(),
-            end_or_period,
-            freq_value,
-            tz);
-    }
-    else if (freq_unit == "Y")
-    {
-        return date_range<year_iterator>(
-            lastDateOfYear(start),
-            end_or_period,
-            freq_value,
-            tz);
-    }
-    else if (freq_unit == "YS")
-    {
-        return date_range<year_iterator>(
-            firstDateOfYear(start),
-            end_or_period,
-            freq_value,
-            tz);
-    }
-    throw std::runtime_error(
-        "date_range with start:date_type is only compatible with [D W M Y] freq_unit");
+    return {nullptr};
 }
 
 std::shared_ptr<arrow::TimestampArray> switchFunction(
@@ -240,7 +308,7 @@ std::shared_ptr<arrow::TimestampArray> date_range(
 std::shared_ptr<arrow::TimestampArray> date_range(
     date const& start,
     date const& end,
-    std::string const& freq,
+    const DateOffset& freq,
     std::string const& tz)
 {
     return switchFunction(start, end, freq, tz);
@@ -249,7 +317,7 @@ std::shared_ptr<arrow::TimestampArray> date_range(
 std::shared_ptr<arrow::TimestampArray> date_range(
     date const& start,
     int period,
-    std::string const& freq,
+    const DateOffset& freq,
     std::string const& tz)
 {
     return switchFunction(start, period, freq, tz);
@@ -279,8 +347,7 @@ std::shared_ptr<arrow::Int64Array> range(int64_t start, int64_t end)
     auto rangeView = std::views::iota(start, end);
     ABORT_NOT_OK(builder.AppendValues(rangeView.begin(), rangeView.end()));
 
-    return dynamic_pointer_cast<arrow::Int64Array>(
-        builder.Finish().MoveValueUnsafe());
+    return dynamic_pointer_cast<arrow::Int64Array>(builder.Finish().MoveValueUnsafe());
 }
 
 std::shared_ptr<arrow::UInt64Array> range(::uint64_t start, uint64_t end)
@@ -289,21 +356,15 @@ std::shared_ptr<arrow::UInt64Array> range(::uint64_t start, uint64_t end)
     auto rangeView = std::views::iota(start, end);
     ABORT_NOT_OK(builder.AppendValues(rangeView.begin(), rangeView.end()));
 
-    return dynamic_pointer_cast<arrow::UInt64Array>(
-        builder.Finish().MoveValueUnsafe());
+    return dynamic_pointer_cast<arrow::UInt64Array>(builder.Finish().MoveValueUnsafe());
 }
 
-std::shared_ptr<arrow::Array> combineIndexes(
-    std::vector<Series::ArrayType> const& indexes,
-    bool ignore_index)
+std::shared_ptr<arrow::Array> combineIndexes(std::vector<Series::ArrayType> const& indexes, bool ignore_index)
 {
     if (ignore_index)
     {
         std::vector<std::uint64_t> idx_len(indexes.size());
-        std::ranges::transform(
-            indexes,
-            idx_len.begin(),
-            [](Series::ArrayType const& idx) { return idx->length(); });
+        std::ranges::transform(indexes, idx_len.begin(), [](Series::ArrayType const& idx) { return idx->length(); });
         return range(0UL, std::accumulate(idx_len.begin(), idx_len.end(), 0UL));
     }
 
@@ -323,9 +384,11 @@ Series ReturnSeriesOrThrowOnError(arrow::Result<arrow::Datum>&& result)
     throw std::runtime_error(result.status().ToString());
 }
 
-std::shared_ptr<arrow::DataType> promoteTypes(const std::vector<std::shared_ptr<arrow::DataType>>& types) {
+std::shared_ptr<arrow::DataType> promoteTypes(const std::vector<std::shared_ptr<arrow::DataType>>& types)
+{
 
-    if (types.empty()) {
+    if (types.empty())
+    {
         return arrow::null();
     }
 
@@ -355,9 +418,8 @@ std::shared_ptr<arrow::DataType> promoteTypes(const std::vector<std::shared_ptr<
 
     return common_type;
 }
-}
-std::shared_ptr<arrow::Array> arrow::ScalarArray::Make(
-    const std::vector<pd::Scalar>& x)
+} // namespace pd
+std::shared_ptr<arrow::Array> arrow::ScalarArray::Make(const std::vector<pd::Scalar>& x)
 {
     if (x.empty())
     {
@@ -367,7 +429,7 @@ std::shared_ptr<arrow::Array> arrow::ScalarArray::Make(
 
     ABORT_NOT_OK(builder->Reserve(x.size()));
 
-    for(auto const& sc : x)
+    for (auto const& sc : x)
     {
         ABORT_NOT_OK(builder->AppendScalar(*sc.value()));
     }

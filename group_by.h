@@ -3,27 +3,25 @@
 // Created by dewe on 1/2/23.
 //
 
-#include <tbb/parallel_for.h>
 #include <arrow/compute/exec/test_util.h>
-
+#include <tbb/parallel_for.h>
 #include <utility>
-#include "unordered_map"
-#include "string"
-#include "arrow/compute/exec/exec_plan.h"
 #include "arrow/compute/api_aggregate.h"
 #include "arrow/compute/api_vector.h"
+#include "arrow/compute/exec/exec_plan.h"
 #include "arrow/compute/row/grouper.h"
 #include "dataframe.h"
 #include "series.h"
+#include "string"
+#include "unordered_map"
 
-using GroupMap = std::unordered_map<std::shared_ptr<arrow::Scalar>,
-    arrow::ArrayVector, pd::HashScalar, pd::HashScalar>;
+using GroupMap = std::unordered_map<std::shared_ptr<arrow::Scalar>, arrow::ArrayVector, pd::HashScalar, pd::HashScalar>;
 
 namespace pd {
 
 struct GroupBy
 {
-    GroupBy(const std::string& key, pd::DataFrame  df) : df(std::move(df))
+    GroupBy(const std::string& key, pd::DataFrame df) : df(std::move(df))
     {
         auto result = makeGroups(key);
         if (not result.ok())
@@ -38,8 +36,7 @@ struct GroupBy
     }
 
     template<class T>
-        requires(not std::same_as<T, std::shared_ptr<arrow::Scalar>>)
-    inline arrow::ArrayVector group(T&& value) const
+    requires(not std::same_as<T, std::shared_ptr<arrow::Scalar>>) inline arrow::ArrayVector group(T&& value) const
     {
         try
         {
@@ -62,17 +59,13 @@ struct GroupBy
         return ReturnOrThrowOnFailure(uniqueKeys->GetScalar(i));
     }
 
-    arrow::Result<pd::Series> apply(
-        std::function<std::shared_ptr<arrow::Scalar>(DataFrame const&)> fn);
+    arrow::Result<pd::Series> apply(std::function<std::shared_ptr<arrow::Scalar>(DataFrame const&)> fn);
 
-    arrow::Result<pd::DataFrame> apply(
-        std::function<std::shared_ptr<arrow::Scalar>(Series const&)> fn);
+    arrow::Result<pd::DataFrame> apply(std::function<std::shared_ptr<arrow::Scalar>(Series const&)> fn);
 
-    arrow::Result<pd::Series> apply_async(
-        std::function<std::shared_ptr<arrow::Scalar>(DataFrame const&)> fn);
+    arrow::Result<pd::Series> apply_async(std::function<std::shared_ptr<arrow::Scalar>(DataFrame const&)> fn);
 
-    arrow::Result<pd::DataFrame> apply_async(
-        std::function<std::shared_ptr<arrow::Scalar>(Series const&)> fn);
+    arrow::Result<pd::DataFrame> apply_async(std::function<std::shared_ptr<arrow::Scalar>(Series const&)> fn);
 
     arrow::Result<pd::DataFrame> mean(std::vector<std::string> const& args);
     arrow::Result<pd::Series> mean(std::string const& arg);
@@ -83,15 +76,13 @@ struct GroupBy
     arrow::Result<pd::DataFrame> any(std::vector<std::string> const& args);
     arrow::Result<pd::Series> any(std::string const& arg);
 
-    arrow::Result<pd::DataFrame> approximate_median(
-        std::vector<std::string> const& args);
+    arrow::Result<pd::DataFrame> approximate_median(std::vector<std::string> const& args);
     arrow::Result<pd::Series> approximate_median(std::string const& arg);
 
     arrow::Result<pd::DataFrame> count(std::vector<std::string> const& args);
     arrow::Result<pd::Series> count(std::string const& arg);
 
-    arrow::Result<pd::DataFrame> count_distinct(
-        std::vector<std::string> const& args);
+    arrow::Result<pd::DataFrame> count_distinct(std::vector<std::string> const& args);
     arrow::Result<pd::Series> count_distinct(std::string const& arg);
 
     arrow::Result<pd::DataFrame> first(std::vector<std::string> const& args);
@@ -114,9 +105,7 @@ struct GroupBy
     arrow::Result<pd::DataFrame> product(std::vector<std::string> const& args);
     arrow::Result<pd::Series> product(std::string const& arg);
 
-    arrow::Result<pd::DataFrame> quantile(
-        std::vector<std::string> const& args,
-        std::vector<double> const& q);
+    arrow::Result<pd::DataFrame> quantile(std::vector<std::string> const& args, std::vector<double> const& q);
     arrow::Result<pd::Series> quantile(std::string const& arg, double q);
 
     arrow::Result<pd::DataFrame> mode(std::vector<std::string> const& args);
@@ -143,11 +132,7 @@ protected:
 private:
     GroupMap groups;
     DataFrame df;
-    std::unordered_map<
-        std::shared_ptr<arrow::Scalar>,
-        std::shared_ptr<arrow::Array>,
-        pd::HashScalar,
-        pd::HashScalar>
+    std::unordered_map<std::shared_ptr<arrow::Scalar>, std::shared_ptr<arrow::Array>, pd::HashScalar, pd::HashScalar>
         indexGroups;
     std::shared_ptr<arrow::Array> uniqueKeys;
 
@@ -158,19 +143,14 @@ private:
     }
 
     template<typename OptionT, typename Args>
-    static std::vector<OptionT> convertToArrowFunctionOptions(
-        std::vector<Args> const& args)
+    static std::vector<OptionT> convertToArrowFunctionOptions(std::vector<Args> const& args)
     {
         std::vector<OptionT> options(args.size());
-        std::ranges::transform(
-            args,
-            options.begin(),
-            convertToArrowFunctionOption<OptionT, Args>);
+        std::ranges::transform(args, options.begin(), convertToArrowFunctionOption<OptionT, Args>);
         return options;
     }
 
-    arrow::Result<std::shared_ptr<arrow::ArrayData>> buildData(
-        arrow::ScalarVector const& arg)
+    arrow::Result<std::shared_ptr<arrow::ArrayData>> buildData(arrow::ScalarVector const& arg)
     {
         std::shared_ptr<arrow::ArrayBuilder> builder;
         if (not arg.empty())
@@ -184,8 +164,7 @@ private:
         return data;
     }
 
-    static arrow::Result<std::shared_ptr<arrow::Array>> buildArray(
-        arrow::ScalarVector const& arg)
+    static arrow::Result<std::shared_ptr<arrow::Array>> buildArray(arrow::ScalarVector const& arg)
     {
         std::shared_ptr<arrow::ArrayBuilder> builder;
         if (not arg.empty())
@@ -199,8 +178,7 @@ private:
         return data;
     }
 
-    static inline auto defaultOpt =
-        std::shared_ptr<arrow::compute::FunctionOptions>();
+    static inline auto defaultOpt = std::shared_ptr<arrow::compute::FunctionOptions>();
 
     /// takes in a grouper (an object that groups rows in a DataFrame based
     /// on certain criteria), a groupings array (which specifies the groups
@@ -222,36 +200,28 @@ private:
 
     arrow::Status makeGroups(std::string const& keyInStringFormat);
 
-    arrow::FieldVector fieldVectors(
-        std::vector<std::string> const& args,
-        std::shared_ptr<arrow::Schema> const& schema)
+    arrow::FieldVector fieldVectors(std::vector<std::string> const& args, std::shared_ptr<arrow::Schema> const& schema)
     {
         arrow::FieldVector fv(args.size());
-        std::ranges::transform(
-            args,
-            fv.begin(),
-            [&](auto const& arg) { return schema->GetFieldByName(arg); });
+        std::ranges::transform(args, fv.begin(), [&](auto const& arg) { return schema->GetFieldByName(arg); });
         return fv;
     }
 };
 
 #define RESAMPLE_GROUP_BY_FUNCTION(name) \
     arrow::Result<pd::DataFrame> name() \
-{ \
-    return GroupBy::name(getDF().columnNames())->setIndex(this->unique()); \
-}
+    { \
+        return GroupBy::name(getDF().columnNames())->setIndex(this->unique()); \
+    }
 
 struct Resampler : protected GroupBy
 {
     std::vector<std::string> group_keys;
-    Resampler(DataFrame const& _df)
-        : GroupBy("__resampler_idx__", _df )
+    Resampler(DataFrame const& _df) : GroupBy("__resampler_idx__", _df)
     {
     }
 
-    friend std::ostream& operator<<(
-        std::ostream& os,
-        Resampler const& resampler)
+    friend std::ostream& operator<<(std::ostream& os, Resampler const& resampler)
     {
         os << resampler.getDF() << "\n";
         return os;
@@ -285,9 +255,8 @@ struct Resampler : protected GroupBy
     RESAMPLE_GROUP_BY_FUNCTION(first)
     RESAMPLE_GROUP_BY_FUNCTION(last)
 
-    using GroupBy::apply_async;
     using GroupBy::apply;
-
+    using GroupBy::apply_async;
 };
 
-}
+} // namespace pd

@@ -17,13 +17,11 @@ using vector_int = std::vector<int64_t>;
 class RandomState
 {
 public:
-    explicit RandomState(std::optional<uint64_t> const& seed)
-        : gen(seed ? *seed : std::random_device()())
+    explicit RandomState(std::optional<uint64_t> const& seed) : gen(seed ? *seed : std::random_device()())
     {
     }
 
-    inline void rand(vector_double& result, double min = 0, double max = 1)
-        const
+    inline void rand(vector_double& result, double min = 0, double max = 1) const
     {
         std::ranges::generate(
             result,
@@ -42,24 +40,17 @@ public:
     }
 
     template<typename T>
-    inline std::vector<T> choice(std::vector<T> const& k,
-                                 int size) const
+    inline std::vector<T> choice(std::vector<T> const& k, int size) const
     {
         std::vector<T> out;
         out.reserve(size);
 
-        std::uniform_int_distribution dist(0UL, k.size()-1);
-        std::generate_n(std::back_inserter(out),
-                        size,
-                        [&](){
-                          return k[dist(gen)];
-                        });
+        std::uniform_int_distribution dist(0UL, k.size() - 1);
+        std::generate_n(std::back_inserter(out), size, [&]() { return k[dist(gen)]; });
         return out;
     }
 
-    inline vector_double rand(
-        vector_double const& min,
-        vector_double const& max) const
+    inline vector_double rand(vector_double const& min, vector_double const& max) const
     {
         vector_double result(min.size());
         std::transform(
@@ -75,8 +66,7 @@ public:
         return result;
     }
 
-    inline void randn(vector_double& result, double mean = 0, double std = 1)
-        const
+    inline void randn(vector_double& result, double mean = 0, double std = 1) const
     {
         std::ranges::generate(
             result,
@@ -120,7 +110,7 @@ public:
         return b.Finish().ValueOrDie();
     }
 
-    private:
+private:
     mutable std::mt19937_64 gen;
 };
-}
+} // namespace pd::random

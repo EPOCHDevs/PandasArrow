@@ -27,42 +27,54 @@ using arrow::internal::int128_t;
 
 // Accumulate sum/squared sum (using naive summation)
 // Shared implementation between scalar/hash aggregate variance/stddev kernels
-template <typename ArrowType>
-struct IntegerVarStd {
-  using c_type = typename ArrowType::c_type;
+template<typename ArrowType>
+struct IntegerVarStd
+{
+    using c_type = typename ArrowType::c_type;
 
-  int64_t count = 0;
-  int64_t sum = 0;
-  int128_t square_sum = 0;
+    int64_t count = 0;
+    int64_t sum = 0;
+    int128_t square_sum = 0;
 
-  void ConsumeOne(const c_type value) {
-    sum += value;
-    square_sum += static_cast<uint64_t>(value) * value;
-    count++;
-  }
+    void ConsumeOne(const c_type value)
+    {
+        sum += value;
+        square_sum += static_cast<uint64_t>(value) * value;
+        count++;
+    }
 
-  double mean() const { return static_cast<double>(sum) / count; }
+    double mean() const
+    {
+        return static_cast<double>(sum) / count;
+    }
 
-  double m2() const {
-    // calculate m2 = square_sum - sum * sum / count
-    // decompose `sum * sum / count` into integers and fractions
-    const int128_t sum_square = static_cast<int128_t>(sum) * sum;
-    const int128_t integers = sum_square / count;
-    const double fractions = static_cast<double>(sum_square % count) / count;
-    return static_cast<double>(square_sum - integers) - fractions;
-  }
+    double m2() const
+    {
+        // calculate m2 = square_sum - sum * sum / count
+        // decompose `sum * sum / count` into integers and fractions
+        const int128_t sum_square = static_cast<int128_t>(sum) * sum;
+        const int128_t integers = sum_square / count;
+        const double fractions = static_cast<double>(sum_square % count) / count;
+        return static_cast<double>(square_sum - integers) - fractions;
+    }
 };
 
-static inline void MergeVarStd(int64_t count1, double mean1, int64_t count2, double mean2,
-                               double m22, int64_t* out_count, double* out_mean,
-                               double* out_m2) {
-  double mean = (mean1 * count1 + mean2 * count2) / (count1 + count2);
-  *out_m2 += m22 + count1 * (mean1 - mean) * (mean1 - mean) +
-             count2 * (mean2 - mean) * (mean2 - mean);
-  *out_count += count2;
-  *out_mean = mean;
+static inline void MergeVarStd(
+    int64_t count1,
+    double mean1,
+    int64_t count2,
+    double mean2,
+    double m22,
+    int64_t* out_count,
+    double* out_mean,
+    double* out_m2)
+{
+    double mean = (mean1 * count1 + mean2 * count2) / (count1 + count2);
+    *out_m2 += m22 + count1 * (mean1 - mean) * (mean1 - mean) + count2 * (mean2 - mean) * (mean2 - mean);
+    *out_count += count2;
+    *out_mean = mean;
 }
 
-}  // namespace internal
-}  // namespace compute
-}  // namespace arrow
+} // namespace internal
+} // namespace compute
+} // namespace arrow

@@ -3,8 +3,8 @@
 // Created by dewe on 1/22/23.
 //
 
-#include "core.h"
 #include "concat.h"
+#include "core.h"
 #include "dataframe.h"
 #include "series.h"
 
@@ -33,30 +33,17 @@ struct Concatenator
         }
     }
 
-    static arrow::ArrayVector makeJoinIndexes(
-        std::vector<pd::DataFrame> const& objs,
-        AxisType axis);
+    static arrow::ArrayVector makeJoinIndexes(std::vector<pd::DataFrame> const& objs, AxisType axis);
 
-    pd::DataFrame concatenateRows(
-        bool intersect,
-        bool ignore_index,
-        bool sort);
+    pd::DataFrame concatenateRows(bool intersect, bool ignore_index, bool sort);
 
-    pd::DataFrame concatenateColumns(
-        bool intersect,
-        bool ignore_index,
-        bool sort);
+    pd::DataFrame concatenateColumns(bool intersect, bool ignore_index, bool sort);
 
-    static ArrayPtr mergeIndexes(
-        arrow::ArrayVector const& indexes,
-        bool intersect);
+    static ArrayPtr mergeIndexes(arrow::ArrayVector const& indexes, bool intersect);
 
-    static ArrayPtr makeConcatIndex(
-        std::vector<pd::DataFrame> const& objs,
-        AxisType axis,
-        bool ignoreIndex);
+    static ArrayPtr makeConcatIndex(std::vector<pd::DataFrame> const& objs, AxisType axis, bool ignoreIndex);
 
-    static std::unordered_map<std::string, std::pair<std::vector<int>, std::shared_ptr<arrow::DataType>> >
+    static std::unordered_map<std::string, std::pair<std::vector<int>, std::shared_ptr<arrow::DataType>>>
     resolveDuplicateFieldName(std::vector<pd::DataFrame> const& objs);
 
 private:
@@ -76,7 +63,7 @@ inline DataFrame concat(
     return Concatenator(objs, join, ignore_index, sort)(axis);
 }
 
-//inline pd::DataFrame concat(
+// inline pd::DataFrame concat(
 //    std::vector<pd::Series> const& objs,
 //    AxisType axis = AxisType::Index,
 //    JoinType join = JoinType::Outer,
@@ -97,7 +84,7 @@ inline DataFrame concat(
 //    return Concatenator(dfs, join, ignore_index, sort)(axis);
 //}
 
-//inline pd::DataFrame concat(
+// inline pd::DataFrame concat(
 //    std::vector<std::variant<pd::DataFrame, pd::Series>> const& objs,
 //    AxisType axis = AxisType::Index,
 //    JoinType join = JoinType::Outer,
@@ -136,4 +123,4 @@ inline DataFrame concat(
 
 DataFrame concatColumnsUnsafe(std::vector<pd::DataFrame> const& objs);
 
-}
+} // namespace pd

@@ -10,7 +10,8 @@ using std::pair;
 using std::vector;
 
 using namespace pd;
-TEST_CASE("Test date_range with end date", "[date_range]") {
+TEST_CASE("Test date_range with end date", "[date_range]")
+{
     auto start = date(2022, 1, 1);
     auto end = date(2022, 1, 7);
     auto freq = "D";
@@ -23,7 +24,8 @@ TEST_CASE("Test date_range with end date", "[date_range]") {
     REQUIRE(result->type()->id() == arrow::Type::TIMESTAMP);
 }
 
-TEST_CASE("Test date_range with period", "[date_range]") {
+TEST_CASE("Test date_range with period", "[date_range]")
+{
     auto start = date(2022, 1, 1);
     auto period = 7;
     auto freq = "D";
@@ -75,7 +77,8 @@ TEST_CASE("Test date_range with different frequency", "[date_range]")
     REQUIRE(result->type()->id() == arrow::Type::TIMESTAMP);
 }
 
-TEST_CASE("Test date_range with different timezone", "[date_range]") {
+TEST_CASE("Test date_range with different timezone", "[date_range]")
+{
     auto start = date(2022, 1, 1);
     auto end = date(2022, 1, 7);
     auto freq = "D";
@@ -97,7 +100,8 @@ TEST_CASE("Test date_range with different timezone", "[date_range]") {
     REQUIRE(result->length() == 10);
 }
 
-TEST_CASE("Test date_range with invalid frequency", "[date_range]") {
+TEST_CASE("Test date_range with invalid frequency", "[date_range]")
+{
     auto start = date(2022, 1, 1);
     auto end = date(2022, 1, 7);
     auto freq = "X";
@@ -107,7 +111,8 @@ TEST_CASE("Test date_range with invalid frequency", "[date_range]") {
     REQUIRE_THROWS(date_range(start, 5, "InvalidFrequency"));
 }
 
-TEST_CASE("Test date_range with invalid timezone", "[date_range]") {
+TEST_CASE("Test date_range with invalid timezone", "[date_range]")
+{
     auto start = date(2022, 1, 1);
     auto end = date(2022, 1, 7);
     auto freq = "D";
@@ -152,32 +157,30 @@ TEST_CASE("Test date_range with valid input", "[date_range]")
 
     REQUIRE(result->length() == 7);
 
-    std::vector<int64_t> expected_values = {
-        1640995200000000000,
-        1640995200000000000 + 86400000000000,
-        1640995200000000000 + 86400000000000*2,
-        1640995200000000000 + 86400000000000*3,
-        1640995200000000000 + 86400000000000*4,
-        1640995200000000000 + 86400000000000*5,
-        1640995200000000000 + 86400000000000*6
-    };
+    std::vector<int64_t> expected_values = { 1640995200000000000,
+                                             1640995200000000000 + 86400000000000,
+                                             1640995200000000000 + 86400000000000 * 2,
+                                             1640995200000000000 + 86400000000000 * 3,
+                                             1640995200000000000 + 86400000000000 * 4,
+                                             1640995200000000000 + 86400000000000 * 5,
+                                             1640995200000000000 + 86400000000000 * 6 };
     auto timestamp_array = std::static_pointer_cast<arrow::TimestampArray>(result);
-    for (int i = 0; i < result->length(); i++) {
+    for (int i = 0; i < result->length(); i++)
+    {
         REQUIRE(timestamp_array->Value(i) == expected_values[i]);
     }
 
     auto result_freq = date_range(start, end, "2D");
     REQUIRE(result_freq->length() == 4);
 
-    expected_values = {
-        1640995200000000000,
-        1640995200000000000 + 86400000000000*2,
-        1640995200000000000 + 86400000000000*4,
-        1640995200000000000 + 86400000000000*6
-    };
+    expected_values = { 1640995200000000000,
+                        1640995200000000000 + 86400000000000 * 2,
+                        1640995200000000000 + 86400000000000 * 4,
+                        1640995200000000000 + 86400000000000 * 6 };
 
     timestamp_array = std::static_pointer_cast<arrow::TimestampArray>(result_freq);
-    for (int i = 0; i < result_freq->length(); i++) {
+    for (int i = 0; i < result_freq->length(); i++)
+    {
         REQUIRE(timestamp_array->Value(i) == expected_values[i]);
     }
 }
@@ -189,8 +192,7 @@ TEST_CASE("Test date_range with valid input and period", "[date_range]")
     auto result = date_range(start, period, "D");
     REQUIRE(result->length() == 10);
     auto array = result->data();
-    auto timestamp_array =
-        arrow::checked_pointer_cast<arrow::TimestampArray>(result);
+    auto timestamp_array = arrow::checked_pointer_cast<arrow::TimestampArray>(result);
 
     auto start_timestamp = fromDate(start);
     for (int i = 0; i < period; i++)
@@ -199,27 +201,31 @@ TEST_CASE("Test date_range with valid input and period", "[date_range]")
     }
 }
 
-TEST_CASE("Test date_range with valid input and frequency", "[date_range]") {
+TEST_CASE("Test date_range with valid input and frequency", "[date_range]")
+{
 
-    SECTION("Test frequency of 'D'") {
+    SECTION("Test frequency of 'D'")
+    {
         date start(2022, 1, 1);
         int period = 10;
         auto result = date_range(start, period, "D");
         REQUIRE(result->length() == 10);
         REQUIRE(result->type()->id() == arrow::Type::TIMESTAMP);
 
-        //Checking that the first timestamp is 2022-01-01
-        auto timestamp = arrow::checked_pointer_cast<arrow::TimestampScalar>( result->GetScalar(0).MoveValueUnsafe() );
+        // Checking that the first timestamp is 2022-01-01
+        auto timestamp = arrow::checked_pointer_cast<arrow::TimestampScalar>(result->GetScalar(0).MoveValueUnsafe());
         date first_date = toDate(timestamp->value);
         REQUIRE(first_date == date(2022, 1, 1));
 
-        //Checking that the last timestamp is 2022-01-10
-        timestamp = arrow::checked_pointer_cast<arrow::TimestampScalar>( result->GetScalar(result->length() - 1).MoveValueUnsafe() );
+        // Checking that the last timestamp is 2022-01-10
+        timestamp = arrow::checked_pointer_cast<arrow::TimestampScalar>(
+            result->GetScalar(result->length() - 1).MoveValueUnsafe());
         date last_date = toDate(timestamp->value);
         REQUIRE(last_date == date(2022, 1, 10));
     }
 
-    SECTION("Test frequency of 'W'") {
+    SECTION("Test frequency of 'W'")
+    {
         date start(2022, 1, 1);
         int period = 2;
 
@@ -227,18 +233,20 @@ TEST_CASE("Test date_range with valid input and frequency", "[date_range]") {
         REQUIRE(result->length() == 2);
         REQUIRE(result->type()->id() == arrow::Type::TIMESTAMP);
 
-        //Checking that the first timestamp is 2022-01-01
-        auto timestamp = arrow::checked_pointer_cast<arrow::TimestampScalar>( result->GetScalar(0).MoveValueUnsafe() );
+        // Checking that the first timestamp is 2022-01-01
+        auto timestamp = arrow::checked_pointer_cast<arrow::TimestampScalar>(result->GetScalar(0).MoveValueUnsafe());
         date first_date = toDate(timestamp->value);
         REQUIRE(first_date == date(2022, 1, 1));
 
-        //Checking that the last timestamp is 2022-01-08
-        timestamp = arrow::checked_pointer_cast<arrow::TimestampScalar>( result->GetScalar(result->length() - 1).MoveValueUnsafe() );
+        // Checking that the last timestamp is 2022-01-08
+        timestamp = arrow::checked_pointer_cast<arrow::TimestampScalar>(
+            result->GetScalar(result->length() - 1).MoveValueUnsafe());
         date last_date = toDate(timestamp->value);
         REQUIRE(last_date == date(2022, 1, 8));
     }
 
-    SECTION("Test frequency of 'M'") {
+    SECTION("Test frequency of 'M'")
+    {
         date start(2022, 1, 31);
         int period = 1;
 
@@ -246,13 +254,14 @@ TEST_CASE("Test date_range with valid input and frequency", "[date_range]") {
         REQUIRE(result->length() == 1);
         REQUIRE(result->type()->id() == arrow::Type::TIMESTAMP);
 
-        //Checking that the first timestamp is 2022-01-31
-        auto timestamp = arrow::checked_pointer_cast<arrow::TimestampScalar>( result->GetScalar(0).MoveValueUnsafe() );
+        // Checking that the first timestamp is 2022-01-31
+        auto timestamp = arrow::checked_pointer_cast<arrow::TimestampScalar>(result->GetScalar(0).MoveValueUnsafe());
         date first_date = toDate(timestamp->value);
         REQUIRE(first_date == date(2022, 1, 31));
     }
 
-    SECTION("Test frequency of 'Y'") {
+    SECTION("Test frequency of 'Y'")
+    {
         date start(2022, 12, 31);
         int period = 1;
 
@@ -260,14 +269,15 @@ TEST_CASE("Test date_range with valid input and frequency", "[date_range]") {
         REQUIRE(result->length() == 1);
         REQUIRE(result->type()->id() == arrow::Type::TIMESTAMP);
 
-        //Checking that the first timestamp is 2022-12-31
-        auto timestamp = arrow::checked_pointer_cast<arrow::TimestampScalar>( result->GetScalar(0).MoveValueUnsafe() );
+        // Checking that the first timestamp is 2022-12-31
+        auto timestamp = arrow::checked_pointer_cast<arrow::TimestampScalar>(result->GetScalar(0).MoveValueUnsafe());
         date first_date = toDate(timestamp->value);
         REQUIRE(first_date == date(2022, 12, 31));
     }
 }
 
-TEST_CASE("Test firstDateOfYear, lastDateOfYear, and firstDateOfMonth", "[date_functions]") {
+TEST_CASE("Test firstDateOfYear, lastDateOfYear, and firstDateOfMonth", "[date_functions]")
+{
     date d1(2022, 2, 15);
     date d2(2022, 12, 31);
     date d3(2022, 12, 1);
@@ -285,13 +295,15 @@ TEST_CASE("Test firstDateOfYear, lastDateOfYear, and firstDateOfMonth", "[date_f
     REQUIRE(firstDateOfMonth(d3) == date(2022, 12, 1));
 }
 
-TEST_CASE("Test toTimestampNS with valid input", "[toTimestampNS]") {
+TEST_CASE("Test toTimestampNS with valid input", "[toTimestampNS]")
+{
     std::string date_string = "2022-01-01T00:00:00";
     int64_t expected_timestamp = 1640995200000000000; // in ns
     REQUIRE(toTimestampNS(date_string) == expected_timestamp);
 }
 
-TEST_CASE("Test fromDateTime function", "[fromDateTime]") {
+TEST_CASE("Test fromDateTime function", "[fromDateTime]")
+{
     date test_date(2022, 1, 1);
     ptime test_ptime(test_date);
     auto date_result = fromDateTime(test_date);
@@ -313,7 +325,7 @@ TEST_CASE("Dataframe Concat")
 {
     using namespace std::string_literals;
     pd::DataFrame df1{ ArrayPtr{ nullptr },
-                       pair{ "letter"s, std::vector<std::string>{ "a", "b"} },
+                       pair{ "letter"s, std::vector<std::string>{ "a", "b" } },
                        pair{ "number"s, std::vector{ 1L, 2L } } };
 
     pd::DataFrame df2{ ArrayPtr{ nullptr },
@@ -338,12 +350,10 @@ TEST_CASE("Dataframe Concat")
         "[resample]")
     {
 
-        expected_result = {
-            arrow::ArrayFromJSON<::uint64_t>("[0,1,0,1]"),
-            pair{ "letter"s, std::vector<std::string>{ "a", "b", "c", "d" } },
-            pair{ "number"s, std::vector<long>{ 1L, 2L, 3L, 4L } },
-            pair{ "animal"s, std::vector{ ""s, ""s, "cat"s, "dog"s } }
-        };
+        expected_result = { arrow::ArrayFromJSON<::uint64_t>("[0,1,0,1]"),
+                            pair{ "letter"s, std::vector<std::string>{ "a", "b", "c", "d" } },
+                            pair{ "number"s, std::vector<long>{ 1L, 2L, 3L, 4L } },
+                            pair{ "animal"s, std::vector{ ""s, ""s, "cat"s, "dog"s } } };
 
         result = pd::concat(std::vector{ df1, df3 }, AxisType::Index);
         // Assert that the resulting DataFrame is equal to the expected result
@@ -351,17 +361,13 @@ TEST_CASE("Dataframe Concat")
         REQUIRE(result.equals_(expected_result));
     }
 
-    SECTION(
-        "Combine DataFrame objects horizontally along the x axis",
-        "[resample]")
+    SECTION("Combine DataFrame objects horizontally along the x axis", "[resample]")
     {
-        expected_result = pd::DataFrame{
-            arrow::ArrayFromJSON<::uint64_t>("[0,1]"),
-            pair{ "letter"s, std::vector<std::string>{ "a", "b" } },
-            pair{ "number"s, std::vector<long>{ 1L, 2L } },
-            pair{ "animal"s, std::vector{ "bird"s, "polly"s } },
-            pair{ "name"s, std::vector{ "monkey"s, "george"s } }
-        };
+        expected_result = pd::DataFrame{ arrow::ArrayFromJSON<::uint64_t>("[0,1]"),
+                                         pair{ "letter"s, std::vector<std::string>{ "a", "b" } },
+                                         pair{ "number"s, std::vector<long>{ 1L, 2L } },
+                                         pair{ "animal"s, std::vector{ "bird"s, "polly"s } },
+                                         pair{ "name"s, std::vector{ "monkey"s, "george"s } } };
 
         result = pd::concat(std::vector{ df1, df4 }, AxisType::Columns);
         // Assert that the resulting DataFrame is equal to the expected result
@@ -375,11 +381,9 @@ TEST_CASE("Dataframe Concat")
         "inner to the join keyword argument.",
         "[resample]")
     {
-        expected_result = pd::DataFrame{
-            arrow::ArrayFromJSON<::uint64_t>("[0,1,0,1]"),
-            pair{ "letter"s, std::vector<std::string>{ "a", "b", "c", "d" } },
-            pair{ "number"s, std::vector{ 1L, 2L, 3L, 4L } }
-        };
+        expected_result = pd::DataFrame{ arrow::ArrayFromJSON<::uint64_t>("[0,1,0,1]"),
+                                         pair{ "letter"s, std::vector<std::string>{ "a", "b", "c", "d" } },
+                                         pair{ "number"s, std::vector{ 1L, 2L, 3L, 4L } } };
 
         result = pd::concat(std::vector{ df1, df3 }, AxisType::Index, JoinType::Inner);
         // Assert that the resulting DataFrame is equal to the expected result
@@ -387,15 +391,11 @@ TEST_CASE("Dataframe Concat")
         REQUIRE(result.equals_(expected_result));
     }
 
-    SECTION(
-        "Combine two DataFrame objects with identical columns",
-        "[resample]")
+    SECTION("Combine two DataFrame objects with identical columns", "[resample]")
     {
-        expected_result = pd::DataFrame{
-            arrow::ArrayFromJSON<::uint64_t>("[0,1,0,1]"),
-            pair{ "letter"s, std::vector<std::string>{ "a", "b", "c", "d" } },
-            pair{ "number"s, std::vector{ 1L, 2L, 3L, 4L } }
-        };
+        expected_result = pd::DataFrame{ arrow::ArrayFromJSON<::uint64_t>("[0,1,0,1]"),
+                                         pair{ "letter"s, std::vector<std::string>{ "a", "b", "c", "d" } },
+                                         pair{ "number"s, std::vector{ 1L, 2L, 3L, 4L } } };
 
         result = pd::concat(std::vector{ df1, df2 }, AxisType::Index);
         // Assert that the resulting DataFrame is equal to the expected result
@@ -403,9 +403,7 @@ TEST_CASE("Dataframe Concat")
         REQUIRE(result.equals_(expected_result));
     }
 
-    SECTION(
-        "Combine two DataFrame objects with identical columns, IGNORE_INDEX",
-        "[resample]")
+    SECTION("Combine two DataFrame objects with identical columns, IGNORE_INDEX", "[resample]")
     {
         auto d7 = pd::DataFrame{ arrow::ArrayFromJSON<::uint64_t>("[0]"),
                                  std::pair{ "a"s, std::vector{ 1L } },
@@ -415,25 +413,19 @@ TEST_CASE("Dataframe Concat")
                                  std::pair{ "a"s, std::vector{ 3L } },
                                  std::pair{ "b"s, std::vector{ 4L } } };
 
-        expected_result =
-            pd::DataFrame{ arrow::ArrayFromJSON<::uint64_t>("[0,1]"),
-                           pair{ "a"s, std::vector{ 1L, 3L } },
-                           pair{ "b"s, std::vector{ 2L, 4L } } };
+        expected_result = pd::DataFrame{ arrow::ArrayFromJSON<::uint64_t>("[0,1]"),
+                                         pair{ "a"s, std::vector{ 1L, 3L } },
+                                         pair{ "b"s, std::vector{ 2L, 4L } } };
 
-        result = pd::concat(
-            std::vector{ d7, d8 },
-            AxisType::Index,
-            pd::JoinType::Outer,
-            true);
+        result = pd::concat(std::vector{ d7, d8 }, AxisType::Index, pd::JoinType::Outer, true);
 
         // Assert that the resulting DataFrame is equal to the expected result
         INFO(result << "\n != \n" << expected_result);
         REQUIRE(result.equals_(expected_result));
     }
-
 }
 
-//TEST_CASE("concatenating DataFrame with Series", "[concat]")
+// TEST_CASE("concatenating DataFrame with Series", "[concat]")
 //{
 //
 //    pd::DataFrame df1{ pd::ArrayTable{
@@ -461,65 +453,60 @@ TEST_CASE("Dataframe Concat")
 //
 //}
 
-TEST_CASE("PromoteTypes: empty input", "[promoteTypes]") {
+TEST_CASE("PromoteTypes: empty input", "[promoteTypes]")
+{
     std::vector<std::shared_ptr<arrow::DataType>> empty_vec;
     REQUIRE(promoteTypes(empty_vec) == arrow::null());
 }
 
-TEST_CASE("PromoteTypes: int32 and int64", "[promoteTypes]") {
-    std::vector<std::shared_ptr<arrow::DataType>> types = {arrow::int32(), arrow::int64()};
+TEST_CASE("PromoteTypes: int32 and int64", "[promoteTypes]")
+{
+    std::vector<std::shared_ptr<arrow::DataType>> types = { arrow::int32(), arrow::int64() };
     REQUIRE(promoteTypes(types)->id() == arrow::Type::INT64);
 }
 
-TEST_CASE("PromoteTypes: int32 and float", "[promoteTypes]") {
-    std::vector<std::shared_ptr<arrow::DataType>> types = {arrow::int32(), arrow::float32()};
+TEST_CASE("PromoteTypes: int32 and float", "[promoteTypes]")
+{
+    std::vector<std::shared_ptr<arrow::DataType>> types = { arrow::int32(), arrow::float32() };
     REQUIRE(promoteTypes(types)->id() == arrow::Type::FLOAT);
 }
 
-TEST_CASE("PromoteTypes: int32, int64 and float", "[promoteTypes]") {
-    std::vector<std::shared_ptr<arrow::DataType>> types = {arrow::int32(), arrow::int64(), arrow::float64()};
+TEST_CASE("PromoteTypes: int32, int64 and float", "[promoteTypes]")
+{
+    std::vector<std::shared_ptr<arrow::DataType>> types = { arrow::int32(), arrow::int64(), arrow::float64() };
     REQUIRE(promoteTypes(types)->id() == arrow::Type::DOUBLE);
 }
 
-TEST_CASE("PromoteTypes: int32 and string", "[promoteTypes]") {
-    std::vector<std::shared_ptr<arrow::DataType>> types = {arrow::int32(), arrow::utf8()};
+TEST_CASE("PromoteTypes: int32 and string", "[promoteTypes]")
+{
+    std::vector<std::shared_ptr<arrow::DataType>> types = { arrow::int32(), arrow::utf8() };
     REQUIRE(promoteTypes(types) == arrow::utf8());
 }
 
-TEST_CASE("PromoteTypes: timestamp and int32", "[promoteTypes]") {
-    std::vector<std::shared_ptr<arrow::DataType>> types = {arrow::timestamp(arrow::TimeUnit::SECOND), arrow::int32()};
+TEST_CASE("PromoteTypes: timestamp and int32", "[promoteTypes]")
+{
+    std::vector<std::shared_ptr<arrow::DataType>> types = { arrow::timestamp(arrow::TimeUnit::SECOND), arrow::int32() };
     REQUIRE(promoteTypes(types)->id() == arrow::Type::TIMESTAMP);
 }
 
 TEST_CASE("ConcatenateRows", "[concatenateRows]")
 {
 
-    auto df1 = pd::DataFrame(
-        pd::NULL_INDEX,
-        pair{ "a"s, vector{ 1L, 2L, 3L } },
-        pair{ "b"s, vector{ 4L, 5L, 6L } });
+    auto df1 = pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 1L, 2L, 3L } }, pair{ "b"s, vector{ 4L, 5L, 6L } });
 
     SECTION("Concatenate two DataFrames with no duplicate keys")
     {
-        auto df2 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "c"s, vector{ 7L, 8L, 9L } },
-            pair{ "d"s, vector{ 10L, 11L, 12L } });
+        auto df2 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "c"s, vector{ 7L, 8L, 9L } }, pair{ "d"s, vector{ 10L, 11L, 12L } });
 
         auto concatenator = pd::Concatenator({ df1, df2 });
 
         auto result = concatenator(AxisType::Index);
         auto expected = pd::DataFrame(
-            ArrayTable{
-                { "a",
-                  arrow::ArrayFromJSON<int64_t>("[1,2,3,null,null,null]") },
-                { "b",
-                  arrow::ArrayFromJSON<int64_t>("[4,5,6,null,null,null]") },
-                { "c",
-                  arrow::ArrayFromJSON<int64_t>("[null,null,null,7,8,9]") },
-                { "d",
-                  arrow::ArrayFromJSON<int64_t>(
-                      "[null,null,null,10,11,12]") } },
+            ArrayTable{ { "a", arrow::ArrayFromJSON<int64_t>("[1,2,3,null,null,null]") },
+                        { "b", arrow::ArrayFromJSON<int64_t>("[4,5,6,null,null,null]") },
+                        { "c", arrow::ArrayFromJSON<int64_t>("[null,null,null,7,8,9]") },
+                        { "d", arrow::ArrayFromJSON<int64_t>("[null,null,null,10,11,12]") } },
             arrow::ArrayFromJSON<::uint64_t>("[0,1,2,0,1,2]"));
 
         INFO(result << "\n!=\n" << expected);
@@ -528,17 +515,14 @@ TEST_CASE("ConcatenateRows", "[concatenateRows]")
 
     SECTION("Concatenate two DataFrames with duplicate keys")
     {
-        auto df2 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "a"s, vector{ 7L, 8L, 9L } },
-            pair{ "b"s, vector{ 10L, 11L, 12L } });
+        auto df2 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 7L, 8L, 9L } }, pair{ "b"s, vector{ 10L, 11L, 12L } });
 
         auto concatenator = pd::Concatenator({ df1, df2 });
 
         auto result = concatenator(AxisType::Index);
         auto expected = pd::DataFrame(
-            TableWithType<int64_t>{ { "a", { 1, 2, 3, 7, 8, 9 } },
-                                    { "b", { 4, 5, 6, 10, 11, 12 } } },
+            TableWithType<int64_t>{ { "a", { 1, 2, 3, 7, 8, 9 } }, { "b", { 4, 5, 6, 10, 11, 12 } } },
             arrow::ArrayFromJSON<::uint64_t>("[0,1,2,0,1,2]"));
         REQUIRE(result.equals_(expected));
     }
@@ -560,39 +544,30 @@ TEST_CASE("ConcatenateRows", "[concatenateRows]")
         REQUIRE(result.equals_(expected));
     }
 
-    SECTION(
-        "Concatenate two DataFrames with duplicate keys and ignore_index = true")
+    SECTION("Concatenate two DataFrames with duplicate keys and ignore_index = true")
     {
-        auto df2 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "a"s, vector{ 7L, 8L, 9L } },
-            pair{ "b"s, vector{ 10L, 11L, 12L } });
+        auto df2 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 7L, 8L, 9L } }, pair{ "b"s, vector{ 10L, 11L, 12L } });
 
-        auto concatenator =
-            pd::Concatenator({ df1, df2 }, JoinType::Outer, true);
+        auto concatenator = pd::Concatenator({ df1, df2 }, JoinType::Outer, true);
 
         auto result = concatenator(AxisType::Index);
-        auto expected = pd::DataFrame(
-            TableWithType<int64_t>{ { "a", { 1, 2, 3, 7, 8, 9 } },
-                                    { "b", { 4, 5, 6, 10, 11, 12 } } });
+        auto expected =
+            pd::DataFrame(TableWithType<int64_t>{ { "a", { 1, 2, 3, 7, 8, 9 } }, { "b", { 4, 5, 6, 10, 11, 12 } } });
         REQUIRE(result.equals_(expected));
     }
 
     SECTION("Concatenate two DataFrames with duplicate keys and sort = true")
     {
-        auto df2 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "a"s, vector{ 7L, 8L, 9L } },
-            pair{ "b"s, vector{ 10L, 11L, 12L } });
+        auto df2 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 7L, 8L, 9L } }, pair{ "b"s, vector{ 10L, 11L, 12L } });
 
-        auto concatenator =
-            pd::Concatenator({ df1, df2 }, JoinType::Outer, false, true);
+        auto concatenator = pd::Concatenator({ df1, df2 }, JoinType::Outer, false, true);
 
         auto result = concatenator(AxisType::Index);
         auto expected = pd::DataFrame(
-            ArrayTable{
-                { "a", arrow::ArrayFromJSON<int64_t>("[1,2,3,7,8,9]") },
-                { "b", arrow::ArrayFromJSON<int64_t>("[4,5,6,10,11,12]") } },
+            ArrayTable{ { "a", arrow::ArrayFromJSON<int64_t>("[1,2,3,7,8,9]") },
+                        { "b", arrow::ArrayFromJSON<int64_t>("[4,5,6,10,11,12]") } },
             arrow::ArrayFromJSON<::uint64_t>("[0,1,2,0,1,2]"));
 
         INFO(result << "\n!=\n" << expected);
@@ -601,10 +576,8 @@ TEST_CASE("ConcatenateRows", "[concatenateRows]")
 
     SECTION("Concatenate DataFrames with JoinType::Inner")
     {
-        auto df2 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "a"s, vector{ 7L, 8L, 9L } },
-            pair{ "b"s, vector{ 10L, 11L, 12L } });
+        auto df2 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 7L, 8L, 9L } }, pair{ "b"s, vector{ 10L, 11L, 12L } });
         auto concatenator = pd::Concatenator({ df1, df2 }, JoinType::Inner);
 
         auto result = concatenator(AxisType::Index);
@@ -621,10 +594,8 @@ TEST_CASE("ConcatenateRows", "[concatenateRows]")
 
     SECTION("Concatenate DataFrames with different indexes and JoinType::Inner")
     {
-        auto df2 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "a"s, vector{ 7L, 8L, 9L } },
-            pair{ "c"s, vector{ 10L, 11L, 12L } });
+        auto df2 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 7L, 8L, 9L } }, pair{ "c"s, vector{ 10L, 11L, 12L } });
         auto concatenator = pd::Concatenator({ df1, df2 }, JoinType::Inner);
 
         auto result = concatenator(AxisType::Index);
@@ -649,13 +620,9 @@ TEST_CASE("ConcatenateRows", "[concatenateRows]")
 
         auto result = concatenator(AxisType::Index);
         auto expected = pd::DataFrame(
-            ArrayTable{
-                { "a",
-                  arrow::ArrayFromJSON<int64_t>("[1,2,3,7,8,9]") },
-                { "b",
-                  arrow::ArrayFromJSON<int64_t>("[4,5,6,10,11,12]") },
-                { "e",
-                  arrow::ArrayFromJSON<int64_t>("[null,null,null,13,14,15]") } },
+            ArrayTable{ { "a", arrow::ArrayFromJSON<int64_t>("[1,2,3,7,8,9]") },
+                        { "b", arrow::ArrayFromJSON<int64_t>("[4,5,6,10,11,12]") },
+                        { "e", arrow::ArrayFromJSON<int64_t>("[null,null,null,13,14,15]") } },
             arrow::ArrayFromJSON<::uint64_t>("[0,1,2,0,1,2]"));
 
         INFO(result << "\n!=\n" << expected);
@@ -670,17 +637,13 @@ TEST_CASE("ConcatenateRows", "[concatenateRows]")
             pair{ "b"s, vector{ 10L, 11L, 12L } },
             pair{ "e"s, vector{ 13L, 14L, 15L } });
 
-        auto concatenator =
-            pd::Concatenator({ df1, df2 }, JoinType::Outer, false, false);
+        auto concatenator = pd::Concatenator({ df1, df2 }, JoinType::Outer, false, false);
 
         auto result = concatenator(AxisType::Index);
         auto expected = pd::DataFrame(
-            ArrayTable{
-                { "a", arrow::ArrayFromJSON<int64_t>("[1,2,3,7,8,9]") },
-                { "b", arrow::ArrayFromJSON<int64_t>("[4,5,6,10,11,12]") },
-                { "e",
-                  arrow::ArrayFromJSON<int64_t>(
-                      "[null,null,null,13,14,15]") } },
+            ArrayTable{ { "a", arrow::ArrayFromJSON<int64_t>("[1,2,3,7,8,9]") },
+                        { "b", arrow::ArrayFromJSON<int64_t>("[4,5,6,10,11,12]") },
+                        { "e", arrow::ArrayFromJSON<int64_t>("[null,null,null,13,14,15]") } },
             arrow::ArrayFromJSON<::uint64_t>("[0,1,2,0,1,2]"));
 
         INFO(result << "\n!=\n" << expected);
@@ -690,22 +653,15 @@ TEST_CASE("ConcatenateRows", "[concatenateRows]")
 
 TEST_CASE("ConcatenateColumns", "[concatenateColumns]")
 {
-    auto df1 = pd::DataFrame(
-        pd::NULL_INDEX,
-        pair{ "a"s, vector{ 1L, 2L, 3L } },
-        pair{ "b"s, vector{ 4L, 5L, 6L } });
+    auto df1 = pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 1L, 2L, 3L } }, pair{ "b"s, vector{ 4L, 5L, 6L } });
 
     SECTION("Concatenate DataFrames with no duplicate keys")
     {
-        auto df1 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "a"s, vector{ 1L, 2L, 3L } },
-            pair{ "b"s, vector{ 4L, 5L, 6L } });
+        auto df1 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 1L, 2L, 3L } }, pair{ "b"s, vector{ 4L, 5L, 6L } });
 
-        auto df2 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "c"s, vector{ 7L, 8L, 9L } },
-            pair{ "d"s, vector{ 10L, 11L, 12L } });
+        auto df2 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "c"s, vector{ 7L, 8L, 9L } }, pair{ "d"s, vector{ 10L, 11L, 12L } });
 
         auto result = pd::concat(std::vector{ df1, df2 }, AxisType::Columns);
         auto expected = pd::DataFrame(
@@ -720,23 +676,14 @@ TEST_CASE("ConcatenateColumns", "[concatenateColumns]")
 
     SECTION("Concatenate two DataFrames with duplicate keys")
     {
-        auto df1 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "a"s, vector{ 1L, 2L, 3L } },
-            pair{ "b"s, vector{ 4L, 5L, 6L } });
-        auto df2 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "a"s, vector{ 7L, 8L, 9L } },
-            pair{ "b"s, vector{ 10L, 11L, 12L } });
+        auto df1 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 1L, 2L, 3L } }, pair{ "b"s, vector{ 4L, 5L, 6L } });
+        auto df2 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 7L, 8L, 9L } }, pair{ "b"s, vector{ 10L, 11L, 12L } });
 
-        auto result = pd::concat(
-            std::vector<pd::DataFrame>{ df1, df2 },
-            AxisType::Columns);
+        auto result = pd::concat(std::vector<pd::DataFrame>{ df1, df2 }, AxisType::Columns);
         auto expected = pd::DataFrame(
-            std::vector<std::vector<long>>{ { { 1L, 2L, 3L },
-                                              { 4L, 5L, 6L },
-                                              { 7, 8, 9 },
-                                              { 10, 11, 12 } } },
+            std::vector<std::vector<long>>{ { { 1L, 2L, 3L }, { 4L, 5L, 6L }, { 7, 8, 9 }, { 10, 11, 12 } } },
             { "a", "b", "a", "b" });
 
         INFO(result << "\n!=\n" << expected);
@@ -745,18 +692,14 @@ TEST_CASE("ConcatenateColumns", "[concatenateColumns]")
 
     SECTION("Concatenate two DataFrames with different types of duplicate keys")
     {
-        auto df1 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "a"s, vector{ 1L, 2L, 3L } },
-            pair{ "b"s, vector{ 4L, 5L, 6L } });
+        auto df1 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 1L, 2L, 3L } }, pair{ "b"s, vector{ 4L, 5L, 6L } });
         auto df2 = pd::DataFrame(
             pd::NULL_INDEX,
             pair{ "a"s, vector<double>{ 7.0, 8.0, 9.0 } },
             pair{ "b"s, vector{ 10L, 11L, 12L } });
 
-        auto result = pd::concat(
-            std::vector<pd::DataFrame>{ df1, df2 },
-            AxisType::Columns);
+        auto result = pd::concat(std::vector<pd::DataFrame>{ df1, df2 }, AxisType::Columns);
         auto expected = pd::DataFrame(
             std::array{ "a"s, "b"s, "a"s, "b"s },
             NULL_INDEX,
@@ -769,28 +712,16 @@ TEST_CASE("ConcatenateColumns", "[concatenateColumns]")
         REQUIRE(result.equals_(expected));
     }
 
-    SECTION(
-        "Concatenate two DataFrames with duplicate keys and ignore_index = true")
+    SECTION("Concatenate two DataFrames with duplicate keys and ignore_index = true")
     {
-        auto df1 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "a"s, vector{ 1L, 2L, 3L } },
-            pair{ "b"s, vector{ 4L, 5L, 6L } });
-        auto df2 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "a"s, vector{ 7L, 8L, 9L } },
-            pair{ "b"s, vector{ 10L, 11L, 12L } });
+        auto df1 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 1L, 2L, 3L } }, pair{ "b"s, vector{ 4L, 5L, 6L } });
+        auto df2 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 7L, 8L, 9L } }, pair{ "b"s, vector{ 10L, 11L, 12L } });
 
-        auto result = pd::concat(
-            std::vector<pd::DataFrame>{ df1, df2 },
-            AxisType::Columns,
-            JoinType::Outer,
-            true);
+        auto result = pd::concat(std::vector<pd::DataFrame>{ df1, df2 }, AxisType::Columns, JoinType::Outer, true);
         auto expected = pd::DataFrame(
-            std::vector<std::vector<long>>{ { { 1L, 2L, 3L },
-                                              { 4L, 5L, 6L },
-                                              { 7, 8, 9 },
-                                              { 10, 11, 12 } } },
+            std::vector<std::vector<long>>{ { { 1L, 2L, 3L }, { 4L, 5L, 6L }, { 7, 8, 9 }, { 10, 11, 12 } } },
             { "0", "1", "2", "3" });
 
         INFO(result << "\n!=\n" << expected);
@@ -799,27 +730,19 @@ TEST_CASE("ConcatenateColumns", "[concatenateColumns]")
 
     SECTION("Concatenate two DataFrames with some duplicate keys and sort = true")
     {
-        auto df1 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "d"s, vector{ 1L, 2L, 3L } },
-            pair{ "e"s, vector{ 4L, 5L, 6L } });
+        auto df1 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "d"s, vector{ 1L, 2L, 3L } }, pair{ "e"s, vector{ 4L, 5L, 6L } });
 
-        auto df2 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "c"s, vector{ 7L, 8L, 9L } },
-            pair{ "e"s, vector{ 10L, 11L, 12L } });
+        auto df2 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "c"s, vector{ 7L, 8L, 9L } }, pair{ "e"s, vector{ 10L, 11L, 12L } });
 
-        auto result = pd::concat(
-            std::vector<pd::DataFrame>{ df1, df2 },
-            AxisType::Columns,
-            JoinType::Outer,
-            false,
-            true);
+        auto result =
+            pd::concat(std::vector<pd::DataFrame>{ df1, df2 }, AxisType::Columns, JoinType::Outer, false, true);
 
         auto expected = pd::DataFrame(
             std::array<std::string, 4>{ "d", "e", "c", "e" },
             pd::ArrayPtr{ nullptr },
-            std::vector{ 1L, 2L, 3L},
+            std::vector{ 1L, 2L, 3L },
             std::vector{ 4L, 5L, 6L },
             std::vector{ 7L, 8L, 9L },
             std::vector{ 10L, 11L, 12L });
@@ -830,27 +753,19 @@ TEST_CASE("ConcatenateColumns", "[concatenateColumns]")
 
     SECTION("Concatenate two DataFrames with some duplicate keys and sort = false")
     {
-        auto df1 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "d"s, vector{ 1L, 2L, 3L } },
-            pair{ "e"s, vector{ 4L, 5L, 6L } });
+        auto df1 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "d"s, vector{ 1L, 2L, 3L } }, pair{ "e"s, vector{ 4L, 5L, 6L } });
 
-        auto df2 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "c"s, vector{ 7L, 8L, 9L } },
-            pair{ "e"s, vector{ 10L, 11L, 12L } });
+        auto df2 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "c"s, vector{ 7L, 8L, 9L } }, pair{ "e"s, vector{ 10L, 11L, 12L } });
 
-        auto result = pd::concat(
-            std::vector<pd::DataFrame>{ df1, df2 },
-            AxisType::Columns,
-            JoinType::Outer,
-            false,
-            false);
+        auto result =
+            pd::concat(std::vector<pd::DataFrame>{ df1, df2 }, AxisType::Columns, JoinType::Outer, false, false);
 
         auto expected = pd::DataFrame(
             std::array<std::string, 4>{ "d", "e", "c", "e" },
             pd::ArrayPtr{ nullptr },
-            std::vector{ 1L, 2L, 3L},
+            std::vector{ 1L, 2L, 3L },
             std::vector{ 4L, 5L, 6L },
             std::vector{ 7L, 8L, 9L },
             std::vector{ 10L, 11L, 12L });
@@ -861,19 +776,13 @@ TEST_CASE("ConcatenateColumns", "[concatenateColumns]")
 
     SECTION("Concatenate DataFrames with different indexes")
     {
-        auto df1 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "a"s, vector{ 1L, 2L, 3L } },
-            pair{ "b"s, vector{ 4L, 5L, 6L } });
+        auto df1 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 1L, 2L, 3L } }, pair{ "b"s, vector{ 4L, 5L, 6L } });
 
-        auto df2 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "a"s, vector{ 7L, 8L, 9L } },
-            pair{ "c"s, vector{ 10L, 11L, 12L } });
+        auto df2 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 7L, 8L, 9L } }, pair{ "c"s, vector{ 10L, 11L, 12L } });
 
-        auto result = pd::concat(
-            std::vector<pd::DataFrame>{ df1, df2 },
-            AxisType::Columns);
+        auto result = pd::concat(std::vector<pd::DataFrame>{ df1, df2 }, AxisType::Columns);
 
         auto expected = pd::DataFrame(
             std::array<std::string, 4>{ "a", "b", "a", "c" },
@@ -890,16 +799,10 @@ TEST_CASE("ConcatenateColumns", "[concatenateColumns]")
     SECTION("Concatenate DataFrames with different indexes and ignore_index = true")
     {
 
-        auto df2 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "a"s, vector{ 7L, 8L, 9L } },
-            pair{ "c"s, vector{ 10L, 11L, 12L } });
+        auto df2 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 7L, 8L, 9L } }, pair{ "c"s, vector{ 10L, 11L, 12L } });
 
-        auto result = pd::concat(
-            std::vector<pd::DataFrame>{ df1, df2 },
-            AxisType::Columns,
-            JoinType::Outer,
-            true);
+        auto result = pd::concat(std::vector<pd::DataFrame>{ df1, df2 }, AxisType::Columns, JoinType::Outer, true);
 
         auto expected = pd::DataFrame(
             std::array<std::string, 4>{ "0", "1", "2", "3" },
@@ -915,49 +818,39 @@ TEST_CASE("ConcatenateColumns", "[concatenateColumns]")
 
     SECTION("Concatenate DataFrames with JoinType::Inner")
     {
-        auto df2 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "a"s, vector{ 7L, 8L, 9L } },
-            pair{ "b"s, vector{ 10L, 11L, 12L } });
-        auto result = pd::concat(
-            std::vector<pd::DataFrame>{ df1, df2 },
-            AxisType::Index,
-            JoinType::Inner);
+        auto df2 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 7L, 8L, 9L } }, pair{ "b"s, vector{ 10L, 11L, 12L } });
+        auto result = pd::concat(std::vector<pd::DataFrame>{ df1, df2 }, AxisType::Index, JoinType::Inner);
 
-            auto expected = pd::DataFrame(
-                ArrayTable{
-                    { "a", arrow::ArrayFromJSON<int64_t>("[1,2,3,7,8,9]") },
-                    { "b", arrow::ArrayFromJSON<int64_t>("[4,5,6,10,11,12]") },
-                },
-                arrow::ArrayFromJSON<::uint64_t>("[0,1,2,0,1,2]"));
+        auto expected = pd::DataFrame(
+            ArrayTable{
+                { "a", arrow::ArrayFromJSON<int64_t>("[1,2,3,7,8,9]") },
+                { "b", arrow::ArrayFromJSON<int64_t>("[4,5,6,10,11,12]") },
+            },
+            arrow::ArrayFromJSON<::uint64_t>("[0,1,2,0,1,2]"));
 
         INFO(result << "\n!=\n" << expected);
         REQUIRE(result.equals_(expected));
     }
     SECTION("Concatenate DataFrames with different indexes and JoinType::Inner")
     {
-        auto df2 = pd::DataFrame(
-            pd::NULL_INDEX,
-            pair{ "a"s, vector{ 7L, 8L, 9L } },
-            pair{ "c"s, vector{ 10L, 11L, 12L } });
+        auto df2 =
+            pd::DataFrame(pd::NULL_INDEX, pair{ "a"s, vector{ 7L, 8L, 9L } }, pair{ "c"s, vector{ 10L, 11L, 12L } });
 
-        auto result = pd::concat(
-            std::vector<pd::DataFrame>{ df1, df2 },
-            AxisType::Index,
-            JoinType::Inner);
+        auto result = pd::concat(std::vector<pd::DataFrame>{ df1, df2 }, AxisType::Index, JoinType::Inner);
 
-            auto expected = pd::DataFrame(
-                ArrayTable{
-                    { "a", arrow::ArrayFromJSON<int64_t>("[1,2,3,7,8,9]") },
-                },
-                arrow::ArrayFromJSON<::uint64_t>("[0,1,2,0,1,2]"));
+        auto expected = pd::DataFrame(
+            ArrayTable{
+                { "a", arrow::ArrayFromJSON<int64_t>("[1,2,3,7,8,9]") },
+            },
+            arrow::ArrayFromJSON<::uint64_t>("[0,1,2,0,1,2]"));
 
         INFO(result << "\n!=\n" << expected);
         REQUIRE(result.equals_(expected));
     }
 }
 
-//TEST_CASE("Concatenate with Series", "[concat]")
+// TEST_CASE("Concatenate with Series", "[concat]")
 //{
 //    SECTION(
 //        "Concatenating multiple Series with different indexes,"
@@ -985,7 +878,8 @@ TEST_CASE("ConcatenateColumns", "[concatenateColumns]")
 //    }
 
 //    SECTION(
-//        "Concatenating multiple Series with different indexes, axis = 1, join = outer, ignore_index = true, sort = true")
+//        "Concatenating multiple Series with different indexes, axis = 1, join = outer, ignore_index = true, sort =
+//        true")
 //    {
 //        auto s1 =
 //            pd::Series(std::vector{ 1L, 2L, 3L }, "s1", pd::range(0UL, 3UL));
@@ -1014,7 +908,8 @@ TEST_CASE("ConcatenateColumns", "[concatenateColumns]")
 //    }
 
 //    SECTION(
-//        "Concatenating multiple Series with different indexes, axis = 1, join = outer, ignore_index = true, sort = true")
+//        "Concatenating multiple Series with different indexes, axis = 1, join = outer, ignore_index = true, sort =
+//        true")
 //    {
 //        auto s1 =
 //            pd::Series(std::vector{ 1L, 2L, 3L }, "s1", pd::range(0UL, 3UL));
@@ -1145,7 +1040,7 @@ TEST_CASE("ConcatenateColumns", "[concatenateColumns]")
 //    }
 // }
 
-//TEST_CASE("Concatenate Benchmark", "[concat]")
+// TEST_CASE("Concatenate Benchmark", "[concat]")
 //{
 //    auto rand = pd::random::RandomState(100);
 //    auto generateTable = [&rand](bool int_type, int N, ArrayTable& data)

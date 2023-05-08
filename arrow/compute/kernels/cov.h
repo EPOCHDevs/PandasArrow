@@ -2,7 +2,6 @@
 #include <memory>
 #include <string>
 #include <utility>
-
 #include "arrow/array.h"
 #include "arrow/compute/api_aggregate.h"
 #include "arrow/compute/kernel.h"
@@ -15,17 +14,11 @@
 #include "arrow/util/checked_cast.h"
 #include "arrow/util/int128_internal.h"
 
-#include "arrow/compute/api_aggregate.h"
-
 namespace arrow {
 namespace compute {
 namespace internal {
 
-template<
-    typename ValueType,
-    typename SumType,
-    SimdLevel::type SimdLevel,
-    typename ValueFunc>
+template<typename ValueType, typename SumType, SimdLevel::type SimdLevel, typename ValueFunc>
 enable_if_t<std::is_floating_point<SumType>::value, SumType> SumArray2WithCovariance(
     const ArraySpan& data1,
     const ArraySpan& data2,
@@ -52,7 +45,8 @@ enable_if_t<std::is_floating_point<SumType>::value, SumType> SumArray2WithCovari
     // level of root node holding the final summation
     int root_level = 0;
 
-    // reduce summation of one block (may be smaller than kBlockSize) from leaf node continue reducing to upper level if two summations are ready for non-leaf node (capture `levels` by value because of ARROW-17567)
+    // reduce summation of one block (may be smaller than kBlockSize) from leaf node continue reducing to upper level if
+    // two summations are ready for non-leaf node (capture `levels` by value because of ARROW-17567)
     auto reduce = [&, levels](SumType block_sum)
     {
         int cur_level = 0;
@@ -153,8 +147,7 @@ struct IntegerCovariance
         // decompose sum_x * sum_y / count into integers and fractions
         const int128_t sum_square = static_cast<int128_t>(sum_x) * sum_y;
         const int128_t integers = sum_square / count;
-        const double fractions =
-            static_cast<double>(sum_square % count) / count;
+        const double fractions = static_cast<double>(sum_square % count) / count;
         return static_cast<double>(sum_xy - integers) - fractions;
     }
 };
@@ -167,12 +160,7 @@ struct CovarianceState
     using ThisType = CovarianceState<ArrowType>;
 
     CovarianceState(int32_t decimal_scale, VarianceOptions options)
-        : count(0),
-          mean_x(0),
-          mean_y(0),
-          m_xy(0),
-          decimal_scale(decimal_scale),
-          options(std::move(options))
+        : count(0), mean_x(0), mean_y(0), m_xy(0), decimal_scale(decimal_scale), options(std::move(options))
     {
     }
 
@@ -195,10 +183,10 @@ struct CovarianceState
         const ArraySpan& array_x,
         const ArraySpan& array_y)
     {
-        // max number of elements that sum will not overflow int64 (2Gi int32 elements) for uint32: 0 <= sum < 2^63 (int64 >= 0) for int32: -2^62 <= sum < 2^62
+        // max number of elements that sum will not overflow int64 (2Gi int32 elements) for uint32: 0 <= sum < 2^63
+        // (int64 >= 0) for int32: -2^62 <= sum < 2^62
         constexpr int64_t max_length = 1ULL << (63 - sizeof(CType) * 8);
-        this->all_valid =
-            (array_x.GetNullCount() == 0) && (array_y.GetNullCount() == 0);
+        this->all_valid = (array_x.GetNullCount() == 0) && (array_y.GetNullCount() == 0);
         if (!this->all_valid && !options.skip_nulls)
             return;
         int64_t start_index_x = 0;
@@ -210,12 +198,8 @@ struct CovarianceState
         while (valid_count_x > 0 && valid_count_y > 0)
         {
             // process in chunks that overflow will never happen
-            slice_x.SetSlice(
-                start_index_x + array_x.offset,
-                std::min(max_length, array_x.length - start_index_x));
-            slice_y.SetSlice(
-                start_index_y + array_y.offset,
-                std::min(max_length, array_y.length - start_index_y));
+            slice_x.SetSlice(start_index_x + array_x.offset, std::min(max_length, array_x.length - start_index_x));
+            slice_y.SetSlice(start_index_y + array_y.offset, std::min(max_length, array_y.length - start_index_y));
             const int64_t count_x = slice_x.length - slice_x.GetNullCount();
             const int64_t count_y = slice_y.length - slice_y.GetNullCount();
             start_index_x += slice_x.length;
@@ -259,15 +243,13 @@ struct CovarianceState
         const ArraySpan& array_x,
         const ArraySpan& array_y)
     {
-        this->all_valid =
-            (array_x.GetNullCount() == 0) && (array_y.GetNullCount() == 0);
+        this->all_valid = (array_x.GetNullCount() == 0) && (array_y.GetNullCount() == 0);
         int64_t count_x = array_x.length - array_x.GetNullCount();
         int64_t count_y = array_y.length - array_y.GetNullCount();
 
         if (count_x != count_y)
         {
-            throw std::runtime_error(
-                "valid values from array1 must equal array2");
+            throw std::runtime_error("valid values from array1 must equal array2");
         }
         int64_t _count = array_x.length - array_x.GetNullCount();
         if (_count == 0 || (!this->all_valid && !options.skip_nulls))
@@ -276,24 +258,21 @@ struct CovarianceState
         }
 
         using SumType = typename internal::GetSumType<T>::SumType;
-        auto sum_x =
-            internal::SumArray<CType, SumType, SimdLevel::NONE>(array_x);
-        auto sum_y =
-            internal::SumArray<CType, SumType, SimdLevel::NONE>(array_y);
+        auto sum_x = internal::SumArray<CType, SumType, SimdLevel::NONE>(array_x);
+        auto sum_y = internal::SumArray<CType, SumType, SimdLevel::NONE>(array_y);
 
         const double _mean_x = ToDouble(sum_x) / _count;
         const double _mean_y = ToDouble(sum_y) / _count;
 
-        double _m_xy =
-            internal::SumArray2WithCovariance<CType, double, SimdLevel::NONE>(
-                array_x,
-                array_y,
-                [this, _mean_x, _mean_y](CType value_x, CType value_y)
-                {
-                    const double vX = ToDouble(value_x);
-                    const double vY = ToDouble(value_y);
-                    return (vX - _mean_x) * (vY - _mean_y);
-                });
+        double _m_xy = internal::SumArray2WithCovariance<CType, double, SimdLevel::NONE>(
+            array_x,
+            array_y,
+            [this, _mean_x, _mean_y](CType value_x, CType value_y)
+            {
+                const double vX = ToDouble(value_x);
+                const double vY = ToDouble(value_y);
+                return (vX - _mean_x) * (vY - _mean_y);
+            });
 
         this->count = _count;
         this->mean_x = _mean_x;
@@ -322,16 +301,14 @@ struct CovarianceState
 
         this->count = count1 + count2;
 
-        auto MergeMean =
-            [this, count1, count2](double mean1, double mean2) mutable
+        auto MergeMean = [this, count1, count2](double mean1, double mean2) mutable
         { return (mean1 * count1 + mean2 * count2) / double(this->count); };
 
         double _mean_x = MergeMean(this->mean_x, other.mean_x);
         double _mean_y = MergeMean(this->mean_y, other.mean_y);
 
         auto m22 = other.m_xy;
-        this->m_xy += m22 +
-            count1 * (this->mean_x - _mean_x) * (this->mean_y - _mean_y) +
+        this->m_xy += m22 + count1 * (this->mean_x - _mean_x) * (this->mean_y - _mean_y) +
             count2 * (other.mean_x - _mean_x) * (other.mean_y - _mean_y);
 
         this->mean_x = _mean_x;
@@ -383,16 +360,14 @@ struct CovarianceImpl : public ScalarAggregator
 
     Status Finalize(KernelContext*, Datum* out) override
     {
-        if (state.count <= state.options.ddof ||
-            state.count < state.options.min_count ||
+        if (state.count <= state.options.ddof || state.count < state.options.min_count ||
             (!state.all_valid && !state.options.skip_nulls))
         {
             out->value = std::make_shared<DoubleScalar>();
         }
         else
         {
-            double covar =
-                state.m_xy / double(state.count - state.options.ddof);
+            double covar = state.m_xy / double(state.count - state.options.ddof);
             out->value = std::make_shared<DoubleScalar>(covar);
         }
         return Status::OK();
@@ -417,11 +392,7 @@ struct CovarianceInitState
         const DataType& in_type_y,
         const std::shared_ptr<DataType>& out_type,
         const VarianceOptions& options)
-        : ctx(ctx),
-          in_type_x(in_type_x),
-          in_type_y(in_type_y),
-          out_type(out_type),
-          options(options)
+        : ctx(ctx), in_type_x(in_type_x), in_type_y(in_type_y), out_type(out_type), options(options)
     {
     }
 
@@ -438,18 +409,14 @@ struct CovarianceInitState
     template<typename Type>
     enable_if_number<Type, Status> Visit(const Type&)
     {
-        state.reset(
-            new CovarianceImpl<Type>(/*decimal_scale=*/0, out_type, options));
+        state.reset(new CovarianceImpl<Type>(/*decimal_scale=*/0, out_type, options));
         return Status::OK();
     }
 
     template<typename Type>
     enable_if_decimal<Type, Status> Visit(const Type&)
     {
-        state.reset(new CovarianceImpl<Type>(
-            checked_cast<const DecimalType&>(in_type_x).scale(),
-            out_type,
-            options));
+        state.reset(new CovarianceImpl<Type>(checked_cast<const DecimalType&>(in_type_x).scale(), out_type, options));
         return Status::OK();
     }
 
@@ -461,9 +428,7 @@ struct CovarianceInitState
     }
 };
 
-inline Result<std::unique_ptr<KernelState>> CovarianceInit(
-    KernelContext* ctx,
-    const KernelInitArgs& args)
+inline Result<std::unique_ptr<KernelState>> CovarianceInit(KernelContext* ctx, const KernelInitArgs& args)
 {
     CovarianceInitState visitor(
         ctx,
@@ -481,42 +446,31 @@ static void AddCovarianceKernels(
 {
     for (const auto& ty : types)
     {
-        auto sig = KernelSignature::Make(
-            { InputType(ty->id()), InputType(ty->id()) },
-            float64());
+        auto sig = KernelSignature::Make({ InputType(ty->id()), InputType(ty->id()) }, float64());
         AddAggKernel(std::move(sig), init, func);
     }
 }
 
-const FunctionDoc covariance_doc{
-    "Calculate the covariance of 2 numeric array",
-    ("The covariance function computes the covariance of two arrays, "
-     "array_x and array_y. The covariance measures the degree to"
-     " which two random variables are linearly related. "
-     "A positive covariance indicates that the variables "
-     "increase together, while a negative covariance "
-     "indicates that the variables vary in opposite directions."
-     " A covariance of zero indicates that the variables are"
-     " independent. The function supports both integer "
-     "and floating-point arrays and skips null values "
-     "if specified in the options. The result is returned as a double."),
-    { "array1", "array2" },
-    "VarianceOptions"
-};
+const FunctionDoc covariance_doc{ "Calculate the covariance of 2 numeric array",
+                                  ("The covariance function computes the covariance of two arrays, "
+                                   "array_x and array_y. The covariance measures the degree to"
+                                   " which two random variables are linearly related. "
+                                   "A positive covariance indicates that the variables "
+                                   "increase together, while a negative covariance "
+                                   "indicates that the variables vary in opposite directions."
+                                   " A covariance of zero indicates that the variables are"
+                                   " independent. The function supports both integer "
+                                   "and floating-point arrays and skips null values "
+                                   "if specified in the options. The result is returned as a double."),
+                                  { "array1", "array2" },
+                                  "VarianceOptions" };
 
 static std::shared_ptr<ScalarAggregateFunction> AddCovarianceKernels()
 {
     static auto default_std_options = VarianceOptions::Defaults();
-    auto func = std::make_shared<ScalarAggregateFunction>(
-        "cov",
-        Arity::Binary(),
-        covariance_doc,
-        &default_std_options);
+    auto func = std::make_shared<ScalarAggregateFunction>("cov", Arity::Binary(), covariance_doc, &default_std_options);
     AddCovarianceKernels(CovarianceInit, NumericTypes(), func.get());
-    AddCovarianceKernels(
-        CovarianceInit,
-        { decimal128(1, 1), decimal256(1, 1) },
-        func.get());
+    AddCovarianceKernels(CovarianceInit, { decimal128(1, 1), decimal256(1, 1) }, func.get());
     return func;
 }
 
@@ -525,7 +479,7 @@ static void RegisterScalarAggregateCovariance(FunctionRegistry* registry)
     DCHECK_OK(registry->AddFunction(AddCovarianceKernels()));
 }
 
-}
+} // namespace internal
 
 
 static Result<arrow::Datum> Covariance(
@@ -535,5 +489,5 @@ static Result<arrow::Datum> Covariance(
 {
     return CallFunction("cov", { arrayx, arrayy }, &options);
 }
-}
-}
+} // namespace compute
+} // namespace arrow

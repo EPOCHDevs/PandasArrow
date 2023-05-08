@@ -22,8 +22,7 @@ struct GroupInfo
 
         if (bins.size() != labels->length())
         {
-            throw std::runtime_error(
-                "Processing Group Info requires bins.size() == labels->length()");
+            throw std::runtime_error("Processing Group Info requires bins.size() == labels->length()");
         }
 
         if (bins.empty())
@@ -38,10 +37,7 @@ struct GroupInfo
         auto label = labels->raw_values();
         for (int64_t bin : bins)
         {
-            std::fill(
-                timestamps_ns.begin() + last_idx,
-                timestamps_ns.begin() + bin,
-                *label);
+            std::fill(timestamps_ns.begin() + last_idx, timestamps_ns.begin() + bin, *label);
             label++;
             last_idx = bin;
         }
@@ -76,13 +72,12 @@ Resampler resample(
     std::string const& rule,
     bool closed_right = false,
     bool label_right = false,
-    std::variant<ptime, TimeGrouperOrigin> const& origin =
-        TimeGrouperOrigin::StartDay,
+    std::variant<ptime, TimeGrouperOrigin> const& origin = TimeGrouperOrigin::StartDay,
     time_duration const& offset = time_duration(),
     std::string const& tz = "")
 {
     auto [freq_unit, freq_value] = splitTimeSpan(rule);
-    time_duration duration{};
+    std::variant<DateOffset, time_duration> duration{};
     if (freq_unit == "T" or freq_unit == "min")
     {
         duration = minutes(freq_value);
@@ -105,54 +100,34 @@ Resampler resample(
     }
     else
     {
-        throw std::runtime_error(
-            "date_range with start:ptime_type is only compatible with "
-            "[T/min S L/ms U/us N/ns] freq_unit");
+        duration = DateOffset::FromString(rule);
     }
 
-    return resample(
-        df,
-        duration,
-        closed_right,
-        label_right,
-        origin,
-        offset,
-        tz);
+    return resample(df, duration, closed_right, label_right, origin, offset, tz);
 }
 
 template<class DataFrameOrSeries>
 Resampler resample(
     DataFrameOrSeries const& df,
-    time_duration const& rule,
+    std::variant<DateOffset, time_duration> const& rule,
     bool closed_right = false,
     bool label_right = false,
-    std::variant<ptime, TimeGrouperOrigin> const& origin =
-        TimeGrouperOrigin::StartDay,
+    std::variant<ptime, TimeGrouperOrigin> const& origin = TimeGrouperOrigin::StartDay,
     time_duration const& offset = time_duration(),
     std::string const& tz = "")
 {
-    GroupInfo group_info = makeGroupInfo(
-        df.indexArray(),
-        rule,
-        closed_right,
-        label_right,
-        origin,
-        offset,
-        tz);
+    GroupInfo group_info = makeGroupInfo(df.indexArray(), rule, closed_right, label_right, origin, offset, tz);
 
     bool reindex = group_info.upsampling();
-    auto new_index = group_info.upsampling() ?
-        group_info.labels :
-        toDateTime(group_info.downsample());
+    auto new_index = group_info.upsampling() ? group_info.labels : toDateTime(group_info.downsample());
 
-    DataFrame new_df{nullptr, nullptr};
+    DataFrame new_df{ nullptr, nullptr };
     if constexpr (std::same_as<DataFrameOrSeries, Series>)
     {
-        new_df =
-            DataFrame{ arrow::schema({ arrow::field(df.name(), df.dtype()) }),
-                       new_index->length(),
-                       { df.array() },
-                       df.indexArray() };
+        new_df = DataFrame{ arrow::schema({ arrow::field(df.name(), df.dtype()) }),
+                            new_index->length(),
+                            { df.array() },
+                            df.indexArray() };
     }
     else
     {
@@ -163,13 +138,11 @@ Resampler resample(
     return { new_df };
 }
 
-arrow::TimestampArray adjustBinEdges(
-    arrow::TimestampArray& binner,
-    arrow::TimestampArray const& ax_values);
+arrow::TimestampArray adjustBinEdges(arrow::TimestampArray& binner, arrow::TimestampArray const& ax_values);
 
 GroupInfo makeGroupInfo(
     std::shared_ptr<arrow::Array> const& timestamps_array,
-    time_duration const& rule,
+    std::variant<DateOffset, time_duration> const& rule,
     bool closed_right = false,
     bool label_right = false,
     std::variant<ptime, TimeGrouperOrigin> const& origin = TimeGrouperOrigin::StartDay,
@@ -193,4 +166,4 @@ std::pair<ptime, ptime> getTimestampRangeEdges(
     std::variant<ptime, TimeGrouperOrigin> const& origin,
     time_duration const& offset);
 
-}
+} // namespace pd

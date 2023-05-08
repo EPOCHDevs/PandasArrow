@@ -1,18 +1,15 @@
 //
 // Created by dewe on 1/21/23.
 //
+#include "resample.h"
 #include "arrow/compute/api.h"
 #include "group_by.h"
-#include "resample.h"
 
 
 namespace pd {
 
 template<class T>
-std::vector<int64_t> generate_bins_dt64(
-    std::shared_ptr<T> values,
-    std::shared_ptr<T> const& binner,
-    bool right_closed)
+std::vector<int64_t> generate_bins_dt64(std::shared_ptr<T> values, std::shared_ptr<T> const& binner, bool right_closed)
 {
 
     int64_t nat_count = 0;
@@ -119,7 +116,8 @@ std::pair<ptime, ptime> adjustDatesAnchored(
     ptime first = start;
     ptime last = end;
 
-    ptime origin_time(date(1970, 1, 1));; // origin == "epoch"
+    ptime origin_time(date(1970, 1, 1));
+    ; // origin == "epoch"
     if (std::holds_alternative<TimeGrouperOrigin>(origin_opt))
     {
         auto origin = std::get<1>(origin_opt);
@@ -159,10 +157,8 @@ std::pair<ptime, ptime> adjustDatesAnchored(
         last = from_time_t(mktime(last_tm));
     }
 
-    time_duration foffset(nanosec(
-        (first - origin_time).total_nanoseconds() % freq.total_nanoseconds()));
-    time_duration loffset(nanoseconds(
-        (last - origin_time).total_nanoseconds() % freq.total_nanoseconds()));
+    time_duration foffset(nanosec((first - origin_time).total_nanoseconds() % freq.total_nanoseconds()));
+    time_duration loffset(nanoseconds((last - origin_time).total_nanoseconds() % freq.total_nanoseconds()));
 
     if (closed_right)
     {
@@ -215,7 +211,7 @@ std::pair<ptime, ptime> adjustDatesAnchored(
 
 GroupInfo makeGroupInfo(
     std::shared_ptr<arrow::Array> const& ax,
-    time_duration const& rule,
+    std::variant<DateOffset, time_duration> const& rule,
     bool closed_right,
     bool label_right,
     std::variant<ptime, TimeGrouperOrigin> const& origin,
@@ -226,9 +222,7 @@ GroupInfo makeGroupInfo(
 
     if (not timestamps_ax)
     {
-        throw std::runtime_error(
-            "axis must be a TimestampArray but got array of type " +
-            ax->type()->ToString());
+        throw std::runtime_error("axis must be a TimestampArray but got array of type " + ax->type()->ToString());
     }
 
     if (timestamps_ax->length() == 0)
@@ -239,16 +233,38 @@ GroupInfo makeGroupInfo(
     ASSIGN_OR_ABORT(auto datum, arrow::compute::MinMax(timestamps_ax));
     auto datum_struct = datum.scalar_as<arrow::StructScalar>();
     auto [min, max] = MinMax{ datum_struct.value[0], datum_struct.value[1] };
-    auto [first, last] = adjustDatesAnchored(
-        toTimeNanoSecPtime(min.scalar),
-        toTimeNanoSecPtime(max.scalar),
-        rule,
-        closed_right,
-        origin,
-        offset,
-        tz);
 
-    auto binner = date_range(first, last, rule, tz);
+    ptime minValue = toTimeNanoSecPtime(min.scalar);
+    ptime maxValue = toTimeNanoSecPtime(max.scalar);
+
+    std::shared_ptr<arrow::NumericArray<arrow::TimestampType>> binner;
+    if (std::holds_alternative<time_duration>(rule))
+    {
+        const auto duration = std::get<time_duration>(rule);
+        auto [first, last] = adjustDatesAnchored(
+            minValue,
+            maxValue,
+            duration,
+            closed_right,
+            origin,
+            offset,
+            tz);
+        binner = date_range(first, last, duration, tz);
+    }
+    else
+    {
+        date first = minValue.date();
+        date last = maxValue.date();
+
+        const auto freq = std::get<DateOffset>(rule);
+
+        if (not closed_right)
+        {
+            throw std::runtime_error("closed_left is not currently supported by DateOffset");
+        }
+
+        binner = date_range(first - freq, last + freq, freq, tz);
+    }
 
     auto labels = binner;
 
@@ -260,32 +276,27 @@ GroupInfo makeGroupInfo(
         labels = binner;
         if (label_right)
         {
-            labels = std::dynamic_pointer_cast<arrow::TimestampArray>(
-                labels->Slice(1));
+            labels = std::dynamic_pointer_cast<arrow::TimestampArray>(labels->Slice(1));
         }
     }
     else if (label_right)
     {
-        labels =
-            std::dynamic_pointer_cast<arrow::TimestampArray>(labels->Slice(1));
+        labels = std::dynamic_pointer_cast<arrow::TimestampArray>(labels->Slice(1));
     }
 
     if (ax->null_count() > 0)
     {
         labels = dynamic_pointer_cast<arrow::TimestampArray>(
-            arrow::Concatenate(
-                { arrow::MakeArrayOfNull(labels->type(), 1).MoveValueUnsafe(),
-                  labels })
+            arrow::Concatenate({ arrow::MakeArrayOfNull(labels->type(), 1).MoveValueUnsafe(), labels })
                 .MoveValueUnsafe());
     }
 
     if (bins.size() < labels->length())
     {
-        labels = dynamic_pointer_cast<arrow::TimestampArray>(
-            labels->Slice(0, bins.size()));
+        labels = dynamic_pointer_cast<arrow::TimestampArray>(labels->Slice(0, bins.size()));
     }
 
     return { bins, labels };
 }
 
-}
+} // namespace pd

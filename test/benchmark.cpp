@@ -5,7 +5,6 @@
 #include "pandas_arrow.h"
 
 
-
 int main()
 {
     using namespace std::string_literals;
@@ -14,7 +13,7 @@ int main()
     TableLike<int64_t> data;
 
     auto random = pd::random::RandomState(1);
-    for(int i = 0; i < 400; i++)
+    for (int i = 0; i < 400; i++)
     {
         data[std::to_string(i)] = random.randint(1e6, 10, 20);
     }
@@ -27,8 +26,7 @@ int main()
 
     auto end = std::chrono::high_resolution_clock::now();
 
-    std::cout << "elapsed time(s): "
-              << std::chrono::duration<double>(end - start).count() << " s.\n";
+    std::cout << "elapsed time(s): " << std::chrono::duration<double>(end - start).count() << " s.\n";
 
     return 0;
 }

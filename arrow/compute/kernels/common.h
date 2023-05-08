@@ -26,7 +26,6 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-
 #include "arrow/array/data.h"
 #include "arrow/buffer.h"
 #include "arrow/chunked_array.h"
@@ -47,7 +46,7 @@
 
 namespace arrow {
 
-    using internal::checked_cast;
-    using internal::checked_pointer_cast;
+using internal::checked_cast;
+using internal::checked_pointer_cast;
 
-}  // namespace arrow
+} // namespace arrow

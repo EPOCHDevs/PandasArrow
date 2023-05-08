@@ -2,31 +2,28 @@
 //
 // Created by dewe on 12/29/22.
 //
-#include <arrow/compute/api_scalar.h>
 #include <arrow/api.h>
+#include <arrow/compute/api_scalar.h>
 #include <arrow/scalar.h>
-#include "scalar.h"
-#include "sstream"
 #include <cmath>
 #include <iostream>
+#include "scalar.h"
+#include "sstream"
 
 
 namespace pd {
 
-struct HashScalar{
+struct HashScalar
+{
 
-    bool operator()(std::shared_ptr<arrow::Scalar> const& a,
-                    std::shared_ptr<arrow::Scalar> const& b) const
+    bool operator()(std::shared_ptr<arrow::Scalar> const& a, std::shared_ptr<arrow::Scalar> const& b) const
     {
-        return a->Equals(
-            b->CastTo(a->type).MoveValueUnsafe());
+        return a->Equals(b->CastTo(a->type).MoveValueUnsafe());
     }
 
-    bool equal(std::shared_ptr<arrow::Scalar> const& a,
-                    std::shared_ptr<arrow::Scalar> const& b) const
+    bool equal(std::shared_ptr<arrow::Scalar> const& a, std::shared_ptr<arrow::Scalar> const& b) const
     {
-        return a->Equals(
-            b->CastTo(a->type).MoveValueUnsafe());
+        return a->Equals(b->CastTo(a->type).MoveValueUnsafe());
     }
 
     size_t operator()(std::shared_ptr<arrow::Scalar> const& scalar) const
@@ -40,10 +37,7 @@ struct HashScalar{
     }
 };
 
-using Indexer = std::unordered_map<std::shared_ptr<arrow::Scalar>,
-                                   int64_t,
-                                   HashScalar,
-                                   HashScalar>;
+using Indexer = std::unordered_map<std::shared_ptr<arrow::Scalar>, int64_t, HashScalar, HashScalar>;
 
 /// Thrown when an invalid cast is attempted on the array data.
 struct RawArrayCastException : std::exception
@@ -51,11 +45,8 @@ struct RawArrayCastException : std::exception
     std::shared_ptr<arrow::DataType> requested_type, array_type;
     mutable std::string msg;
 
-    RawArrayCastException(
-        std::shared_ptr<arrow::DataType> requested_type,
-        std::shared_ptr<arrow::DataType> array_type)
-        : requested_type(std::move(requested_type)),
-          array_type(std::move(array_type))
+    RawArrayCastException(std::shared_ptr<arrow::DataType> requested_type, std::shared_ptr<arrow::DataType> array_type)
+        : requested_type(std::move(requested_type)), array_type(std::move(array_type))
     {
     }
 
@@ -71,16 +62,13 @@ struct RawArrayCastException : std::exception
 };
 
 
-
 template<class BaseT>
 struct NDFrame
 {
 
 public:
-    using ArrayType = std::shared_ptr<std::conditional_t<
-        std::same_as<BaseT, class DataFrame>,
-        arrow::RecordBatch,
-        arrow::Array>>;
+    using ArrayType =
+        std::shared_ptr<std::conditional_t<std::same_as<BaseT, class DataFrame>, arrow::RecordBatch, arrow::Array>>;
 
     ArrayType m_array;
 
@@ -89,23 +77,17 @@ public:
         return m_array;
     }
 
-    NDFrame(
-        ArrayType const& array,
-        std::shared_ptr<arrow::Array> const& _index,
-        bool skipIndex = false);
+    NDFrame(ArrayType const& array, std::shared_ptr<arrow::Array> const& _index, bool skipIndex = false);
 
-    NDFrame(ArrayType const& array, int64_t num_rows)
-        : m_array(array), m_index(uint_range(num_rows))
+    NDFrame(ArrayType const& array, int64_t num_rows) : m_array(array), m_index(uint_range(num_rows))
     {
     }
 
-    NDFrame(std::shared_ptr<arrow::Array> const& _index=nullptr)
-        : m_array(nullptr), m_index(_index)
+    NDFrame(std::shared_ptr<arrow::Array> const& _index = nullptr) : m_array(nullptr), m_index(_index)
     {
     }
 
-    NDFrame(int64_t num_rows)
-        : m_array(nullptr), m_index(uint_range(num_rows))
+    NDFrame(int64_t num_rows) : m_array(nullptr), m_index(uint_range(num_rows))
     {
     }
 
@@ -114,8 +96,7 @@ public:
     template<typename T>
     static std::vector<bool> makeValidFlags(std::vector<T> const& arr);
 
-    static std::vector<uint8_t> makeValidFlags(
-        std::vector<std::string> const& arr);
+    static std::vector<uint8_t> makeValidFlags(std::vector<std::string> const& arr);
 
     virtual bool equals_(BaseT const& a) const
     {
@@ -141,23 +122,17 @@ protected:
     std::shared_ptr<arrow::Array> uint_range(int64_t n_rows);
 
     void setIndexer();
-
 };
 
 template<class BaseT>
-NDFrame<BaseT>::NDFrame(
-    ArrayType const& array,
-    std::shared_ptr<arrow::Array> const& _index,
-    bool skipIndex)
+NDFrame<BaseT>::NDFrame(ArrayType const& array, std::shared_ptr<arrow::Array> const& _index, bool skipIndex)
     : m_array(array), m_index(_index)
 {
     if (not m_index and not skipIndex)
     {
         if (m_array)
         {
-            if constexpr (std::same_as<
-                              ArrayType,
-                              std::shared_ptr<arrow::RecordBatch>>)
+            if constexpr (std::same_as<ArrayType, std::shared_ptr<arrow::RecordBatch>>)
             {
                 m_index = uint_range(array->num_rows());
             }
@@ -170,10 +145,7 @@ NDFrame<BaseT>::NDFrame(
 }
 
 template<class BaseT>
-NDFrame<BaseT>::NDFrame(
-    int64_t num_rows,
-    std::shared_ptr<arrow::Array> const& _index)
-    : m_array(nullptr)
+NDFrame<BaseT>::NDFrame(int64_t num_rows, std::shared_ptr<arrow::Array> const& _index) : m_array(nullptr)
 {
     if (_index)
     {
@@ -186,8 +158,7 @@ NDFrame<BaseT>::NDFrame(
 }
 
 template<class BaseT>
-std::vector<uint8_t> NDFrame<BaseT>::makeValidFlags(
-    std::vector<std::string> const& arr)
+std::vector<uint8_t> NDFrame<BaseT>::makeValidFlags(std::vector<std::string> const& arr)
 {
 
     std::vector<uint8_t> valid;
@@ -215,7 +186,7 @@ std::shared_ptr<arrow::Array> NDFrame<BaseT>::uint_range(int64_t n_rows)
 template<class BaseT>
 void NDFrame<BaseT>::setIndexer()
 {
-    if(m_array != nullptr)
+    if (m_array != nullptr)
     {
         isIndex = true;
         for (int i = 0; i < m_array->length(); i++)
@@ -227,7 +198,7 @@ void NDFrame<BaseT>::setIndexer()
 
 template<class BaseT>
 template<typename T>
- std::vector<bool> NDFrame<BaseT>::makeValidFlags(std::vector<T> const& arr)
+std::vector<bool> NDFrame<BaseT>::makeValidFlags(std::vector<T> const& arr)
 {
 
     std::vector<bool> valid;
@@ -241,4 +212,4 @@ template<typename T>
     return valid;
 }
 
-}
+} // namespace pd

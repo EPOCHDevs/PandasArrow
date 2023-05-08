@@ -1,10 +1,11 @@
 //
 // Created by dewe on 1/15/23.
 //
-#include "../scalar.h"
 #include <catch.hpp>
+#include "../scalar.h"
 
-TEST_CASE("Scalar construction") {
+TEST_CASE("Scalar construction")
+{
     // Test default constructor
     pd::Scalar defaultScalar;
     REQUIRE_FALSE(defaultScalar.isValid());
@@ -36,7 +37,8 @@ TEST_CASE("Scalar construction") {
     REQUIRE(stringScalar.as<std::string>() == "hello");
 }
 
-TEST_CASE("Scalar as() function") {
+TEST_CASE("Scalar as() function")
+{
     // Test as() function for int
     pd::Scalar intScalar(5);
     REQUIRE(intScalar.as<int>() == 5);
@@ -54,14 +56,16 @@ TEST_CASE("Scalar as() function") {
     REQUIRE_THROWS_AS(intScalar2.as<std::string>(), std::runtime_error);
 }
 
-TEST_CASE("Scalar MinMax struct") {
+TEST_CASE("Scalar MinMax struct")
+{
     // Test MinMax struct
-    pd::MinMax minMax{pd::Scalar(5), pd::Scalar(10)};
+    pd::MinMax minMax{ pd::Scalar(5), pd::Scalar(10) };
     REQUIRE(minMax.min.as<int>() == 5);
     REQUIRE(minMax.max.as<int>() == 10);
 }
 
-TEST_CASE("Scalar arithmetic operator overloads", "[scalar]") {
+TEST_CASE("Scalar arithmetic operator overloads", "[scalar]")
+{
 
     using namespace pd;
     Scalar a(2);
@@ -69,35 +73,40 @@ TEST_CASE("Scalar arithmetic operator overloads", "[scalar]") {
     Scalar c(4.5);
     Scalar d(1.5);
 
-    SECTION("Addition") {
+    SECTION("Addition")
+    {
         REQUIRE(a + b == Scalar(5));
         REQUIRE(a + 3 == Scalar(5));
         REQUIRE(2 + b == Scalar(5));
         REQUIRE(c + d == Scalar(6.0));
     }
 
-    SECTION("Subtraction") {
+    SECTION("Subtraction")
+    {
         REQUIRE(a - b == Scalar(-1));
         REQUIRE(b - a == Scalar(1));
         REQUIRE(c - d == Scalar(3.0));
         REQUIRE(d - c == Scalar(-3.0));
     }
 
-    SECTION("Multiplication") {
+    SECTION("Multiplication")
+    {
         REQUIRE(a * b == Scalar(6));
         REQUIRE(b * 3 == Scalar(9));
         REQUIRE(2 * b == Scalar(6));
         REQUIRE(c * d == Scalar(6.75));
     }
 
-    SECTION("Division") {
-        REQUIRE( (b / a.cast<double>()) == Scalar(1.5) );
+    SECTION("Division")
+    {
+        REQUIRE((b / a.cast<double>()) == Scalar(1.5));
         REQUIRE(b / a == Scalar(1));
         REQUIRE(c / d == Scalar(3.0));
         REQUIRE(d / c == Scalar(1 / 3.0));
     }
 
-    SECTION("Comparison") {
+    SECTION("Comparison")
+    {
         REQUIRE(a < b);
         REQUIRE(a <= b);
         REQUIRE(b > a);
@@ -106,8 +115,9 @@ TEST_CASE("Scalar arithmetic operator overloads", "[scalar]") {
         REQUIRE(d != Scalar(4.5));
     }
 
-    SECTION("Logical") {
-        REQUIRE( (a.cast<bool>() && b.cast<bool>()).as<bool>() == true);
-        REQUIRE( (!a.cast<bool>() || b.cast<bool>()).as<bool>() == true);
+    SECTION("Logical")
+    {
+        REQUIRE((a.cast<bool>() && b.cast<bool>()).as<bool>() == true);
+        REQUIRE((!a.cast<bool>() || b.cast<bool>()).as<bool>() == true);
     }
 }
