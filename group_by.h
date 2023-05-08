@@ -3,12 +3,12 @@
 // Created by dewe on 1/2/23.
 //
 
-#include <arrow/compute/exec/test_util.h>
+//#include <arrow/compute/exec/test_util.h>
 #include <tbb/parallel_for.h>
 #include <utility>
 #include "arrow/compute/api_aggregate.h"
 #include "arrow/compute/api_vector.h"
-#include "arrow/compute/exec/exec_plan.h"
+//#include "arrow/compute/exec/exec_plan.h"
 #include "arrow/compute/row/grouper.h"
 #include "dataframe.h"
 #include "series.h"

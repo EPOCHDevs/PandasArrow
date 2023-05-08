@@ -16,7 +16,7 @@
 #include "arrow/compute/api_aggregate.h"
 #include "arrow/compute/api_vector.h"
 #include "arrow/compute/cast.h"
-#include "arrow/compute/exec/aggregate.h"
+//#include "arrow/compute/exec/aggregate.h"
 #include "arrow/compute/registry.h"
 #include "arrow/table.h"
 #include "arrow/type.h"

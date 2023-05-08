@@ -18,12 +18,12 @@ struct HashScalar
 
     bool operator()(std::shared_ptr<arrow::Scalar> const& a, std::shared_ptr<arrow::Scalar> const& b) const
     {
-        return a->Equals(b->CastTo(a->type).MoveValueUnsafe());
+        return a->Equals(*b->CastTo(a->type).MoveValueUnsafe());
     }
 
     bool equal(std::shared_ptr<arrow::Scalar> const& a, std::shared_ptr<arrow::Scalar> const& b) const
     {
-        return a->Equals(b->CastTo(a->type).MoveValueUnsafe());
+        return a->Equals(*b->CastTo(a->type).MoveValueUnsafe());
     }
 
     size_t operator()(std::shared_ptr<arrow::Scalar> const& scalar) const

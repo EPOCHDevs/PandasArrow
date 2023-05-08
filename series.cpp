@@ -4,7 +4,7 @@
 #include "series.h"
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
-#include <arrow/compute/exec/aggregate.h>
+//#include <arrow/compute/exec/aggregate.h>
 #include <arrow/io/api.h>
 #include <tabulate/table.hpp>
 #include <unordered_set>
