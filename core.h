@@ -367,6 +367,14 @@ struct ArrayT
             builder->Finish().MoveValueUnsafe());
     }
 
+    static auto Make(std::valarray<T> const& x)
+    {
+        auto builder = std::make_shared<typename arrow::CTypeTraits<T>::BuilderType>();
+        pd::ThrowOnFailure(builder->AppendValues(std::begin(x), std::end(x)));
+        return std::dynamic_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(
+            builder->Finish().MoveValueUnsafe());
+    }
+
     static auto Make(std::vector<T> const& x, std::vector<bool> const& map)
     {
         auto builder = std::make_shared<typename arrow::CTypeTraits<T>::BuilderType>();
