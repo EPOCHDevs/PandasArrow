@@ -326,6 +326,21 @@ std::shared_ptr<arrow::TimestampArray> date_range(
     time_duration const& freq,
     std::string const& tz = "");
 
+inline std::shared_ptr<arrow::TimestampArray> any_date_range(
+    std::variant<date, ptime> const& start,
+    int period,
+    std::string const& tz = "")
+{
+    if (std::holds_alternative<date>(start))
+    {
+        return pd::date_range(std::get<date>(start), period, "D", tz);
+    }
+    else
+    {
+        return pd::date_range(std::get<ptime>(start), period, "T", tz);
+    }
+}
+
 std::shared_ptr<arrow::Int64Array> range(int64_t start, int64_t end);
 std::shared_ptr<arrow::UInt64Array> range(::uint64_t start, uint64_t end);
 
