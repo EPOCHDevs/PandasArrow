@@ -232,6 +232,18 @@ static inline auto toDate(int64_t timeStampNanoSec)
     return toTimeNanoSecPtime(timeStampNanoSec).date();
 }
 
+std::pair<std::string, int> splitTimeSpan(std::string const& freq);
+
+time_duration duration_from_string(std::string const& freq_unit,
+                                   int freq_value);
+
+inline time_duration duration_from_string(std::string const& freq,
+                                   std::optional<int> freq_value_override=std::nullopt)
+{
+    auto [freq_unit, freq_value] = splitTimeSpan(freq);
+    return duration_from_string(freq_unit, freq_value_override.value_or(freq_value));
+}
+
 inline int64_t toTimestampNS(const std::string& date_string)
 {
     boost::posix_time::ptime date_time = boost::posix_time::from_iso_extended_string(date_string);

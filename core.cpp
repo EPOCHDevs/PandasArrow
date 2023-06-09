@@ -222,26 +222,35 @@ std::shared_ptr<arrow::TimestampArray> switchFunction(
     std::string const& freq,
     std::string const& tz)
 {
-    auto [freq_unit, freq_value] = splitTimeSpan(freq);
-    if (freq_unit == "T" or freq_unit == "min")
+    return date_range(start, end_or_period, duration_from_string(freq), tz);
+}
+
+time_duration duration_from_string(std::string const& freq_unit,
+                                   int freq_value)
+{
+    if (freq_unit == "H" or freq_unit == "hrs")
     {
-        return date_range(start, end_or_period, minutes(freq_value), tz);
+        return hours(freq_value);
+    }
+    else if (freq_unit == "T" or freq_unit == "min")
+    {
+        return minutes(freq_value);
     }
     else if (freq_unit == "S")
     {
-        return date_range(start, end_or_period, seconds(freq_value), tz);
+        return seconds(freq_value);
     }
     else if (freq_unit == "L" or freq_unit == "ms")
     {
-        return date_range(start, end_or_period, milliseconds(freq_value), tz);
+        return milliseconds(freq_value);
     }
     else if (freq_unit == "U" or freq_unit == "us")
     {
-        return date_range(start, end_or_period, microseconds(freq_value), tz);
+        return microseconds(freq_value);
     }
     else if (freq_unit == "N" or freq_unit == "ns")
     {
-        return date_range(start, end_or_period, nanoseconds(freq_value), tz);
+        return pd::nanoseconds(freq_value);
     }
     throw std::runtime_error(
         "date_range with start:ptime_type is only compatible with "
