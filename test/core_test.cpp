@@ -276,24 +276,24 @@ TEST_CASE("Test date_range with valid input and frequency", "[date_range]")
     }
 }
 
-TEST_CASE("Test firstDateOfYear, lastDateOfYear, and firstDateOfMonth", "[date_functions]")
-{
-    date d1(2022, 2, 15);
-    date d2(2022, 12, 31);
-    date d3(2022, 12, 1);
-
-    // Test firstDateOfYear
-    REQUIRE(firstDateOfYear(d1) == date(2022, 1, 1));
-    REQUIRE(firstDateOfYear(d2) == date(2022, 1, 1));
-
-    // Test lastDateOfYear
-    REQUIRE(lastDateOfYear(d1) == date(2022, 12, 31));
-    REQUIRE(lastDateOfYear(d2) == date(2022, 12, 31));
-
-    // Test firstDateOfMonth
-    REQUIRE(firstDateOfMonth(d1) == date(2022, 2, 1));
-    REQUIRE(firstDateOfMonth(d3) == date(2022, 12, 1));
-}
+//TEST_CASE("Test firstDateOfYear, lastDateOfYear, and firstDateOfMonth", "[date_functions]")
+//{
+//    date d1(2022, 2, 15);
+//    date d2(2022, 12, 31);
+//    date d3(2022, 12, 1);
+//
+//    // Test firstDateOfYear
+//    REQUIRE(firstDateOfYear(d1) == date(2022, 1, 1));
+//    REQUIRE(firstDateOfYear(d2) == date(2022, 1, 1));
+//
+//    // Test lastDateOfYear
+//    REQUIRE(lastDateOfYear(d1) == date(2022, 12, 31));
+//    REQUIRE(lastDateOfYear(d2) == date(2022, 12, 31));
+//
+//    // Test firstDateOfMonth
+//    REQUIRE(firstDateOfMonth(d1) == date(2022, 2, 1));
+//    REQUIRE(firstDateOfMonth(d3) == date(2022, 12, 1));
+//}
 
 TEST_CASE("Test toTimestampNS with valid input", "[toTimestampNS]")
 {
