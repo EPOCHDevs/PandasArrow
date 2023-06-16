@@ -2,7 +2,7 @@
 //
 // Created by dewe on 1/21/23.
 //
-
+#include "glog/logging.h"
 #include "group_by.h"
 
 namespace pd {
@@ -100,7 +100,7 @@ Resampler resample(
     }
     else
     {
-        duration = DateOffset::FromString(rule);
+        duration = *DateOffset::FromString(rule);
     }
 
     return resample(df, duration, closed_right, label_right, origin, offset, tz);
@@ -117,11 +117,9 @@ Resampler resample(
     std::string const& tz = "")
 {
     GroupInfo group_info = makeGroupInfo(df.indexArray(), rule, closed_right, label_right, origin, offset, tz);
+    auto new_index = toDateTime(group_info.downsample());
 
-    bool reindex = group_info.upsampling();
-    auto new_index = group_info.upsampling() ? group_info.labels : toDateTime(group_info.downsample());
-
-    DataFrame new_df{ nullptr, nullptr };
+    std::optional<DataFrame> new_df;
     if constexpr (std::same_as<DataFrameOrSeries, Series>)
     {
         new_df = DataFrame{ arrow::schema({ arrow::field(df.name(), df.dtype()) }),
@@ -133,9 +131,8 @@ Resampler resample(
     {
         new_df = df;
     }
-
-    new_df = reindex ? new_df.reindex(new_index) : new_df.setIndex(new_index);
-    return { new_df };
+    new_df = new_df->setIndex(new_index);
+    return { *new_df };
 }
 
 arrow::TimestampArray adjustBinEdges(arrow::TimestampArray& binner, arrow::TimestampArray const& ax_values);

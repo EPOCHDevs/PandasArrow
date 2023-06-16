@@ -237,7 +237,7 @@ GroupInfo makeGroupInfo(
     ptime minValue = toTimeNanoSecPtime(min.scalar);
     ptime maxValue = toTimeNanoSecPtime(max.scalar);
 
-    std::shared_ptr<arrow::NumericArray<arrow::TimestampType>> binner;
+    std::shared_ptr<arrow::TimestampArray> binner;
     if (std::holds_alternative<time_duration>(rule))
     {
         const auto duration = std::get<time_duration>(rule);

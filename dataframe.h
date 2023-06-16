@@ -215,6 +215,8 @@ public:
         return newClone;
     }
 
+    DataFrame indexAsDateTime() const;
+
     DataFrame setColumns(std::vector<std::string> const& column_names);
 
     [[nodiscard]] pd::Series forAxis(std::string const& functionName, pd::AxisType) const;
@@ -525,7 +527,7 @@ requires std::is_scalar_v<T> T getDefault(T scalarV)
 }
 
 template<class T>
-T getDefault(std::vector<T> const& vectorT)
+T getDefault(std::vector<T> const&)
 {
     return T{};
 }

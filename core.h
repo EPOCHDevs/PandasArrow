@@ -119,11 +119,12 @@ struct DateOffset
         YearEnd,
         YearStart
     } type;
+
     int multiplier{ 1 };
 
     static date add(const date& x, Type, int);
 
-    static DateOffset FromString(const std::string& code);
+    static std::optional<DateOffset> FromString(const std::string& code);
 
     friend inline date operator+(const date& x, const DateOffset& dateOffset)
     {
@@ -302,7 +303,7 @@ inline std::shared_ptr<arrow::TimestampArray> date_range(
     std::string const& freq = "D",
     std::string const& tz = "")
 {
-    return date_range(start, end, DateOffset::FromString(freq), tz);
+    return date_range(start, end, *DateOffset::FromString(freq), tz);
 }
 
 inline std::shared_ptr<arrow::TimestampArray> date_range(
@@ -311,7 +312,7 @@ inline std::shared_ptr<arrow::TimestampArray> date_range(
     std::string const& freq = "D",
     std::string const& tz = "")
 {
-    return date_range(start, period, DateOffset::FromString(freq), tz);
+    return date_range(start, period, *DateOffset::FromString(freq), tz);
 }
 
 std::shared_ptr<arrow::TimestampArray> date_range(

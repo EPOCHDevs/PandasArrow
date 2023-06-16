@@ -180,6 +180,11 @@ DataFrame DataFrame::setIndex(std::string const& column_name)
     return { pd::ReturnOrThrowOnFailure(m_array->RemoveColumn(column_idx)), new_index };
 }
 
+DataFrame DataFrame::indexAsDateTime() const
+{
+    return setIndex(pd::Series(m_index, true, "index").to_datetime().array());
+}
+
 DataFrame DataFrame::setColumns(std::vector<std::string> const& column_names)
 {
     auto current_column_names = columnNames();
@@ -1117,7 +1122,7 @@ arrow::Result<pd::DataFrame> GroupBy::apply(std::function<ScalarPtr(Series const
     ::int64_t numGroups = groupSize();
     ::int64_t numColumns = schema->num_fields();
 
-    arrow::ArrayDataVector resultForEachColumn(numGroups);
+    arrow::ArrayDataVector resultForEachColumn(numColumns);
     auto columnNames = schema->field_names();
 
     std::ranges::transform(

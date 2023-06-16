@@ -1439,7 +1439,6 @@ pd::Series Series::reindex(
         throw std::runtime_error(ss.str());
     }
 
-
     auto new_idx_int =
         pd::ReturnOrThrowOnFailure(arrow::compute::Cast(newIndex, { arrow::int64() })).array_as<arrow::Int64Array>();
     // Get the length of the new index

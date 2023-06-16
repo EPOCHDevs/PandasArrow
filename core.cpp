@@ -59,7 +59,7 @@ date DateOffset::add(const date& x, Type type, int n)
 
     return result;
 }
-DateOffset DateOffset::FromString(const string& code)
+std::optional<DateOffset> DateOffset::FromString(const string& code)
 {
     const auto [freq_unit, mul] = splitTimeSpan(code);
     DateOffset::Type type{ DateOffset::Day };
@@ -98,9 +98,9 @@ DateOffset DateOffset::FromString(const string& code)
     }
     else
     {
-        throw std::runtime_error("Invalid DateOffset Type: " + freq_unit);
+        return std::nullopt;
     }
-    return { type, mul };
+    return std::make_optional<DateOffset>(type, mul);
 }
 
 std::pair<std::string, int> splitTimeSpan(std::string const& freq)
