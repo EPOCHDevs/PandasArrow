@@ -1156,8 +1156,12 @@ arrow::Result<pd::DataFrame> GroupBy::apply(std::function<ScalarPtr(Series const
 
 arrow::Result<pd::Series> GroupBy::apply(std::function<ScalarPtr(DataFrame const&)> fn)
 {
-    ::int64_t numGroups = groupSize();
+    int64_t numGroups = groupSize();
     arrow::ScalarVector result(numGroups);
+    if (!df.m_array)
+    {
+        return arrow::Status::OK();
+    }
     std::shared_ptr<arrow::Schema> schema = df.m_array->schema();
 
     std::ranges::transform(
@@ -1234,6 +1238,10 @@ arrow::Status GroupBy::makeGroups(std::string const& keyInStringFormat)
 {
     using namespace arrow;
     using namespace arrow::compute;
+    if (!df.m_array)
+    {
+        return arrow::Status::OK();
+    }
 
     auto schema = df.array()->schema();
     auto key_array = keyInStringFormat == "__resampler_idx__" ? df.indexArray() : df[keyInStringFormat].array();
