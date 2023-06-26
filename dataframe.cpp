@@ -276,8 +276,7 @@ std::ostream& operator<<(std::ostream& os, DataFrame const& df)
     const auto halfRow = int(PD_MAX_ROW_TO_PRINT / 2);
     const auto halfCol = int(PD_MAX_COL_TO_PRINT / 2);
 
-    std::vector<std::variant<std::string, const char*, tabulate::Table>> dot{ halfRow, "" };
-    std::vector<std::variant<std::string, const char*, tabulate::Table>> cells;
+    tabulate::Table::Row_t cells, dot{ halfRow, "" };
     cells.emplace_back("index");
     for (int j = 0; j < nCols; j++)
     {
