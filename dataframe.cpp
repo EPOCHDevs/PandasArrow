@@ -320,7 +320,9 @@ Series DataFrame::operator[](const std::string& column) const
 {
     auto ptr = m_array->GetColumnByName(column);
     if (ptr)
+    {
         return { ptr, m_index, column };
+    }
     auto columns = columnNames();
     std::stringstream ss;
     ss << column + " is not a valid column, Valid Columns: ";

@@ -1433,8 +1433,10 @@ pd::Series Series::reindex(
     if (newIndex->type()->id() != m_index->type()->id())
     {
         std::stringstream ss;
-        ss << "Index type of newIndex does not match the index type of the current series.";
-        ss << newIndex->type()->ToString() << " != " << m_index->type()->ToString();
+        ss << "type(NewIndex) != type(CurrentIndex).\n";
+        ss << newIndex->type()->ToString() << " != " << m_index->type()->ToString() << "\nNewIndex:\n"
+           << newIndex->ToString() << "\nCurrentIndex:\n"
+           << m_index->ToString();
 
         throw std::runtime_error(ss.str());
     }

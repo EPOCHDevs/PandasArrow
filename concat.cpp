@@ -258,7 +258,18 @@ pd::DataFrame concatColumnsUnsafe(std::vector<pd::DataFrame> const& objs)
     {
         for (auto const& field : objs[i].array()->schema()->fields())
         {
-            df = pd::ReturnOrThrowOnFailure(df->AddColumn(N++, field, objs[i][field->name()].m_array));
+            auto result = df->AddColumn(N++, field, objs[i][field->name()].m_array);
+            if (result.ok())
+            {
+                df = result.MoveValueUnsafe();
+            }else
+            {
+                std::cerr << df->ToString()
+                          << "\nLength: " << df->num_rows() << "\nNewColumn: " << objs[i][field->name()].m_array->ToString()
+                          << "\nNew Column Length: " << objs[i][field->name()].m_array->length()
+                          << "\nField: " << field->name() << "\n";
+                throw std::runtime_error(result.status().ToString());
+            }
         }
     }
     return { df, objs.at(0).indexArray() };

@@ -342,15 +342,16 @@ std::shared_ptr<arrow::TimestampArray> date_range(
 inline std::shared_ptr<arrow::TimestampArray> any_date_range(
     std::variant<date, ptime> const& start,
     int period,
+    std::optional<std::string> const& offset={},
     std::string const& tz = "")
 {
     if (std::holds_alternative<date>(start))
     {
-        return pd::date_range(std::get<date>(start), period, "D", tz);
+        return pd::date_range(std::get<date>(start), period, offset.value_or("D"), tz);
     }
     else
     {
-        return pd::date_range(std::get<ptime>(start), period, "T", tz);
+        return pd::date_range(std::get<ptime>(start), period, offset.value_or("T"), tz);
     }
 }
 

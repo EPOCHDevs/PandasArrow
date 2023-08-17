@@ -375,6 +375,25 @@ public:
     [[nodiscard]] Series strptime(std::string const& format, arrow::TimeUnit::type unit, bool error_is_null = false)
         const;
 
+    inline Series ReturnSeriesOrThrowOnError(arrow::Result<arrow::Datum>&& result) const
+    {
+        if (result.ok())
+        {
+            auto arr = result->make_array();
+            if (m_index && (arr->length() == m_index->length()) )
+            {
+                return pd::Series{ arr, m_index, "" };
+            }
+            else if(not m_index)
+            {
+                return pd::Series{ arr, false, "" };
+            }
+            throw std::runtime_error(
+                "ReturnSeriesOrThrowOnError requires new Series has same length as original index");
+        }
+        throw std::runtime_error(result.status().ToString());
+    }
+
 private:
     std::string m_name;
 
