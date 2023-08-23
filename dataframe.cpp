@@ -344,8 +344,14 @@ DataFrame DataFrame::operator[](int64_t row) const
         [this, row](std::string const& column)
         {
             auto series = this->m_array->GetColumnByName(column);
-            auto scalar = pd::ReturnOrThrowOnFailure(series->GetScalar(row));
-            return std::pair{ column, pd::ReturnOrThrowOnFailure(arrow::MakeArrayFromScalar(*scalar, 1)) };
+            if (series)
+            {
+                auto scalar = pd::ReturnOrThrowOnFailure(series->GetScalar(row));
+                return std::pair{ column, pd::ReturnOrThrowOnFailure(arrow::MakeArrayFromScalar(*scalar, 1)) };
+            }
+            std::stringstream ss;
+            ss << "[" << column << "] returned null.";
+            throw std::runtime_error(ss.str());
         });
     auto index = pd::ReturnOrThrowOnFailure(m_index->GetScalar(row));
     return DataFrame{ result, pd::ReturnOrThrowOnFailure(arrow::MakeArrayFromScalar(*index, 1)) };
