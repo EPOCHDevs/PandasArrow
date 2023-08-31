@@ -18,6 +18,7 @@
 #include "ranges"
 #include "resample.h"
 #include "stringlike.h"
+#include "boost/format.hpp"
 
 
 #define BINARY_OPERATOR(sign, name) \
@@ -406,10 +407,11 @@ Resampler Series::resample(
 }
 
 
-GenericFunctionSeriesReturn(unique) GenericFunctionSeriesReturnRename(drop_na, drop_null, Series)
-    GenericFunctionSeriesReturn(indices_nonzero)
+GenericFunctionSeriesReturn(unique)
+GenericFunctionSeriesReturnRename(drop_na, drop_null, Series)
+GenericFunctionSeriesReturn(indices_nonzero)
 
-        Series Series::where(const Series& _filter) const
+Series Series::where(const Series& _filter) const
 {
     arrow::compute::FilterOptions opt{ arrow::compute::FilterOptions::NullSelectionBehavior::EMIT_NULL };
     return ReturnSeriesOrThrowOnError(arrow::compute::CallFunction("array_filter", { m_array, _filter.m_array }, &opt));
@@ -1543,6 +1545,35 @@ pd::Series Series::reindexAsync(
     // Return a new series with the reindexed values and new index
     return { newValues, newIndex, m_name };
 }
+
+Series Series::ReturnSeriesOrThrowOnError(arrow::Result<arrow::Datum>&& result) const
+{
+    if (result.ok())
+    {
+        auto arr = result->make_array();
+        const int64_t arrayLength = arr->length();
+        const int64_t indexLength = m_index ? m_index->length() : 0;
+        if (indexLength == 0 || arrayLength == 0)
+        {
+            return pd::Series{ arr, false, "" };
+        }
+        else if (arrayLength == indexLength)
+        {
+            return pd::Series{ arr, m_index, "" };
+        }
+        else if (arrayLength < indexLength)
+        {
+            return pd::Series{ arr, m_index->Slice(indexLength - arrayLength, arrayLength), "" };
+        }
+        throw std::runtime_error(
+            (boost::format(
+                 "ReturnSeriesOrThrowOnError requires new Array length(%1%) <= original index Length(%2%)") %
+             arrayLength % indexLength)
+                .str());
+    }
+    throw std::runtime_error(result.status().ToString());
+}
+
 
 GenericFunctionSeriesReturnDateTimeLike(day) GenericFunctionSeriesReturnDateTimeLike(day_of_week)
     GenericFunctionSeriesReturnDateTimeLike(day_of_year) GenericFunctionSeriesReturnDateTimeLike(hour)
