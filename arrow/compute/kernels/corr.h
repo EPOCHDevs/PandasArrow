@@ -1,5 +1,6 @@
 #pragma once
 #include "cov.h"
+#include <cmath>
 
 namespace arrow {
 namespace compute::internal {

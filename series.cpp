@@ -11,7 +11,6 @@
 #include "arrow/compute/kernels/autocorr.h"
 #include "arrow/compute/kernels/corr.h"
 #include "arrow/compute/kernels/cov.h"
-#include "arrow/compute/kernels/cumprod.h"
 #include "arrow/compute/kernels/pct_change.h"
 #include "datetimelike.h"
 #include "filesystem"
@@ -369,16 +368,28 @@ Series Series::logb(int base) const
 GenericFunctionSeriesReturnRename(operator~, bit_wise_not, Series)
     GenericFunctionSeriesReturnRename(operator!, invert, Series)
 
-        Series Series::cumsum(double start, bool skip_nulls) const
+Series Series::cumsum(double start, bool skip_nulls) const
 {
     return ReturnSeriesOrThrowOnError(
-        arrow::compute::CumulativeSum(m_array, arrow::compute::CumulativeSumOptions{ start, skip_nulls }));
+        arrow::compute::CumulativeSum(m_array, arrow::compute::CumulativeOptions{ start, skip_nulls }));
 }
 
 Series Series::cumprod(double start, bool skip_nulls) const
 {
     return ReturnSeriesOrThrowOnError(
-        arrow::compute::CumulativeProduct(m_array, arrow::compute::CumulativeProductOptions{ start, skip_nulls }));
+        arrow::compute::CumulativeProd(m_array, arrow::compute::CumulativeOptions{ start, skip_nulls }));
+}
+
+Series Series::cummax(double start, bool skip_nulls) const
+{
+    return ReturnSeriesOrThrowOnError(
+        arrow::compute::CumulativeMax(m_array, arrow::compute::CumulativeOptions{ start, skip_nulls }));
+}
+
+Series Series::cummin(double start, bool skip_nulls) const
+{
+    return ReturnSeriesOrThrowOnError(
+        arrow::compute::CumulativeMin(m_array, arrow::compute::CumulativeOptions{ start, skip_nulls }));
 }
 
 std::shared_ptr<arrow::DictionaryArray> Series::dictionary_encode() const

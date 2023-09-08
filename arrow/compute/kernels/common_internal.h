@@ -14,32 +14,41 @@
 // KIND, either express or implied.  See the License for the
 // specific language governing permissions and limitations
 // under the License.
+
 #pragma once
 
-#include "arrow/util/config.h"
+// IWYU pragma: begin_exports
+
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
+#include "arrow/array/data.h"
+#include "arrow/buffer.h"
+#include "arrow/chunked_array.h"
+
+#include "arrow/compute/function.h"
+#include "arrow/compute/kernel.h"
+#include "arrow/compute/kernels/codegen_internal.h"
+#include "arrow/compute/registry.h"
+#include "arrow/datum.h"
+#include "arrow/memory_pool.h"
+#include "arrow/status.h"
+#include "arrow/type.h"
+#include "arrow/type_traits.h"
+#include "arrow/util/checked_cast.h"
+#include "arrow/util/logging.h"
 #include "arrow/util/macros.h"
 
-#ifndef ARROW_USE_NATIVE_INT128
-#include <boost/multiprecision/cpp_int.hpp>
-#endif
+// IWYU pragma: end_exports
 
 namespace arrow {
-namespace internal {
 
-// NOTE: __int128_t and boost::multiprecision::int128_t are not interchangeable.
-// For example, __int128_t does not have any member function, and does not have
-// operator<<(std::ostream, __int128_t). On the other hand, the behavior of
-// boost::multiprecision::int128_t might be surprising with some configs (e.g.,
-// static_cast<uint64_t>(boost::multiprecision::uint128_t) might return
-// ~uint64_t{0} instead of the lower 64 bits of the input).
-// Try to minimize the usage of int128_t and uint128_t.
-#ifdef ARROW_USE_NATIVE_INT128
-using int128_t = __int128_t;
-using uint128_t = __uint128_t;
-#else
-using boost::multiprecision::int128_t;
-using boost::multiprecision::uint128_t;
-#endif
+using internal::checked_cast;
+using internal::checked_pointer_cast;
 
-}  // namespace internal
 }  // namespace arrow

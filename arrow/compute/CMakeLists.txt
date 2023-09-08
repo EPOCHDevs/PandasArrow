@@ -1,1 +1,0 @@
-target_sources(pandas_arrow PRIVATE kernels/cumprod.cpp)

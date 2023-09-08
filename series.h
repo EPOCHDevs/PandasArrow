@@ -246,6 +246,8 @@ public:
     [[nodiscard]] Series trunc() const;
     [[nodiscard]] Series cumsum(double start = 0, bool skip_nulls = true) const;
     [[nodiscard]] Series cumprod(double start = 1, bool skip_nulls = true) const;
+    [[nodiscard]] Series cummax(double start, bool skip_nulls = true) const;
+    [[nodiscard]] Series cummin(double start, bool skip_nulls = true) const;
 
     // agg functions
     [[nodiscard]] MinMax min_max(bool skip_nulls) const;

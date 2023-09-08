@@ -6,7 +6,6 @@
 
 #include "arrow/compute/kernels/autocorr.h"
 #include "arrow/compute/kernels/corr.h"
-#include "arrow/compute/kernels/cumprod.h"
 #include "arrow/compute/kernels/pct_change.h"
 #include "arrow/compute/kernels/shift.h"
 #include "concat.h"
@@ -22,7 +21,6 @@ struct CustomKernelsRegistryImpl
 {
     CustomKernelsRegistryImpl()
     {
-        arrow::compute::internal::RegisterVectorCumulativeProduct(GetFunctionRegistry());
         arrow::compute::internal::RegisterScalarAggregateCovariance(GetFunctionRegistry());
         arrow::compute::internal::RegisterScalarAggregateCorrelation(GetFunctionRegistry());
         arrow::compute::internal::MakeVectorShiftFunction(GetFunctionRegistry());
