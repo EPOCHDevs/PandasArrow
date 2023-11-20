@@ -1176,16 +1176,40 @@ arrow::Result<pd::Series> GroupBy::apply(std::function<ScalarPtr(DataFrame const
         result.begin(),
         [&](::int64_t i)
         {
-            ScalarPtr key = GetKeyByIndex(i);
-            ArrayPtr index = indexGroups[key];
-            arrow::ArrayVector group = groups[key];
-            int64_t numRows = index->length();
-            auto dataFrameGroup = pd::DataFrame(schema, numRows, group, index);
-            return fn(dataFrameGroup);
+            return fn(MakeSubDataFrame(i, schema));
         });
 
     ARROW_ASSIGN_OR_RAISE(auto finalArray, buildArray(result));
     return pd::Series(finalArray, uniqueKeys);
+}
+
+arrow::Result<pd::Series> GroupBy::apply(std::function<ArrayPtr(DataFrame const&)> fn)
+{
+    int64_t numGroups = groupSize();
+    arrow::ArrayVector result(numGroups);
+    if (!df.m_array) {
+        return arrow::Status::OK();
+    }
+    std::shared_ptr<arrow::Schema> schema = df.m_array->schema();
+
+    std::ranges::transform(
+        std::views::iota(0L, numGroups),
+        result.begin(),
+        [&](::int64_t i)
+        {
+            auto subGroup = MakeSubDataFrame(i, schema);
+            auto result = fn(subGroup);
+            if (result->length() == subGroup.num_rows()) {
+                return result;
+            }
+            throw std::runtime_error(std::string("Failed to Merge Apply::Functor due to inconsistent Row Length\n")
+                                         .append(std::to_string(result->length()))
+                                         .append(" != ")
+                                         .append(std::to_string(subGroup.num_rows())));
+        });
+
+    ARROW_ASSIGN_OR_RAISE(auto finalArray, arrow::Concatenate(result));
+    return pd::Series(finalArray, df.indexArray());
 }
 
 GROUPBY_NUMERIC_AGG(mean, double)

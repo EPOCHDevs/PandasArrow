@@ -59,7 +59,18 @@ struct GroupBy
         return ReturnOrThrowOnFailure(uniqueKeys->GetScalar(i));
     }
 
+    inline pd::DataFrame MakeSubDataFrame(int64_t groupIndex,
+                                          std::shared_ptr<arrow::Schema> const& schema)
+    {
+        ScalarPtr key = GetKeyByIndex(groupIndex);
+        ArrayPtr index = indexGroups[key];
+        arrow::ArrayVector group = groups[key];
+        int64_t numRows = index->length();
+        return pd::DataFrame(schema, numRows, group, index);
+    }
+
     arrow::Result<pd::Series> apply(std::function<std::shared_ptr<arrow::Scalar>(DataFrame const&)> fn);
+    arrow::Result<pd::Series> apply(std::function<ArrayPtr(DataFrame const&)> fn);
 
     arrow::Result<pd::DataFrame> apply(std::function<std::shared_ptr<arrow::Scalar>(Series const&)> fn);
 
