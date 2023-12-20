@@ -8,15 +8,14 @@
 
 namespace pd {
 
-template<class T>
-std::vector<int64_t> generate_bins_dt64(std::shared_ptr<T> values, std::shared_ptr<T> const& binner, bool right_closed)
+std::vector<int64_t> generate_bins_dt64(std::shared_ptr<arrow::TimestampArray> values,
+                                        std::shared_ptr<arrow::Int64Array> const& binner,
+                                        bool right_closed)
 {
-
     int64_t nat_count = 0;
-    if (values->null_count() > 0)
-    {
+    if (values->null_count() > 0) {
         auto datum = pd::ReturnOrThrowOnFailure(arrow::compute::DropNull(values));
-        values = datum.template array_as<T>();
+        values = datum.array_as<arrow::TimestampArray>();
         nat_count = values->null_count();
     }
 
@@ -85,21 +84,6 @@ std::vector<int64_t> generate_bins_dt64(std::shared_ptr<T> values, std::shared_p
 
     return bins;
 }
-
-template std::vector<int64_t> generate_bins_dt64(
-    std::shared_ptr<arrow::TimestampArray> values,
-    std::shared_ptr<arrow::TimestampArray> const& binner,
-    bool closed_right);
-
-template std::vector<int64_t> generate_bins_dt64(
-    std::shared_ptr<arrow::Int64Array> values,
-    std::shared_ptr<arrow::Int64Array> const& binner,
-    bool closed_right);
-
-template std::vector<int64_t> generate_bins_dt64(
-    std::shared_ptr<arrow::UInt64Array> values,
-    std::shared_ptr<arrow::UInt64Array> const& binner,
-    bool closed_right);
 
 std::pair<ptime, ptime> adjustDatesAnchored(
     ptime const& start,
@@ -209,6 +193,28 @@ std::pair<ptime, ptime> adjustDatesAnchored(
     return std::make_pair(first, last);
 }
 
+    std::shared_ptr<arrow::Int64Array> adjustBinEdges(std::shared_ptr<arrow::TimestampArray>& binner,
+                                                      int64_t max_timestamp) {
+
+        auto binEdges = pd::ReturnOrThrowOnFailure(arrow::compute::Add(binner,
+                                                                       std::make_shared<arrow::DurationScalar>(
+                                                                               60 * 60 * 24/*1D*/,
+                                                                               arrow::TimeUnit::SECOND)));
+        binEdges = pd::ReturnOrThrowOnFailure(arrow::compute::Subtract(binEdges,
+                                                                       std::make_shared<arrow::DurationScalar>(1,
+                                                                                                               arrow::TimeUnit::NANO)));
+        binEdges = pd::ReturnOrThrowOnFailure(arrow::compute::Cast(binEdges, arrow::int64()));
+
+        auto binEdgesArray = binEdges.array_as<arrow::Int64Array>();
+        const int64_t length = binEdgesArray->length();
+
+        if (binEdgesArray->Value(length - 2) > max_timestamp) {
+            binner = static_pointer_cast<arrow::TimestampArray>(binner->Slice(0, length - 1));
+            binEdgesArray = static_pointer_cast<arrow::Int64Array>(binEdgesArray->Slice(0, length - 1));
+        }
+        return binEdgesArray;
+    }
+
 GroupInfo makeGroupInfo(
     std::shared_ptr<arrow::Array> const& ax,
     std::variant<DateOffset, time_duration> const& rule,
@@ -237,7 +243,9 @@ GroupInfo makeGroupInfo(
     ptime minValue = toTimeNanoSecPtime(min.scalar);
     ptime maxValue = toTimeNanoSecPtime(max.scalar);
 
-    std::shared_ptr<arrow::TimestampArray> binner;
+    std::shared_ptr<arrow::TimestampArray> binner, labels;
+    std::shared_ptr<arrow::Int64Array> binEdges;
+
     if (std::holds_alternative<time_duration>(rule))
     {
         const auto duration = std::get<time_duration>(rule);
@@ -250,26 +258,29 @@ GroupInfo makeGroupInfo(
             offset,
             tz);
         binner = date_range(first, last, duration, tz);
+        labels = binner;
+        binEdges = pd::ReturnOrThrowOnFailure(arrow::compute::Cast(binner, arrow::int64())).array_as<arrow::Int64Array>();
     }
-    else
-    {
+    else {
         date first = minValue.date();
         date last = maxValue.date();
 
         const auto freq = std::get<DateOffset>(rule);
 
-        if (not closed_right)
-        {
+        if (not closed_right) {
             throw std::runtime_error("closed_left is not currently supported by DateOffset");
         }
 
         binner = date_range(first - freq, last + freq, freq, tz);
+        if ((freq.type == DateOffset::Day && freq.multiplier > 1) or freq.type != DateOffset::Day) {
+            binEdges = adjustBinEdges(binner, pd::fromPTime(maxValue));
+        } else {
+            binEdges = pd::ReturnOrThrowOnFailure(
+                    arrow::compute::Cast(binner, arrow::int64())).array_as<arrow::Int64Array>();
+        }
     }
 
-    auto labels = binner;
-
-    auto bins = generate_bins_dt64(timestamps_ax, binner, closed_right);
-
+    auto bins = generate_bins_dt64(timestamps_ax, binEdges, closed_right);
     // Handle the closed_right and label_right options
     if (closed_right)
     {

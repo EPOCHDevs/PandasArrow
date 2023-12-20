@@ -121,14 +121,11 @@ struct DateOffset
     } type;
 
     int multiplier{ 1 };
+    greg_weekday startDay{Sunday};
 
-    static date add(const date& x, Type, int);
-
-    static std::optional<DateOffset> FromString(const std::string& code);
-
-    friend inline date operator+(const date& x, const DateOffset& dateOffset)
+    inline friend date operator+(const date& x, const DateOffset& dateOffset)
     {
-        return add(x, dateOffset.type, +dateOffset.multiplier);
+        return add(x, dateOffset);
     }
 
     inline DateOffset operator*(int x) const
@@ -141,10 +138,16 @@ struct DateOffset
         return { _type, x };
     }
 
-    friend inline date operator-(const date& x, const DateOffset& dateOffset)
+    inline friend date operator-(const date& x, DateOffset dateOffset)
     {
-        return add(x, dateOffset.type, -dateOffset.multiplier);
+        dateOffset.multiplier *= -1;
+        return add(x, dateOffset);
     }
+
+    static std::optional<DateOffset> FromString(const std::string& code);
+
+private:
+    static date add(date, const DateOffset&);
 };
 
 struct DateTimeSlice
@@ -212,10 +215,11 @@ struct DateRangeSpec
 /**
  * Converts unix timestamp (nanoseconds) to ptime.
  */
-static inline auto toTimeNanoSecPtime(uint64_t timeStampNanoSec)
+static inline auto toTimeNanoSecPtime(uint64_t nanoseconds_since_epoch)
 {
-    return from_time_t(
-        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::nanoseconds(timeStampNanoSec)).count());
+    long long seconds_since_epoch = nanoseconds_since_epoch / 1000000000LL;
+    long nanoseconds_remainder = nanoseconds_since_epoch % 1000000000LL;
+    return from_time_t(seconds_since_epoch) + nanoseconds(nanoseconds_remainder);
 }
 
 static inline auto toTimeNanoSecPtime(ScalarPtr const& timeStampNanoSec)
@@ -347,11 +351,11 @@ inline std::shared_ptr<arrow::TimestampArray> any_date_range(
 {
     if (std::holds_alternative<date>(start))
     {
-        return pd::date_range(std::get<date>(start), period, offset.value_or("D"), tz);
+        return pd::date_range(std::get<date>(start), period, offset.value_or("1D"), tz);
     }
     else
     {
-        return pd::date_range(std::get<ptime>(start), period, offset.value_or("T"), tz);
+        return pd::date_range(std::get<ptime>(start), period, offset.value_or("1T"), tz);
     }
 }
 

@@ -9,6 +9,7 @@
 #include <iostream>
 #include "scalar.h"
 #include "sstream"
+#include "span"
 
 
 namespace pd {
@@ -111,6 +112,13 @@ public:
     std::shared_ptr<arrow::Array> indexArray() const noexcept
     {
         return m_index;
+    }
+
+    template<typename T>
+    std::span<const T> getIndexSpan() const noexcept
+    {
+        return { reinterpret_cast<const T*>(m_index->data()->buffers[1]->data()) + m_index->offset(),
+                 size_t(m_index->length()) };
     }
 
 protected:

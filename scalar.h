@@ -107,6 +107,18 @@ public:
         }
     }
 
+    int64_t dt() const
+    {
+        auto res = std::dynamic_pointer_cast<arrow::TimestampScalar>(scalar);
+        if (res)
+        {
+            return res->value;
+        }
+        std::stringstream ss;
+        ss << "Invalid Scalar Cast to TimestampType, current type " << scalar->type->name() << "\n";
+        throw std::runtime_error(ss.str());
+    }
+
     inline bool isValid() const
     {
         return scalar->is_valid;

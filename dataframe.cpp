@@ -29,6 +29,8 @@
 #include "filesystem"
 #include "macros.h"
 #include "resample.h"
+#include "concat.h"
+
 
 namespace pd {
 
@@ -259,7 +261,13 @@ DataFrame DataFrame::readCSV(std::filesystem::path const& path)
     std::shared_ptr<arrow::Table> table = pd::ReturnOrThrowOnFailure(csv_reader->Read());
     arrow::TableBatchReader tableBatchReader(table);
 
-    return pd::ReturnOrThrowOnFailure(tableBatchReader.ToRecordBatches()).at(0);
+    auto batches = pd::ReturnOrThrowOnFailure(tableBatchReader.ToRecordBatches());
+    if (batches.size() == 1)
+    {
+        return batches.at(0);
+    }
+    std::vector<pd::DataFrame> dataFrames{batches.begin(), batches.end()};
+    return pd::concat(dataFrames);
 }
 
 std::ostream& operator<<(std::ostream& os, DataFrame const& df)
@@ -455,6 +463,28 @@ DataFrame DataFrame::slice(Slice slice, std::vector<std::string> const& columns)
     }
     return { arrow::RecordBatch::Make(arrow::schema(fieldVector), length, arrays),
              m_index->Slice(slice.start, length) };
+}
+
+DataFrame DataFrame::timestamp_slice(Slice const& slicer) const
+{
+    int64_t start = 0, end = m_index->length() - 1;
+    if (slicer.start != 0)
+    {
+        start = ReturnScalarOrThrowOnError<int64_t>(
+            arrow::compute::Index(m_index, arrow::compute::IndexOptions{ pd::Scalar(slicer.start).value() }));
+    }
+
+    if (slicer.end != 0)
+    {
+        end = ReturnScalarOrThrowOnError<int64_t>(
+            arrow::compute::Index(m_index, arrow::compute::IndexOptions{ pd::Scalar(slicer.end).value() }));
+        if (end != -1)
+        {
+            end++;
+        }
+    }
+
+    return slice(Slice{ start, end });
 }
 
 DataFrame DataFrame::slice(Slice slice) const
@@ -978,6 +1008,13 @@ GroupBy DataFrame::group_by(const std::string& key) const
     return { key, *this };
 }
 
+void DataFrame::drop(std::vector<std::string> const& columns) {
+    for (const std::string &column: columns) {
+        int index = m_array->schema()->GetFieldIndex(column);
+        m_array = index == -1 ? m_array : pd::ReturnOrThrowOnFailure(this->m_array->RemoveColumn(index));
+    }
+}
+
 DataFrame DataFrame::drop_na() const
 {
     auto N = num_columns();
@@ -1122,6 +1159,28 @@ arrow::Result<pd::Series> GroupBy::apply_async(std::function<ScalarPtr(DataFrame
     return pd::Series(finalArray, uniqueKeys);
 }
 
+
+arrow::Result<DataFrame> GroupBy::apply_chunk(std::function<DataFrame(DataFrame const&)> fn)
+{
+    const std::shared_ptr<arrow::Schema> schema = df.m_array->schema();
+
+    ::int64_t numGroups = groupSize();
+    std::vector<pd::DataFrame> resultForEachGroup(numGroups);
+
+    std::ranges::transform(
+        std::views::iota(0L, numGroups),
+        resultForEachGroup.begin(),
+        [&](int64_t groupIndex) -> pd::DataFrame
+        {
+            ScalarPtr key = GetKeyByIndex(groupIndex);
+            arrow::ArrayVector group = groups[key];
+            const ArrayPtr index = indexGroups[key];
+            const int64_t numRows = index->length();
+            return fn(pd::DataFrame(schema, numRows, group, index));
+        });
+    return pd::concat(resultForEachGroup, AxisType::Index);
+}
+
 arrow::Result<pd::DataFrame> GroupBy::apply(std::function<ScalarPtr(Series const&)> fn)
 {
     std::shared_ptr<arrow::Schema> schema = df.m_array->schema();
@@ -1161,6 +1220,25 @@ arrow::Result<pd::DataFrame> GroupBy::apply(std::function<ScalarPtr(Series const
     return pd::DataFrame(schema, numGroups, resultForEachColumn);
 }
 
+std::vector<std::pair<pd::Scalar, pd::DataFrame>> GroupBy::orderedGroups() const
+{
+    const int64_t numGroups = groupSize();
+    std::shared_ptr<arrow::Schema> schema = df.m_array->schema();
+
+    std::vector<std::pair<pd::Scalar, pd::DataFrame>> result(numGroups);
+
+    std::ranges::transform(
+        std::views::iota(0L, numGroups),
+        result.begin(),
+        [&](::int64_t groupIndex)
+        {
+            const ScalarPtr key = GetKeyByIndex(groupIndex);
+            return std::pair{ key, MakeSubDataFrame(key, schema) };
+        });
+
+    return result;
+}
+
 arrow::Result<pd::Series> GroupBy::apply(std::function<ScalarPtr(DataFrame const&)> fn)
 {
     int64_t numGroups = groupSize();
@@ -1174,9 +1252,9 @@ arrow::Result<pd::Series> GroupBy::apply(std::function<ScalarPtr(DataFrame const
     std::ranges::transform(
         std::views::iota(0L, numGroups),
         result.begin(),
-        [&](::int64_t i)
+        [&](::int64_t groupIdx)
         {
-            return fn(MakeSubDataFrame(i, schema));
+            return fn(MakeSubDataFrame(groupIdx, schema));
         });
 
     ARROW_ASSIGN_OR_RAISE(auto finalArray, buildArray(result));

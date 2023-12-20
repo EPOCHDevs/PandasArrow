@@ -11,6 +11,61 @@ namespace pd {
 constexpr int PD_MAX_ROW_TO_PRINT = { 7000 };
 constexpr int PD_MAX_COL_TO_PRINT = { 100 };
 
+template<class T>
+concept LiteralType = std::is_floating_point_v<T> || std::is_integral_v<T> || std::is_same_v<T, std::string>;
+
+template<class T> requires LiteralType<T>
+using Row = std::pair<std::string, std::vector<T>>;
+
+template<class T> requires LiteralType<T>
+std::pair<std::string, std::vector<T>> GetRow(std::string const& columnName, std::initializer_list<T> const& value)
+{
+    return { columnName, std::vector<T>{ value.begin(), value.end() } };
+}
+
+template<class T> requires LiteralType<T>
+std::pair<std::string, std::vector<T>> GetRow(std::function<std::string()> const& columnName, std::initializer_list<T> const& value)
+{
+    return GetRow(columnName(), value);
+}
+
+template<class T> requires LiteralType<T>
+std::pair<std::string, std::vector<T>> GetRow(std::string const& columnName, std::vector<T> const& value)
+{
+    return { columnName, value };
+}
+
+template<class T> requires LiteralType<T>
+std::pair<std::string, std::vector<T>> GetRow(std::function<std::string()> const& columnName, std::vector<T> const& value)
+{
+    return GetRow(columnName(), value );
+}
+
+template<class T> requires LiteralType<T>
+std::pair<std::string, std::vector<T>> GetRow(std::string const& columnName, T const& value)
+{
+    return { columnName, std::vector<T>{ value } };
+}
+
+template<class T> requires LiteralType<T>
+std::pair<std::string, std::vector<T>> GetRow(std::string const& columnName, pd::Scalar const& value)
+{
+    return GetRow(columnName, value.as<T>());
+}
+
+template<class T> requires LiteralType<T>
+std::pair<std::string, std::vector<T>> GetRow(std::function<std::string()> const& columnName, T const& value)
+{
+    return { columnName(), std::vector<T>{ value } };
+}
+
+template<class T> requires LiteralType<T>
+std::pair<std::string, std::vector<T>> GetRow(std::function<std::string()> const& columnName, pd::Scalar const& value)
+{
+    return GetRow(columnName, value.as<T>());
+}
+
+
 class DataFrame : public NDFrame<DataFrame>
 {
 public:
@@ -54,7 +109,7 @@ public:
     template<class... ColumnTypes, size_t N = std::tuple_size_v<std::tuple<ColumnTypes...>>>
     DataFrame(
         std::shared_ptr<arrow::Array> const& _index,
-        std::pair<std::string, std::vector<ColumnTypes>>&&... columnData);
+        Row<ColumnTypes> &&... columnData);
 
     template<class T>
     DataFrame(
@@ -191,6 +246,12 @@ public:
     [[nodiscard]] DataFrame is_finite() const;
     [[nodiscard]] DataFrame is_infinite() const;
 
+    void drop(std::vector<std::string> const&);
+
+    inline void drop(std::string const& column) {
+        drop(std::vector{column});
+    }
+
     DataFrame drop_na() const;
 
     DataFrame slice(int offset) const;
@@ -199,6 +260,7 @@ public:
     DataFrame slice(Slice, std::vector<std::string> const& columns) const;
     DataFrame slice(DateTimeSlice, std::vector<std::string> const& columns) const;
     DataFrame slice(Slice) const;
+    DataFrame timestamp_slice(Slice const& slice) const;
     DataFrame slice(DateTimeSlice) const;
 
     [[nodiscard]] Series index() const;
@@ -460,7 +522,7 @@ DataFrame::DataFrame(
 template<class... ColumnTypes, size_t N>
 DataFrame::DataFrame(
     std::shared_ptr<arrow::Array> const& _index,
-    std::pair<std::string, std::vector<ColumnTypes>>&&... columnData)
+    Row<ColumnTypes>&&... columnData)
     : NDFrame<DataFrame>(std::get<0>(std::forward_as_tuple(columnData...)).second.size(), _index)
 {
 

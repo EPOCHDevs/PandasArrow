@@ -29,8 +29,11 @@ Concatenator::Concatenator(const std::vector<pd::DataFrame>& objs, JoinType join
         throw std::invalid_argument("Only can inner (intersect) or outer (union) join the other axis");
     }
 
-    this->objs = objs;
-}
+    this->objs.reserve(objs.size());
+    std::ranges::copy_if(
+        objs,
+        std::back_inserter(this->objs),
+        [](const pd::DataFrame& df) { return df.m_array != nullptr; });}
 
 arrow::ArrayVector Concatenator::makeJoinIndexes(std::vector<pd::DataFrame> const& objs, AxisType concat_axis)
 {

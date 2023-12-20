@@ -45,25 +45,9 @@ struct GroupInfo
     }
 };
 
-template<class T>
 std::vector<int64_t> generate_bins_dt64(
-    std::shared_ptr<T> timestamps_array,
-    std::shared_ptr<T> const& bin_edges,
-    bool closed_right);
-
-extern template std::vector<int64_t> generate_bins_dt64(
     std::shared_ptr<arrow::TimestampArray> values,
-    std::shared_ptr<arrow::TimestampArray> const& binner,
-    bool closed_right);
-
-extern template std::vector<int64_t> generate_bins_dt64(
-    std::shared_ptr<arrow::Int64Array> values,
     std::shared_ptr<arrow::Int64Array> const& binner,
-    bool closed_right);
-
-extern template std::vector<int64_t> generate_bins_dt64(
-    std::shared_ptr<arrow::UInt64Array> values,
-    std::shared_ptr<arrow::UInt64Array> const& binner,
     bool closed_right);
 
 template<class DataFrameOrSeries>
@@ -135,7 +119,8 @@ Resampler resample(
     return { *new_df };
 }
 
-arrow::TimestampArray adjustBinEdges(arrow::TimestampArray& binner, arrow::TimestampArray const& ax_values);
+std::shared_ptr<arrow::Int64Array> adjustBinEdges(std::shared_ptr<arrow::TimestampArray>& binner,
+                                                  int64_t max_timestamp);
 
 GroupInfo makeGroupInfo(
     std::shared_ptr<arrow::Array> const& timestamps_array,

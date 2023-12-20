@@ -379,6 +379,16 @@ public:
 
     Series ReturnSeriesOrThrowOnError(arrow::Result<arrow::Datum>&& result) const;
 
+    bool approx_equals_(pd::Series const& a, double eps) const
+    {
+        return m_array->ApproxEquals(*a.m_array, arrow::EqualOptions::Defaults().atol(eps));
+    }
+
+    std::string diff_str(pd::Series const& a) const
+    {
+        return m_array->Diff(*a.m_array);
+    }
+
 private:
     std::string m_name;
 
@@ -473,7 +483,6 @@ template<typename T>
 template<typename T>
 std::vector<T> Series::values() const
 {
-
     static_assert(not std::is_same_v<T, bool>);
 
     auto requested_type = arrow::CTypeTraits<T>::type_singleton();
@@ -482,12 +491,20 @@ std::vector<T> Series::values() const
         std::vector<T> result;
         result.resize(m_array->length());
 
-        auto realArray = std::static_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(m_array);
+        if constexpr (std::same_as<T, std::string>)
+        {
+            auto stringSpan = getSpan<std::string_view>();
+            std::ranges::copy(stringSpan, result.begin());
+        }
+        else
+        {
+            auto realArray = std::static_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(m_array);
 
-        auto N = realArray->length();
-        auto ptr = realArray->raw_values();
+            auto N = realArray->length();
+            auto ptr = realArray->raw_values();
 
-        memcpy(result.data(), ptr, sizeof(T) * N);
+            memcpy(result.data(), ptr, sizeof(T) * N);
+        }
         return result;
     }
     else

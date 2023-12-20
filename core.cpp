@@ -11,54 +11,52 @@
 
 namespace pd {
 
-date DateOffset::add(const date& x, Type type, int n)
+date DateOffset::add(date currentDate, const DateOffset& dateOffset)
 {
     using namespace boost::gregorian;
-
-    date result = x;
-
-    switch (type)
+    switch (dateOffset.type)
     {
         case MonthEnd:
-            result += months(n);
-            result = result.end_of_month();
+            currentDate += months(dateOffset.multiplier);
+            currentDate = currentDate.end_of_month();
             break;
 
         case QuarterStart:
-            result += months(3 * n);
-            result = date(result.year(), (result.month() - 1) / 3 * 3 + 1, 1);
+            currentDate += months(3 * dateOffset.multiplier);
+            currentDate = date(currentDate.year(), (currentDate.month() - 1) / 3 * 3 + 1, 1);
             break;
 
         case QuarterEnd:
-            result += months(3 * n);
-            result = date(result.year(), (result.month() - 1) / 3 * 3 + 3, 1) - days(1);
+            currentDate += months(3 * dateOffset.multiplier);
+            currentDate = date(currentDate.year(), (currentDate.month() - 1) / 3 * 3 + 3, 1) - days(1);
             break;
 
         case Weekly:
-            result += weeks(n);
+            currentDate += weeks(dateOffset.multiplier);
             break;
 
         case MonthStart:
-            result += months(n);
-            result = date(result.year(), result.month(), 1);
+            currentDate += months(dateOffset.multiplier);
+            currentDate = date(currentDate.year(), currentDate.month(), 1);
             break;
 
         case YearEnd:
-            result += years(n);
-            result = date(result.year(), Dec, 31);
+            currentDate += years(dateOffset.multiplier);
+            currentDate = date(currentDate.year(), Dec, 31);
             break;
 
         case YearStart:
-            result += years(n);
-            result = date(result.year(), Jan, 1);
+            currentDate += years(dateOffset.multiplier);
+            currentDate = date(currentDate.year(), Jan, 1);
             break;
 
         default:
-            result += days(n);
+            currentDate += days(dateOffset.multiplier);
     }
 
-    return result;
+    return currentDate;
 }
+
 std::optional<DateOffset> DateOffset::FromString(const string& code)
 {
     const auto [freq_unit, mul] = splitTimeSpan(code);
@@ -120,6 +118,10 @@ std::pair<std::string, int> splitTimeSpan(std::string const& freq)
         copy(freq.begin(), it, std::ostream_iterator<uint8_t>(ss2));
         freqValueStr = ss2.str();
         freq_value = std::stoi(freqValueStr);
+    }
+    else
+    {
+        throw std::runtime_error("Invalid time offset " + freq);
     }
     return { freq_unit, freq_value };
 }

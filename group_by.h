@@ -60,17 +60,21 @@ struct GroupBy
     }
 
     inline pd::DataFrame MakeSubDataFrame(int64_t groupIndex,
-                                          std::shared_ptr<arrow::Schema> const& schema)
+                                          std::shared_ptr<arrow::Schema> const& schema) const
     {
-        ScalarPtr key = GetKeyByIndex(groupIndex);
-        ArrayPtr index = indexGroups[key];
-        arrow::ArrayVector group = groups[key];
-        int64_t numRows = index->length();
-        return pd::DataFrame(schema, numRows, group, index);
+        return MakeSubDataFrame(GetKeyByIndex(groupIndex), schema);
+    }
+
+    inline pd::DataFrame MakeSubDataFrame(const ScalarPtr& key,
+                                          std::shared_ptr<arrow::Schema> const& schema) const
+    {
+        const ArrayPtr& index = indexGroups.at(key);
+        return pd::DataFrame(schema, index->length(), groups.at(key), index);
     }
 
     arrow::Result<pd::Series> apply(std::function<std::shared_ptr<arrow::Scalar>(DataFrame const&)> fn);
     arrow::Result<pd::Series> apply(std::function<ArrayPtr(DataFrame const&)> fn);
+    arrow::Result<DataFrame> apply_chunk(std::function<DataFrame(DataFrame const&)> fn);
 
     arrow::Result<pd::DataFrame> apply(std::function<std::shared_ptr<arrow::Scalar>(Series const&)> fn);
 
@@ -133,6 +137,8 @@ struct GroupBy
 
     arrow::Result<pd::DataFrame> tdigest(std::vector<std::string> const& args);
     arrow::Result<pd::Series> tdigest(std::string const& arg);
+
+    std::vector<std::pair<pd::Scalar, pd::DataFrame>> orderedGroups() const;
 
 protected:
     inline const DataFrame& getDF() const
@@ -266,6 +272,7 @@ struct Resampler : protected GroupBy
     RESAMPLE_GROUP_BY_FUNCTION(first)
     RESAMPLE_GROUP_BY_FUNCTION(last)
 
+    using GroupBy::apply_chunk;
     using GroupBy::apply;
     using GroupBy::apply_async;
 };
