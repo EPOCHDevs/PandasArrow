@@ -1220,25 +1220,6 @@ arrow::Result<pd::DataFrame> GroupBy::apply(std::function<ScalarPtr(Series const
     return pd::DataFrame(schema, numGroups, resultForEachColumn);
 }
 
-std::vector<std::pair<pd::Scalar, pd::DataFrame>> GroupBy::orderedGroups() const
-{
-    const int64_t numGroups = groupSize();
-    std::shared_ptr<arrow::Schema> schema = df.m_array->schema();
-
-    std::vector<std::pair<pd::Scalar, pd::DataFrame>> result(numGroups);
-
-    std::ranges::transform(
-        std::views::iota(0L, numGroups),
-        result.begin(),
-        [&](::int64_t groupIndex)
-        {
-            const ScalarPtr key = GetKeyByIndex(groupIndex);
-            return std::pair{ key, MakeSubDataFrame(key, schema) };
-        });
-
-    return result;
-}
-
 arrow::Result<pd::Series> GroupBy::apply(std::function<ScalarPtr(DataFrame const&)> fn)
 {
     int64_t numGroups = groupSize();

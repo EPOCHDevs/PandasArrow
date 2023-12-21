@@ -52,6 +52,11 @@ public:
             .value;
     }
 
+    inline bool IsType(arrow::Type::type type) const
+    {
+        return scalar->type->id() == type;
+    }
+
     template<typename T>
     requires std::is_scalar_v<T>
     inline bool operator==(T const& s) const

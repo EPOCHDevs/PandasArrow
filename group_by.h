@@ -138,7 +138,28 @@ struct GroupBy
     arrow::Result<pd::DataFrame> tdigest(std::vector<std::string> const& args);
     arrow::Result<pd::Series> tdigest(std::string const& arg);
 
-    std::vector<std::pair<pd::Scalar, pd::DataFrame>> orderedGroups() const;
+    template<class IndexType>
+    std::vector<std::pair<IndexType, pd::DataFrame>>
+    orderedGroups() const
+    {
+        const int64_t numGroups = groupSize();
+        std::shared_ptr<arrow::Schema> schema = df.m_array->schema();
+
+        std::vector<std::pair<IndexType, pd::DataFrame>> result(numGroups);
+
+        std::ranges::transform(
+            std::views::iota(0L, numGroups),
+            result.begin(),
+            [&](::int64_t groupIndex)
+            {
+                const pd::Scalar key(GetKeyByIndex(groupIndex));
+                auto subDataframe = MakeSubDataFrame(key.value(), schema);
+                IndexType index = key.IsType(arrow::Type::TIMESTAMP) ? key.dt() : key.as<int64_t>();
+                return std::pair{ index, subDataframe };
+            });
+
+        return result;
+    }
 
 protected:
     inline const DataFrame& getDF() const

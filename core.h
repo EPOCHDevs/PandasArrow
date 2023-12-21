@@ -304,7 +304,7 @@ std::shared_ptr<arrow::TimestampArray> date_range(
 inline std::shared_ptr<arrow::TimestampArray> date_range(
     date const& start,
     date const& end,
-    std::string const& freq = "D",
+    std::string const& freq = "1D",
     std::string const& tz = "")
 {
     return date_range(start, end, *DateOffset::FromString(freq), tz);
@@ -313,7 +313,7 @@ inline std::shared_ptr<arrow::TimestampArray> date_range(
 inline std::shared_ptr<arrow::TimestampArray> date_range(
     date const& start,
     int period,
-    std::string const& freq = "D",
+    std::string const& freq = "1D",
     std::string const& tz = "")
 {
     return date_range(start, period, *DateOffset::FromString(freq), tz);
@@ -322,13 +322,13 @@ inline std::shared_ptr<arrow::TimestampArray> date_range(
 std::shared_ptr<arrow::TimestampArray> date_range(
     ptime const& start,
     ptime const& end,
-    std::string const& freq = "T",
+    std::string const& freq = "1T",
     std::string const& tz = "");
 
 std::shared_ptr<arrow::TimestampArray> date_range(
     ptime const& start,
     int period,
-    std::string const& freq = "T",
+    std::string const& freq = "1T",
     std::string const& tz = "");
 
 std::shared_ptr<arrow::TimestampArray> date_range(
