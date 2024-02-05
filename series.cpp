@@ -1049,7 +1049,8 @@ Series Series::ewm(EWMAgg agg, double value, EWMAlphaType type, bool adjust, boo
 
     std::vector<double> output;
 
-    const std::vector<int64_t> begin{ 0 }, end{ doubleArray->length() };
+    const std::vector<int64_t> begin{ 0 };
+    const std::vector<int64_t> end{ doubleArray->length() };
     switch (agg)
     {
         case EWMAgg::Mean:
@@ -1260,8 +1261,8 @@ vector<double> Series::ewm(
 
 vector<double> Series::ewmcov(
     const std::shared_ptr<arrow::DoubleArray>& input_x,
-    std::vector<int64_t> start,
-    std::vector<int64_t> end,
+    const std::vector<int64_t>& start,
+    const std::vector<int64_t>& end,
     const std::shared_ptr<arrow::DoubleArray>& input_y,
     int minp,
     double com,

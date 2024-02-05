@@ -30,6 +30,9 @@
 #include "macros.h"
 #include "resample.h"
 #include "concat.h"
+#include <arrow/api.h>
+#include <arrow/ipc/reader.h>
+#include <arrow/ipc/writer.h>
 
 
 namespace pd {
@@ -246,6 +249,31 @@ DataFrame DataFrame::readParquet(std::filesystem::path const& path)
     }
 }
 
+arrow::Status DataFrame::toParquet(std::filesystem::path const& filepath, const std::string& indexField)
+{
+    ARROW_ASSIGN_OR_RAISE(
+        std::shared_ptr<arrow::Table> table,
+        arrow::Table::FromRecordBatches(std::vector{ concatenateArraysToRecordBatch(m_array, m_index, indexField) }));
+
+    // Choose compression
+    std::shared_ptr<parquet::WriterProperties> props =
+        parquet::WriterProperties::Builder().compression(arrow::Compression::GZIP)->build();
+
+    std::shared_ptr<arrow::io::FileOutputStream> outfile;
+    ARROW_ASSIGN_OR_RAISE(outfile, arrow::io::FileOutputStream::Open(filepath));
+
+    return parquet::arrow::WriteTable(*table.get(), arrow::default_memory_pool(), outfile);
+}
+
+arrow::Status DataFrame::toCSV(std::filesystem::path const& filepath, const std::string& indexField) const
+{
+    // Create a file output stream
+    ARROW_ASSIGN_OR_RAISE(auto fileOutputStream, arrow::io::FileOutputStream::Open(filepath));
+    // Write the RecordBatch to CSV
+    auto concatenated = concatenateArraysToRecordBatch(m_array, m_index, indexField);
+    return arrow::csv::WriteCSV(*concatenated, arrow::csv::WriteOptions::Defaults(), fileOutputStream.get());
+}
+
 
 DataFrame DataFrame::readCSV(std::filesystem::path const& path)
 {
@@ -322,6 +350,17 @@ std::ostream& operator<<(std::ostream& os, DataFrame const& df)
     }
     os << table;
     return os;
+}
+
+pd::DataFrame DataFrame::operator[](const pd::Series& filter) const
+{
+    if(filter.dtype()->id() != arrow::Type::BOOL)
+    {
+        throw std::runtime_error("operator[] can only be used for a series of type bool, got type " + filter.dtype()->ToString());
+    }
+    auto rb = ReturnOrThrowOnFailure(arrow::compute::CallFunction("filter", { m_array, filter.m_array })).record_batch();
+    auto idx = ReturnOrThrowOnFailure(arrow::compute::CallFunction("filter", { m_index, filter.m_array })).make_array();
+    return {rb, idx};
 }
 
 Series DataFrame::operator[](const std::string& column) const
@@ -491,17 +530,7 @@ DataFrame DataFrame::slice(Slice slice) const
 {
     slice.normalize(m_array->num_rows());
     int64_t length = slice.end - slice.start;
-
-    std::vector<std::shared_ptr<arrow::ArrayData>> arrays;
-    arrays.reserve(m_array->num_columns());
-
-    auto schema = m_array->schema();
-
-    for (auto const& column : m_array->columns())
-    {
-        arrays.emplace_back(column->data()->Slice(slice.start, length));
-    }
-    return { arrow::RecordBatch::Make(schema, length, arrays), m_index->Slice(slice.start, length) };
+    return { m_array->Slice(slice.start, length), m_index->Slice(slice.start, length) };
 }
 
 DataFrame DataFrame::DataFrame::slice(DateTimeSlice slicer) const
@@ -589,6 +618,11 @@ DataFrame DataFrame::operator[](std::vector<std::string> const& columns) const
 DataFrame DataFrame::slice(int offset) const
 {
     return { m_array->Slice(offset), m_index->Slice(offset) };
+}
+
+DataFrame DataFrame::slice(int offset, int64_t length) const
+{
+    return { m_array->Slice(offset, length), m_index->Slice(offset,length) };
 }
 
 Scalar DataFrame::sum() const
@@ -849,9 +883,13 @@ DataFrame DataFrame::head(int length) const
 DataFrame DataFrame::tail(int length) const
 {
     auto nRows = m_array->num_rows();
-    auto startIndex = std::max<int64_t>(0l, nRows - length);
-    return { m_array->Slice(startIndex, length),
-             m_index->Slice(startIndex, length) };
+    if (nRows > 0)
+    {
+        auto startIndex = std::max<int64_t>(0l, nRows - length);
+        return { m_array->Slice(startIndex, length),
+                m_index->Slice(startIndex, length) };
+    }
+    return *this;
 }
 
 DataFrame DataFrame::sort_index(bool ascending, bool ignore_index)
@@ -901,6 +939,56 @@ DataFrame Series::value_counts() const
     {
         throw std::runtime_error(result.status().ToString());
     }
+}
+
+pd::DataFrame DataFrame::add_column(std::string const& fieldName, pd::ArrayPtr const& ptr) const
+{
+    const int64_t index = m_array->schema()->GetFieldIndex(fieldName);
+    if (index == -1)
+    {
+        return { pd::ReturnOrThrowOnFailure(m_array->AddColumn(num_columns(), fieldName, ptr)), m_index };
+    }
+    else
+    {
+        auto field = m_array->schema()->GetFieldByName(fieldName);
+        return { pd::ReturnOrThrowOnFailure(m_array->SetColumn(index, field, ptr)), m_index };
+    }
+}
+
+void DataFrame::add_column(std::string const& fieldName, pd::ArrayPtr const& ptr)
+{
+    const int64_t index = m_array->schema()->GetFieldIndex(fieldName);
+    if (index == -1)
+    {
+        m_array = pd::ReturnOrThrowOnFailure(m_array->AddColumn(num_columns(), fieldName, ptr));
+    }
+    else
+    {
+        auto field = m_array->schema()->GetFieldByName(fieldName);
+        m_array = pd::ReturnOrThrowOnFailure(m_array->SetColumn(index, field, ptr));
+    }
+}
+
+void DataFrame::add_column(std::string const& newColumn, pd::Series const& ptr)
+{
+    add_column(newColumn, ptr.array());
+}
+
+pd::DataFrame DataFrame::reset_index(std::string const& columnName, bool drop) const
+{
+    pd::ArrayPtr newIndex = pd::range(0UL, static_cast<uint64_t>(m_index->length()));
+    std::shared_ptr<arrow::RecordBatch> new_rb{ nullptr };
+    if (drop)
+    {
+        new_rb = m_array;
+    }
+    else
+    {
+        new_rb = pd::ReturnOrThrowOnFailure(
+            m_array->AddColumn(num_columns(), arrow::field(columnName, arrow::uint64()), m_index));
+    }
+
+    return pd::DataFrame{ new_rb, newIndex };
 }
 
 pd::DataFrame DataFrame::reindex(std::shared_ptr<arrow::Array> const& newIndex,

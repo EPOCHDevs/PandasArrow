@@ -278,6 +278,22 @@ inline std::shared_ptr<arrow::TimestampArray> toDateTime(
     return dynamic_pointer_cast<arrow::TimestampArray>(array);
 }
 
+inline std::shared_ptr<arrow::RecordBatch> concatenateArraysToRecordBatch(
+    const std::shared_ptr<arrow::RecordBatch>& originalBatch,
+    const std::shared_ptr<arrow::Array>& newArray,
+    std::string const& newField)
+{
+    // Create a new schema with the additional field
+    auto fields = originalBatch->schema()->fields();
+    fields.push_back(arrow::field(newField, newArray->type()));
+
+    // Create a new RecordBatch with the additional array
+    auto columns = originalBatch->columns();
+    columns.push_back(newArray);
+
+    return arrow::RecordBatch::Make(arrow::schema(fields), newArray->length(), columns);
+}
+
 /**
  * Converts date to nanoseconds since Unix epoch.
  */

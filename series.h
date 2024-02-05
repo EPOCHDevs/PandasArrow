@@ -409,8 +409,8 @@ private:
 
     static vector<double> ewmcov(
         const std::shared_ptr<arrow::DoubleArray>& input_x,
-        std::vector<int64_t> start,
-        std::vector<int64_t> end,
+        const std::vector<int64_t>& start,
+        const std::vector<int64_t>& end,
         const std::shared_ptr<arrow::DoubleArray>& input_y,
         int minp = 1,
         double com = 9.5,

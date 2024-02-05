@@ -204,7 +204,7 @@ const FunctionDoc correlation_doc{ "Calculate the covariance of 2 numeric array"
                                     " A covariance of zero indicates that the variables are"
                                     " independent. The function supports both integer "
                                     "and floating-point arrays and skips null values "
-                                    "if specified in the options. The result is returned as a double."),
+                                    "if specified in the filters. The result is returned as a double."),
                                    { "array1", "array2" },
                                    "VarianceOptions" };
 

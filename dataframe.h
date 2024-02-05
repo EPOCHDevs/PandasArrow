@@ -201,10 +201,22 @@ public:
     static DataFrame readParquet(std::filesystem::path const& path);
     static DataFrame readCSV(std::filesystem::path const& path);
 
+    arrow::Status toParquet(std::filesystem::path const& filepath, const std::string& indexField="index");
+    arrow::Status toCSV(std::filesystem::path const& filepath, const std::string& indexField="index") const;
+
     // indexer
     class Series operator[](std::string const& column) const;
+
+    pd::DataFrame add_column(std::string const& newColumn, pd::ArrayPtr const& ptr) const;
+
+    void add_column(std::string const& newColumn, pd::ArrayPtr const& ptr);
+
+    void add_column(std::string const& newColumn, pd::Series const& ptr);
+
     DataFrame operator[](std::vector<std::string> const& columns) const;
     DataFrame operator[](int64_t row) const;
+
+    DataFrame operator[](pd::Series const& filter) const;
 
     Scalar at(int64_t row, int64_t col) const;
 
@@ -217,6 +229,8 @@ public:
         }
         return at(row, idx);
     }
+
+    pd::DataFrame reset_index(std::string const& columnName, bool drop) const;
 
     pd::DataFrame reindex(std::shared_ptr<arrow::Array> const& newIndex,
                           const std::optional<Scalar>& fillValue=std::nullopt) const noexcept;
@@ -488,6 +502,7 @@ public:
 
     std::vector<std::string> columnNames() const;
     Series mean(AxisType axis) const;
+    DataFrame slice(int offset, int64_t length) const;
 };
 
 template<class... ColumnTypes, size_t N>
