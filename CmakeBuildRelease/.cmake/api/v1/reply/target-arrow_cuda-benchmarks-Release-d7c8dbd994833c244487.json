@@ -1,0 +1,35 @@
+{
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target"
+		],
+		"files" : 
+		[
+			"third_party/arrow/cpp/src/arrow/gpu/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 24,
+				"parent" : 0
+			}
+		]
+	},
+	"id" : "arrow_cuda-benchmarks::@fd4e63777b50988c5c49",
+	"name" : "arrow_cuda-benchmarks",
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp/src/arrow/gpu",
+		"source" : "third_party/arrow/cpp/src/arrow/gpu"
+	},
+	"sources" : [],
+	"type" : "UTILITY"
+}

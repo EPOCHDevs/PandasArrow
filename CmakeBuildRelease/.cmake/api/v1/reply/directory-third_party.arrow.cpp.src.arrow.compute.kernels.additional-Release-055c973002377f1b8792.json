@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp/src/arrow/compute/kernels/additional",
+		"source" : "third_party/arrow/cpp/src/arrow/compute/kernels/additional"
+	}
+}

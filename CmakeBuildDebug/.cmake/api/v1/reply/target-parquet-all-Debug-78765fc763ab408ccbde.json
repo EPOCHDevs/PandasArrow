@@ -1,0 +1,57 @@
+{
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target",
+			"add_dependencies"
+		],
+		"files" : 
+		[
+			"third_party/arrow/cpp/src/parquet/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 18,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 22,
+				"parent" : 0
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "parquet::@391ce8019d2f29893d38"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "parquet-benchmarks::@391ce8019d2f29893d38"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "parquet-tests::@391ce8019d2f29893d38"
+		}
+	],
+	"id" : "parquet-all::@391ce8019d2f29893d38",
+	"name" : "parquet-all",
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp/src/parquet",
+		"source" : "third_party/arrow/cpp/src/parquet"
+	},
+	"sources" : [],
+	"type" : "UTILITY"
+}

@@ -1,0 +1,179 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install",
+			"arrow_install_all_headers",
+			"add_arrow_lib",
+			"arrow_install_cmake_package",
+			"arrow_add_pkg_config"
+		],
+		"files" : 
+		[
+			"third_party/arrow/cpp/cmake_modules/BuildUtils.cmake",
+			"third_party/arrow/cpp/src/arrow/dataset/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 20,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 936,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 71,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 397,
+				"parent" : 3
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 478,
+				"parent" : 3
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 163,
+				"parent" : 5
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 166,
+				"parent" : 5
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 482,
+				"parent" : 3
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 945,
+				"parent" : 8
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "include/arrow/dataset",
+			"paths" : 
+			[
+				"third_party/arrow/cpp/src/arrow/dataset/api.h",
+				"third_party/arrow/cpp/src/arrow/dataset/dataset.h",
+				"third_party/arrow/cpp/src/arrow/dataset/dataset_writer.h",
+				"third_party/arrow/cpp/src/arrow/dataset/discovery.h",
+				"third_party/arrow/cpp/src/arrow/dataset/file_base.h",
+				"third_party/arrow/cpp/src/arrow/dataset/file_csv.h",
+				"third_party/arrow/cpp/src/arrow/dataset/file_ipc.h",
+				"third_party/arrow/cpp/src/arrow/dataset/file_json.h",
+				"third_party/arrow/cpp/src/arrow/dataset/file_orc.h",
+				"third_party/arrow/cpp/src/arrow/dataset/file_parquet.h",
+				"third_party/arrow/cpp/src/arrow/dataset/parquet_encryption_config.h",
+				"third_party/arrow/cpp/src/arrow/dataset/partition.h",
+				"third_party/arrow/cpp/src/arrow/dataset/pch.h",
+				"third_party/arrow/cpp/src/arrow/dataset/plan.h",
+				"third_party/arrow/cpp/src/arrow/dataset/projector.h",
+				"third_party/arrow/cpp/src/arrow/dataset/scanner.h",
+				"third_party/arrow/cpp/src/arrow/dataset/type_fwd.h",
+				"third_party/arrow/cpp/src/arrow/dataset/visibility.h"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 4,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"third_party/arrow/cpp/debug/libarrow_dataset.so.1600.0.0",
+				"third_party/arrow/cpp/debug/libarrow_dataset.so.1600"
+			],
+			"targetId" : "arrow_dataset_shared::@ad78816fbda1f6aa86c0",
+			"targetIndex" : 18,
+			"targetInstallNamelink" : "skip",
+			"type" : "target"
+		},
+		{
+			"backtrace" : 4,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"third_party/arrow/cpp/debug/libarrow_dataset.so"
+			],
+			"targetId" : "arrow_dataset_shared::@ad78816fbda1f6aa86c0",
+			"targetIndex" : 18,
+			"targetInstallNamelink" : "only",
+			"type" : "target"
+		},
+		{
+			"backtrace" : 6,
+			"component" : "Unspecified",
+			"destination" : "lib/cmake/ArrowDataset",
+			"paths" : 
+			[
+				"CmakeBuildDebug/third_party/arrow/cpp/src/arrow/dataset/ArrowDatasetConfig.cmake",
+				"CmakeBuildDebug/third_party/arrow/cpp/src/arrow/dataset/ArrowDatasetConfigVersion.cmake"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 7,
+			"component" : "Unspecified",
+			"destination" : "lib/cmake/ArrowDataset",
+			"exportName" : "arrow_dataset_targets",
+			"exportTargets" : 
+			[
+				{
+					"id" : "arrow_dataset_shared::@ad78816fbda1f6aa86c0",
+					"index" : 18
+				}
+			],
+			"paths" : 
+			[
+				"third_party/arrow/cpp/src/arrow/dataset/CMakeFiles/Export/d634468ed1d230a2db467d2d9404c337/ArrowDatasetTargets.cmake"
+			],
+			"type" : "export"
+		},
+		{
+			"backtrace" : 9,
+			"component" : "Unspecified",
+			"destination" : "lib/pkgconfig",
+			"paths" : 
+			[
+				"CmakeBuildDebug/third_party/arrow/cpp/src/arrow/dataset/Debug/arrow-dataset.pc"
+			],
+			"type" : "file"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp/src/arrow/dataset",
+		"source" : "third_party/arrow/cpp/src/arrow/dataset"
+	}
+}

@@ -1,0 +1,863 @@
+{
+	"inputs" : 
+	[
+		{
+			"path" : "CMakeLists.txt"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "CmakeBuildRelease/CMakeFiles/3.27.8/CMakeSystem.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/scripts/buildsystems/vcpkg.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakeDependentOption.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakeSystemSpecificInitialize.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Platform/Linux-Initialize.cmake"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "CmakeBuildRelease/CMakeFiles/3.27.8/CMakeCCompiler.cmake"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "CmakeBuildRelease/CMakeFiles/3.27.8/CMakeCXXCompiler.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakeSystemSpecificInformation.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakeGenericSystem.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakeInitializeConfigs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Platform/Linux.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Platform/UnixPaths.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakeCInformation.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakeLanguageInformation.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Compiler/GNU-C.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Compiler/GNU.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Compiler/CMakeCommonCompilerMacros.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Platform/Linux-GNU-C.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Platform/Linux-GNU.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakeCommonLanguageInclude.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakeCXXInformation.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakeLanguageInformation.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Compiler/GNU-CXX.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Compiler/GNU.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Platform/Linux-GNU-CXX.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Platform/Linux-GNU.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakeCommonLanguageInclude.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/boost/vcpkg-cmake-wrapper.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindBoost.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/tabulate/tabulateConfigVersion.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/tabulate/tabulateConfig.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakeFindDependencyMacro.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/tabulate/tabulateTargets.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/usr/lib/x86_64-linux-gnu/cmake/TBB/TBBConfigVersion.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/usr/lib/x86_64-linux-gnu/cmake/TBB/TBBConfig.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/usr/lib/x86_64-linux-gnu/cmake/TBB/TBBTargets.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/usr/lib/x86_64-linux-gnu/cmake/TBB/TBBTargets-none.cmake"
+		},
+		{
+			"path" : "third_party/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/CMakeLists.txt"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindThreads.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CheckLibraryExists.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CheckCSourceCompiles.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Internal/CheckSourceCompiles.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"path" : "third_party/arrow/cpp/CMakeLists.txt"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakePackageConfigHelpers.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/WriteBasicConfigVersionFile.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakeParseArguments.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/ExternalProject.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/ExternalProject/shared_internal_commands.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/GNUInstallDirs.cmake"
+		},
+		{
+			"path" : "third_party/arrow/cpp/cmake_modules/FindClangTools.cmake"
+		},
+		{
+			"path" : "third_party/arrow/cpp/cmake_modules/FindInferTools.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPython3.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPython/Support.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"path" : "third_party/arrow/cpp/cmake_modules/DefineOptions.cmake"
+		},
+		{
+			"path" : "third_party/arrow/cpp/cmake_modules/SetupCxxFlags.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CheckCXXCompilerFlag.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Internal/CheckCompilerFlag.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Internal/CheckFlagCommonConfig.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Internal/CheckSourceCompiles.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakeCheckCompilerFlagCommonPatterns.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CheckCXXSourceCompiles.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Internal/CheckSourceCompiles.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CheckCXXSourceCompiles.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CheckLinkerFlag.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Internal/CheckLinkerFlag.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Internal/CheckFlagCommonConfig.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/Internal/CheckSourceCompiles.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakeCheckCompilerFlagCommonPatterns.cmake"
+		},
+		{
+			"path" : "third_party/arrow/cpp/cmake_modules/BuildUtils.cmake"
+		},
+		{
+			"path" : "third_party/arrow/cpp/cmake_modules/ThirdpartyToolchain.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/ProcessorCount.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FetchContent.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/ExternalProject/shared_internal_commands.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CheckCXXSymbolExists.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CheckSymbolExists.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/boost/vcpkg-cmake-wrapper.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindBoost.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"path" : "third_party/arrow/cpp/cmake_modules/FindThriftAlt.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/thrift/ThriftConfigVersion.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/thrift/ThriftConfig.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/thrift/thriftTargets.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/thrift/thriftTargets-debug.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/thrift/thriftTargets-release.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/thrift/thriftzTargets.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/thrift/thriftzTargets-debug.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/thrift/thriftzTargets-release.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CMakeFindDependencyMacro.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/zlib/vcpkg-cmake-wrapper.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindZLIB.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/SelectLibraryConfigurations.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindOpenSSL.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPkgConfig.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindThreads.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CheckLibraryExists.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CheckCSourceCompiles.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/thrift/FindLibevent.cmake"
+		},
+		{
+			"path" : "third_party/arrow/cpp/cmake_modules/FindRapidJSONAlt.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/rapidjson/RapidJSONConfigVersion.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/rapidjson/RapidJSONConfig.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/xsimd/xsimdConfigVersion.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/xsimd/xsimdConfig.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/xsimd/xsimdTargets.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/dewe/vcpkg/installed/x64-linux/share/zlib/vcpkg-cmake-wrapper.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindZLIB.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"path" : "third_party/arrow/cpp/cmake_modules/AWSSDKVariables.cmake"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/util/config.h.cmake"
+		},
+		{
+			"path" : "third_party/arrow/cpp/cmake_modules/san-config.cmake"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/CMakeLists.txt"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "CmakeBuildRelease/third_party/arrow/cpp/src/arrow/try_compile_glibcxx_use_cxx_abi.cc"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/ArrowConfig.cmake.in"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/BasicConfigVersion-SameMajorVersion.cmake.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/arrow.pc.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/libarrow_gdb.py.in"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "CmakeBuildRelease/third_party/arrow/cpp/src/arrow/arrow.pc.generate.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/testing/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/array/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/c/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/compute/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/compute/arrow-compute.pc.in"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "CmakeBuildRelease/third_party/arrow/cpp/src/arrow/compute/arrow-compute.pc.generate.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/compute/kernels/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/compute/kernels/additional/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/compute/row/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/io/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/tensor/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/util/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/vendored/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/vendored/datetime/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/vendored/double-conversion/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/vendored/pcg/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/vendored/portable-snippets/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/vendored/xxhash/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/csv/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/csv/arrow-csv.pc.in"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "CmakeBuildRelease/third_party/arrow/cpp/src/arrow/csv/arrow-csv.pc.generate.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/acero/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/acero/ArrowAceroConfig.cmake.in"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/BasicConfigVersion-SameMajorVersion.cmake.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/acero/arrow-acero.pc.in"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "CmakeBuildRelease/third_party/arrow/cpp/src/arrow/acero/arrow-acero.pc.generate.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/gpu/CMakeLists.txt"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindCUDAToolkit.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindThreads.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CheckLibraryExists.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CheckIncludeFile.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/CheckCSourceCompiles.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageHandleStandardArgs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindPackageMessage.cmake"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/gpu/ArrowCUDAConfig.cmake.in"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/BasicConfigVersion-SameMajorVersion.cmake.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/gpu/arrow-cuda.pc.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/gpu/cuda_version.h.in"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "CmakeBuildRelease/third_party/arrow/cpp/src/arrow/gpu/arrow-cuda.pc.generate.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/ArrowDatasetConfig.cmake.in"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/BasicConfigVersion-SameMajorVersion.cmake.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/arrow-dataset.pc.in"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "CmakeBuildRelease/third_party/arrow/cpp/src/arrow/dataset/arrow-dataset.pc.generate.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/filesystem/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/filesystem/arrow-filesystem.pc.in"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "CmakeBuildRelease/third_party/arrow/cpp/src/arrow/filesystem/arrow-filesystem.pc.generate.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/ipc/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/json/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/json/arrow-json.pc.in"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "CmakeBuildRelease/third_party/arrow/cpp/src/arrow/json/arrow-json.pc.generate.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/extension/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/parquet/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/parquet/ParquetConfig.cmake.in"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/BasicConfigVersion-SameMajorVersion.cmake.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/parquet/parquet.pc.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/parquet/parquet_version.h.in"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "CmakeBuildRelease/third_party/arrow/cpp/src/parquet/parquet.pc.generate.in"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/parquet/api/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/parquet/arrow/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/parquet/encryption/CMakeLists.txt"
+		},
+		{
+			"path" : "third_party/arrow/cpp/tools/parquet/CMakeLists.txt"
+		}
+	],
+	"kind" : "cmakeFiles",
+	"paths" : 
+	{
+		"build" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/CmakeBuildRelease",
+		"source" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow"
+	},
+	"version" : 
+	{
+		"major" : 1,
+		"minor" : 0
+	}
+}

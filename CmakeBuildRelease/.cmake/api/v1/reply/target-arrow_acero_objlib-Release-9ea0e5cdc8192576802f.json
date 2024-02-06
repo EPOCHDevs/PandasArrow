@@ -1,0 +1,607 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/acero/CMakeFiles/arrow_acero_objlib.dir/./Unity/unity_3_cxx.cxx.o"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/acero/CMakeFiles/arrow_acero_objlib.dir/./Unity/unity_2_cxx.cxx.o"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/acero/CMakeFiles/arrow_acero_objlib.dir/./Unity/unity_1_cxx.cxx.o"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/acero/CMakeFiles/arrow_acero_objlib.dir/./Unity/unity_0_cxx.cxx.o"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/acero/CMakeFiles/arrow_acero_objlib.dir/./bloom_filter_avx2.cc.o"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/acero/CMakeFiles/arrow_acero_objlib.dir/./swiss_join_avx2.cc.o"
+		}
+	],
+	"backtrace" : 3,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"_add_library",
+			"add_library",
+			"add_arrow_lib",
+			"add_dependencies",
+			"target_compile_definitions",
+			"add_definitions",
+			"include",
+			"include_directories",
+			"target_link_libraries"
+		],
+		"files" : 
+		[
+			"/home/dewe/vcpkg/scripts/buildsystems/vcpkg.cmake",
+			"third_party/arrow/cpp/cmake_modules/BuildUtils.cmake",
+			"third_party/arrow/cpp/src/arrow/acero/CMakeLists.txt",
+			"third_party/arrow/cpp/cmake_modules/SetupCxxFlags.cmake",
+			"third_party/arrow/cpp/CMakeLists.txt",
+			"third_party/arrow/cpp/src/arrow/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 2
+			},
+			{
+				"command" : 2,
+				"file" : 2,
+				"line" : 87,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 244,
+				"parent" : 1
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 639,
+				"parent" : 2
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 248,
+				"parent" : 1
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 371,
+				"parent" : 1
+			},
+			{
+				"command" : 4,
+				"file" : 2,
+				"line" : 120,
+				"parent" : 0
+			},
+			{
+				"file" : 4
+			},
+			{
+				"command" : 6,
+				"file" : 4,
+				"line" : 445,
+				"parent" : 7
+			},
+			{
+				"file" : 3,
+				"parent" : 8
+			},
+			{
+				"command" : 5,
+				"file" : 3,
+				"line" : 106,
+				"parent" : 9
+			},
+			{
+				"command" : 5,
+				"file" : 3,
+				"line" : 110,
+				"parent" : 9
+			},
+			{
+				"command" : 5,
+				"file" : 3,
+				"line" : 99,
+				"parent" : 9
+			},
+			{
+				"command" : 5,
+				"file" : 3,
+				"line" : 500,
+				"parent" : 9
+			},
+			{
+				"file" : 5
+			},
+			{
+				"command" : 5,
+				"file" : 5,
+				"line" : 331,
+				"parent" : 14
+			},
+			{
+				"command" : 5,
+				"file" : 5,
+				"line" : 304,
+				"parent" : 14
+			},
+			{
+				"command" : 7,
+				"file" : 4,
+				"line" : 579,
+				"parent" : 7
+			},
+			{
+				"command" : 7,
+				"file" : 4,
+				"line" : 580,
+				"parent" : 7
+			},
+			{
+				"command" : 7,
+				"file" : 4,
+				"line" : 583,
+				"parent" : 7
+			},
+			{
+				"command" : 8,
+				"file" : 1,
+				"line" : 274,
+				"parent" : 1
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : " -Wno-noexcept-type -Wno-subobject-linkage  -fdiagnostics-color=always  -Wall -fno-semantic-interposition -msse4.2  -O3 -DNDEBUG -O2 -ftree-vectorize  -std=c++23 -fPIC -fdiagnostics-color=always"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 6,
+					"define" : "ARROW_ACERO_EXPORTING"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "ARROW_HAVE_RUNTIME_AVX2"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "ARROW_HAVE_RUNTIME_AVX512"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "ARROW_HAVE_RUNTIME_BMI2"
+				},
+				{
+					"backtrace" : 12,
+					"define" : "ARROW_HAVE_RUNTIME_SSE4_2"
+				},
+				{
+					"backtrace" : 13,
+					"define" : "ARROW_HAVE_SSE4_2"
+				},
+				{
+					"backtrace" : 15,
+					"define" : "ARROW_WITH_ZLIB"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "URI_STATIC_BUILD"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 17,
+					"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/CmakeBuildRelease/third_party/arrow/cpp/src"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/third_party/arrow/cpp/src"
+				},
+				{
+					"backtrace" : 19,
+					"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/third_party/arrow/cpp/src/generated"
+				},
+				{
+					"backtrace" : 20,
+					"isSystem" : true,
+					"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/third_party/arrow/cpp/thirdparty/flatbuffers/include"
+				},
+				{
+					"backtrace" : 20,
+					"isSystem" : true,
+					"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/third_party/arrow/cpp/thirdparty/hadoop/include"
+				},
+				{
+					"backtrace" : 20,
+					"isSystem" : true,
+					"path" : "/home/dewe/vcpkg/installed/x64-linux/include"
+				},
+				{
+					"backtrace" : 20,
+					"isSystem" : true,
+					"path" : "/home/dewe/vcpkg/installed/x64-linux/share/rapidjson/../../include"
+				}
+			],
+			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					20,
+					20
+				],
+				"standard" : "23"
+			},
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3
+			]
+		},
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : " -Wno-noexcept-type -Wno-subobject-linkage  -fdiagnostics-color=always  -Wall -fno-semantic-interposition -msse4.2  -O3 -DNDEBUG -O2 -ftree-vectorize  -std=c++23 -fPIC -fdiagnostics-color=always"
+				},
+				{
+					"fragment" : "-march=haswell -mavx2"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 6,
+					"define" : "ARROW_ACERO_EXPORTING"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "ARROW_HAVE_RUNTIME_AVX2"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "ARROW_HAVE_RUNTIME_AVX512"
+				},
+				{
+					"backtrace" : 10,
+					"define" : "ARROW_HAVE_RUNTIME_BMI2"
+				},
+				{
+					"backtrace" : 12,
+					"define" : "ARROW_HAVE_RUNTIME_SSE4_2"
+				},
+				{
+					"backtrace" : 13,
+					"define" : "ARROW_HAVE_SSE4_2"
+				},
+				{
+					"backtrace" : 15,
+					"define" : "ARROW_WITH_ZLIB"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "URI_STATIC_BUILD"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 17,
+					"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/CmakeBuildRelease/third_party/arrow/cpp/src"
+				},
+				{
+					"backtrace" : 18,
+					"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/third_party/arrow/cpp/src"
+				},
+				{
+					"backtrace" : 19,
+					"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/third_party/arrow/cpp/src/generated"
+				},
+				{
+					"backtrace" : 20,
+					"isSystem" : true,
+					"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/third_party/arrow/cpp/thirdparty/flatbuffers/include"
+				},
+				{
+					"backtrace" : 20,
+					"isSystem" : true,
+					"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/third_party/arrow/cpp/thirdparty/hadoop/include"
+				},
+				{
+					"backtrace" : 20,
+					"isSystem" : true,
+					"path" : "/home/dewe/vcpkg/installed/x64-linux/include"
+				},
+				{
+					"backtrace" : 20,
+					"isSystem" : true,
+					"path" : "/home/dewe/vcpkg/installed/x64-linux/share/rapidjson/../../include"
+				}
+			],
+			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					20,
+					20
+				],
+				"standard" : "23"
+			},
+			"sourceIndexes" : 
+			[
+				33,
+				34
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 4,
+			"id" : "toolchain::@590c79dd36ec6b04d69f"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "arrow_shared::@d7a5c5372ac5a67b4aa4"
+		}
+	],
+	"id" : "arrow_acero_objlib::@1f90ede8fcfe4ae4ca25",
+	"name" : "arrow_acero_objlib",
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp/src/arrow/acero",
+		"source" : "third_party/arrow/cpp/src/arrow/acero"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				21,
+				22,
+				23,
+				24,
+				25,
+				26,
+				27,
+				28,
+				29,
+				30,
+				31,
+				32,
+				33,
+				34
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 0,
+			"compileGroupIndex" : 0,
+			"path" : "CmakeBuildRelease/third_party/arrow/cpp/src/arrow/acero/CMakeFiles/arrow_acero_objlib.dir/Unity/unity_3_cxx.cxx",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 0,
+			"compileGroupIndex" : 0,
+			"path" : "CmakeBuildRelease/third_party/arrow/cpp/src/arrow/acero/CMakeFiles/arrow_acero_objlib.dir/Unity/unity_2_cxx.cxx",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 0,
+			"compileGroupIndex" : 0,
+			"path" : "CmakeBuildRelease/third_party/arrow/cpp/src/arrow/acero/CMakeFiles/arrow_acero_objlib.dir/Unity/unity_1_cxx.cxx",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 0,
+			"compileGroupIndex" : 0,
+			"path" : "CmakeBuildRelease/third_party/arrow/cpp/src/arrow/acero/CMakeFiles/arrow_acero_objlib.dir/Unity/unity_0_cxx.cxx",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/accumulation_queue.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/scalar_aggregate_node.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/groupby_aggregate_node.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/aggregate_internal.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/asof_join_node.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/bloom_filter.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/exec_plan.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/fetch_node.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/filter_node.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/hash_join.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/hash_join_dict.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/hash_join_node.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/map_node.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/options.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/order_by_node.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/order_by_impl.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/partition_util.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/pivot_longer_node.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/project_node.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/query_context.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/sink_node.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/sorted_merge_node.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/source_node.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/swiss_join.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/task_util.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/time_series_util.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/tpch_node.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/union_node.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/util.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 1,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/bloom_filter_avx2.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"compileGroupIndex" : 1,
+			"path" : "third_party/arrow/cpp/src/arrow/acero/swiss_join_avx2.cc",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "OBJECT_LIBRARY"
+}

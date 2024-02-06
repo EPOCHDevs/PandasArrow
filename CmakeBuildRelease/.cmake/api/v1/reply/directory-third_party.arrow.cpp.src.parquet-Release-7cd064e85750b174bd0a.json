@@ -1,0 +1,209 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install",
+			"add_arrow_lib",
+			"arrow_install_cmake_package",
+			"arrow_add_pkg_config",
+			"arrow_install_all_headers"
+		],
+		"files" : 
+		[
+			"third_party/arrow/cpp/cmake_modules/BuildUtils.cmake",
+			"third_party/arrow/cpp/src/parquet/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 270,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 397,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 478,
+				"parent" : 1
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 163,
+				"parent" : 3
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 166,
+				"parent" : 3
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 482,
+				"parent" : 1
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 945,
+				"parent" : 6
+			},
+			{
+				"command" : 4,
+				"file" : 1,
+				"line" : 340,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 936,
+				"parent" : 8
+			},
+			{
+				"command" : 0,
+				"file" : 1,
+				"line" : 344,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"third_party/arrow/cpp/release/libparquet.so.1600.0.0",
+				"third_party/arrow/cpp/release/libparquet.so.1600"
+			],
+			"targetId" : "parquet_shared::@391ce8019d2f29893d38",
+			"targetIndex" : 38,
+			"targetInstallNamelink" : "skip",
+			"type" : "target"
+		},
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"third_party/arrow/cpp/release/libparquet.so"
+			],
+			"targetId" : "parquet_shared::@391ce8019d2f29893d38",
+			"targetIndex" : 38,
+			"targetInstallNamelink" : "only",
+			"type" : "target"
+		},
+		{
+			"backtrace" : 4,
+			"component" : "Unspecified",
+			"destination" : "lib/cmake/Parquet",
+			"paths" : 
+			[
+				"CmakeBuildRelease/third_party/arrow/cpp/src/parquet/ParquetConfig.cmake",
+				"CmakeBuildRelease/third_party/arrow/cpp/src/parquet/ParquetConfigVersion.cmake"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 5,
+			"component" : "Unspecified",
+			"destination" : "lib/cmake/Parquet",
+			"exportName" : "parquet_targets",
+			"exportTargets" : 
+			[
+				{
+					"id" : "parquet_shared::@391ce8019d2f29893d38",
+					"index" : 38
+				}
+			],
+			"paths" : 
+			[
+				"third_party/arrow/cpp/src/parquet/CMakeFiles/Export/56c4c1eadc5ea6fcb65bdde4634255f9/ParquetTargets.cmake"
+			],
+			"type" : "export"
+		},
+		{
+			"backtrace" : 7,
+			"component" : "Unspecified",
+			"destination" : "lib/pkgconfig",
+			"paths" : 
+			[
+				"CmakeBuildRelease/third_party/arrow/cpp/src/parquet/Release/parquet.pc"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 9,
+			"component" : "Unspecified",
+			"destination" : "include/parquet",
+			"paths" : 
+			[
+				"third_party/arrow/cpp/src/parquet/benchmark_util.h",
+				"third_party/arrow/cpp/src/parquet/bloom_filter.h",
+				"third_party/arrow/cpp/src/parquet/bloom_filter_reader.h",
+				"third_party/arrow/cpp/src/parquet/column_page.h",
+				"third_party/arrow/cpp/src/parquet/column_reader.h",
+				"third_party/arrow/cpp/src/parquet/column_scanner.h",
+				"third_party/arrow/cpp/src/parquet/column_writer.h",
+				"third_party/arrow/cpp/src/parquet/encoding.h",
+				"third_party/arrow/cpp/src/parquet/exception.h",
+				"third_party/arrow/cpp/src/parquet/file_reader.h",
+				"third_party/arrow/cpp/src/parquet/file_writer.h",
+				"third_party/arrow/cpp/src/parquet/hasher.h",
+				"third_party/arrow/cpp/src/parquet/level_comparison.h",
+				"third_party/arrow/cpp/src/parquet/level_comparison_inc.h",
+				"third_party/arrow/cpp/src/parquet/level_conversion.h",
+				"third_party/arrow/cpp/src/parquet/level_conversion_inc.h",
+				"third_party/arrow/cpp/src/parquet/metadata.h",
+				"third_party/arrow/cpp/src/parquet/page_index.h",
+				"third_party/arrow/cpp/src/parquet/pch.h",
+				"third_party/arrow/cpp/src/parquet/platform.h",
+				"third_party/arrow/cpp/src/parquet/printer.h",
+				"third_party/arrow/cpp/src/parquet/properties.h",
+				"third_party/arrow/cpp/src/parquet/schema.h",
+				"third_party/arrow/cpp/src/parquet/statistics.h",
+				"third_party/arrow/cpp/src/parquet/stream_reader.h",
+				"third_party/arrow/cpp/src/parquet/stream_writer.h",
+				"third_party/arrow/cpp/src/parquet/test_util.h",
+				"third_party/arrow/cpp/src/parquet/type_fwd.h",
+				"third_party/arrow/cpp/src/parquet/types.h",
+				"third_party/arrow/cpp/src/parquet/windows_compatibility.h",
+				"third_party/arrow/cpp/src/parquet/windows_fixup.h",
+				"third_party/arrow/cpp/src/parquet/xxhasher.h"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 10,
+			"component" : "Unspecified",
+			"destination" : "include/parquet",
+			"paths" : 
+			[
+				"CmakeBuildRelease/third_party/arrow/cpp/src/parquet/parquet_version.h"
+			],
+			"type" : "file"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp/src/parquet",
+		"source" : "third_party/arrow/cpp/src/parquet"
+	}
+}

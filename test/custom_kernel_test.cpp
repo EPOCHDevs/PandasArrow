@@ -1,4 +1,3 @@
-#include "arrow/testing/gtest_util.h"
 #include "arrow/testing/random.h"
 #include "arrow/util/decimal.h"
 #include "arrow/util/int128_internal.h"
@@ -6,6 +5,7 @@
 #include "pandas_arrow/pandas_arrow.h"
 #include "vector"
 
+//TODO: Move to arrow folder
 
 using namespace arrow;
 using namespace arrow::compute;

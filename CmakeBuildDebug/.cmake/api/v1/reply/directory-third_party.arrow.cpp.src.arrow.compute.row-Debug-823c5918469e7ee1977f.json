@@ -1,0 +1,51 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install",
+			"arrow_install_all_headers"
+		],
+		"files" : 
+		[
+			"third_party/arrow/cpp/cmake_modules/BuildUtils.cmake",
+			"third_party/arrow/cpp/src/arrow/compute/row/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 21,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 936,
+				"parent" : 1
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "include/arrow/compute/row",
+			"paths" : 
+			[
+				"third_party/arrow/cpp/src/arrow/compute/row/grouper.h"
+			],
+			"type" : "file"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp/src/arrow/compute/row",
+		"source" : "third_party/arrow/cpp/src/arrow/compute/row"
+	}
+}

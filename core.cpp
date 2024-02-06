@@ -103,7 +103,7 @@ std::optional<DateOffset> DateOffset::FromString(const string& code)
 
 std::pair<std::string, int> splitTimeSpan(std::string const& freq)
 {
-    auto it = std::find_if(freq.begin(), freq.end(), [](int x) { return std::isalpha(x); });
+    auto it = std::find_if(freq.begin(), freq.end(), [](unsigned char x) { return std::isalpha(x); });
 
     std::ostringstream ss;
     std::string freq_unit, freqValueStr;
@@ -119,7 +119,7 @@ std::pair<std::string, int> splitTimeSpan(std::string const& freq)
         freqValueStr = ss2.str();
         freq_value = std::stoi(freqValueStr);
     }
-    else
+    else if (std::ranges::any_of(freq, [](unsigned char x) { return std::isdigit(x); }))
     {
         throw std::runtime_error("Invalid time offset " + freq);
     }
@@ -356,7 +356,7 @@ std::shared_ptr<arrow::Int64Array> range(int64_t start, int64_t end)
 {
     arrow::Int64Builder builder;
     auto rangeView = std::views::iota(start, end);
-    ABORT_NOT_OK(builder.AppendValues(rangeView.begin(), rangeView.end()));
+    pd::ThrowOnFailure(builder.AppendValues(rangeView.begin(), rangeView.end()));
 
     return dynamic_pointer_cast<arrow::Int64Array>(builder.Finish().MoveValueUnsafe());
 }
@@ -365,7 +365,7 @@ std::shared_ptr<arrow::UInt64Array> range(::uint64_t start, uint64_t end)
 {
     arrow::UInt64Builder builder;
     auto rangeView = std::views::iota(start, end);
-    ABORT_NOT_OK(builder.AppendValues(rangeView.begin(), rangeView.end()));
+    pd::ThrowOnFailure(builder.AppendValues(rangeView.begin(), rangeView.end()));
 
     return dynamic_pointer_cast<arrow::UInt64Array>(builder.Finish().MoveValueUnsafe());
 }
@@ -438,11 +438,11 @@ std::shared_ptr<arrow::Array> arrow::ScalarArray::Make(const std::vector<pd::Sca
     }
     auto builder = arrow::MakeBuilder(x.back().value()->type).MoveValueUnsafe();
 
-    ABORT_NOT_OK(builder->Reserve(x.size()));
+    pd::ThrowOnFailure(builder->Reserve(x.size()));
 
     for (auto const& sc : x)
     {
-        ABORT_NOT_OK(builder->AppendScalar(*sc.value()));
+        pd::ThrowOnFailure(builder->AppendScalar(*sc.value()));
     }
 
     return builder->Finish().MoveValueUnsafe();

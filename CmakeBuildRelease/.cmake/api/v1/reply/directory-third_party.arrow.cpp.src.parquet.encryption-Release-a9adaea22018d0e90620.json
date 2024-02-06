@@ -1,0 +1,67 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install",
+			"arrow_install_all_headers"
+		],
+		"files" : 
+		[
+			"third_party/arrow/cpp/cmake_modules/BuildUtils.cmake",
+			"third_party/arrow/cpp/src/parquet/encryption/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 19,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 936,
+				"parent" : 1
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "include/parquet/encryption",
+			"paths" : 
+			[
+				"third_party/arrow/cpp/src/parquet/encryption/crypto_factory.h",
+				"third_party/arrow/cpp/src/parquet/encryption/encryption.h",
+				"third_party/arrow/cpp/src/parquet/encryption/file_key_material_store.h",
+				"third_party/arrow/cpp/src/parquet/encryption/file_key_unwrapper.h",
+				"third_party/arrow/cpp/src/parquet/encryption/file_key_wrapper.h",
+				"third_party/arrow/cpp/src/parquet/encryption/file_system_key_material_store.h",
+				"third_party/arrow/cpp/src/parquet/encryption/key_encryption_key.h",
+				"third_party/arrow/cpp/src/parquet/encryption/key_material.h",
+				"third_party/arrow/cpp/src/parquet/encryption/key_metadata.h",
+				"third_party/arrow/cpp/src/parquet/encryption/key_toolkit.h",
+				"third_party/arrow/cpp/src/parquet/encryption/kms_client.h",
+				"third_party/arrow/cpp/src/parquet/encryption/kms_client_factory.h",
+				"third_party/arrow/cpp/src/parquet/encryption/local_wrap_kms_client.h",
+				"third_party/arrow/cpp/src/parquet/encryption/test_encryption_util.h",
+				"third_party/arrow/cpp/src/parquet/encryption/test_in_memory_kms.h",
+				"third_party/arrow/cpp/src/parquet/encryption/two_level_cache_with_expiration.h",
+				"third_party/arrow/cpp/src/parquet/encryption/type_fwd.h"
+			],
+			"type" : "file"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp/src/parquet/encryption",
+		"source" : "third_party/arrow/cpp/src/parquet/encryption"
+	}
+}

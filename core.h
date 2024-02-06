@@ -4,7 +4,6 @@
 //
 
 #include <arrow/api.h>
-#include <arrow/testing/gtest_util.h>
 #include <cmath>
 #include <rapidjson/document.h>
 #include "boost/date_time/gregorian/gregorian.hpp"
@@ -14,6 +13,12 @@
 #include "random.h"
 #include "ranges"
 
+
+namespace arrow
+{
+    using arrow::internal::checked_pointer_cast;
+    using arrow::internal::checked_cast;
+}
 
 using namespace boost::posix_time;
 using namespace boost::gregorian;
@@ -273,8 +278,8 @@ inline std::shared_ptr<arrow::TimestampArray> toDateTime(
     std::string const& tz = "")
 {
     arrow::TimestampBuilder builder{ arrow::timestamp(unit, tz), arrow::default_memory_pool() };
-    ABORT_NOT_OK(builder.AppendValues(timestamps));
-    ASSIGN_OR_ABORT(auto array, builder.Finish());
+    pd::ThrowOnFailure(builder.AppendValues(timestamps));
+    const auto array = pd::ReturnOrThrowOnFailure(builder.Finish());
     return dynamic_pointer_cast<arrow::TimestampArray>(array);
 }
 

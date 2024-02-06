@@ -4,20 +4,16 @@
 #include "series.h"
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
-//#include <arrow/compute/exec/aggregate.h>
 #include <arrow/io/api.h>
 #include <tabulate/table.hpp>
 #include <unordered_set>
-#include "arrow/compute/kernels/autocorr.h"
-#include "arrow/compute/kernels/corr.h"
-#include "arrow/compute/kernels/cov.h"
-#include "arrow/compute/kernels/pct_change.h"
+#include "arrow/compute/api_additional.h"
+#include "boost/format.hpp"
 #include "datetimelike.h"
 #include "filesystem"
 #include "ranges"
 #include "resample.h"
 #include "stringlike.h"
-#include "boost/format.hpp"
 
 
 #define BINARY_OPERATOR(sign, name) \
@@ -957,7 +953,7 @@ double Series::corr(const Series& s2, CorrelationType method) const
     {
         case CorrelationType::Pearson:
             return ReturnScalarOrThrowOnError<double>(
-                arrow::Correlation(m_array, s2.m_array, arrow::compute::VarianceOptions(1)));
+                arrow::compute::Correlation(m_array, s2.m_array, arrow::compute::VarianceOptions(1)));
         case CorrelationType::Kendall:
         case CorrelationType::Spearman:
             throw std::runtime_error("Series currently only supports Pearson CorrelationType");

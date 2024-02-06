@@ -1,0 +1,492 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "third_party/arrow/cpp/debug/libarrow.so"
+		}
+	],
+	"backtrace" : 3,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"_add_library",
+			"add_library",
+			"add_arrow_lib",
+			"install",
+			"target_link_libraries",
+			"target_compile_definitions",
+			"add_definitions",
+			"include",
+			"include_directories",
+			"target_compile_features"
+		],
+		"files" : 
+		[
+			"/home/dewe/vcpkg/scripts/buildsystems/vcpkg.cmake",
+			"third_party/arrow/cpp/cmake_modules/BuildUtils.cmake",
+			"third_party/arrow/cpp/src/arrow/CMakeLists.txt",
+			"third_party/arrow/cpp/cmake_modules/SetupCxxFlags.cmake",
+			"third_party/arrow/cpp/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 2
+			},
+			{
+				"command" : 2,
+				"file" : 2,
+				"line" : 654,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 313,
+				"parent" : 1
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 639,
+				"parent" : 2
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 397,
+				"parent" : 1
+			},
+			{
+				"command" : 4,
+				"file" : 1,
+				"line" : 361,
+				"parent" : 1
+			},
+			{
+				"command" : 5,
+				"file" : 2,
+				"line" : 721,
+				"parent" : 0
+			},
+			{
+				"file" : 4
+			},
+			{
+				"command" : 7,
+				"file" : 4,
+				"line" : 445,
+				"parent" : 7
+			},
+			{
+				"file" : 3,
+				"parent" : 8
+			},
+			{
+				"command" : 6,
+				"file" : 3,
+				"line" : 106,
+				"parent" : 9
+			},
+			{
+				"command" : 6,
+				"file" : 3,
+				"line" : 110,
+				"parent" : 9
+			},
+			{
+				"command" : 6,
+				"file" : 3,
+				"line" : 99,
+				"parent" : 9
+			},
+			{
+				"command" : 6,
+				"file" : 3,
+				"line" : 500,
+				"parent" : 9
+			},
+			{
+				"command" : 6,
+				"file" : 2,
+				"line" : 331,
+				"parent" : 0
+			},
+			{
+				"command" : 6,
+				"file" : 2,
+				"line" : 304,
+				"parent" : 0
+			},
+			{
+				"command" : 8,
+				"file" : 4,
+				"line" : 579,
+				"parent" : 7
+			},
+			{
+				"command" : 8,
+				"file" : 4,
+				"line" : 580,
+				"parent" : 7
+			},
+			{
+				"command" : 8,
+				"file" : 4,
+				"line" : 583,
+				"parent" : 7
+			},
+			{
+				"command" : 9,
+				"file" : 2,
+				"line" : 723,
+				"parent" : 0
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"id" : "arrow_objlib::@d7a5c5372ac5a67b4aa4"
+		}
+	],
+	"id" : "arrow_shared::@d7a5c5372ac5a67b4aa4",
+	"install" : 
+	{
+		"destinations" : 
+		[
+			{
+				"backtrace" : 4,
+				"path" : "lib"
+			},
+			{
+				"backtrace" : 4,
+				"path" : "lib"
+			}
+		],
+		"prefix" : 
+		{
+			"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/third_party/arrow/../installed/arrow"
+		}
+	},
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-Wl,--version-script=/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/third_party/arrow/cpp/src/arrow/symbols.map",
+				"role" : "flags"
+			},
+			{
+				"backtrace" : 5,
+				"fragment" : "-ldl",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 5,
+				"fragment" : "-lrt",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 5,
+				"fragment" : "/home/dewe/vcpkg/installed/x64-linux/debug/lib/libz.a",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "arrow_shared",
+	"nameOnDisk" : "libarrow.so",
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp/src/arrow",
+		"source" : "third_party/arrow/cpp/src/arrow"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Object Libraries",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14,
+				15,
+				16,
+				17,
+				18,
+				19,
+				20,
+				21,
+				22,
+				23,
+				24,
+				25,
+				26,
+				27,
+				28,
+				29,
+				30,
+				31,
+				32,
+				33,
+				34,
+				35,
+				36,
+				37,
+				38
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_26_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_25_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_24_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_23_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_22_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_21_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_20_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_19_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_18_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_17_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_16_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_15_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_14_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_13_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_12_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_11_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_10_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_9_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_8_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_7_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_6_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_5_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_4_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_3_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_2_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_1_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_0_cxx.cxx.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_1_c.c.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/Unity/unity_0_c.c.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/vendored/datetime/tz.cpp.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/util/bpacking_avx2.cc.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/util/bpacking_avx512.cc.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/compute/key_hash_avx2.cc.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/compute/key_map_avx2.cc.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/compute/row/compare_internal_avx2.cc.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/compute/row/encode_internal_avx2.cc.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/compute/util_avx2.cc.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/compute/kernels/aggregate_basic_avx2.cc.o",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"isGenerated" : true,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/CMakeFiles/arrow_objlib.dir/compute/kernels/aggregate_basic_avx512.cc.o",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "SHARED_LIBRARY"
+}

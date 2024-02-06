@@ -1,0 +1,187 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install",
+			"arrow_install_all_headers",
+			"add_arrow_lib",
+			"arrow_install_cmake_package",
+			"arrow_add_pkg_config"
+		],
+		"files" : 
+		[
+			"third_party/arrow/cpp/cmake_modules/BuildUtils.cmake",
+			"third_party/arrow/cpp/src/arrow/acero/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 20,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 936,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 87,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 397,
+				"parent" : 3
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 478,
+				"parent" : 3
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 163,
+				"parent" : 5
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 166,
+				"parent" : 5
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 482,
+				"parent" : 3
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 945,
+				"parent" : 8
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "include/arrow/acero",
+			"paths" : 
+			[
+				"third_party/arrow/cpp/src/arrow/acero/accumulation_queue.h",
+				"third_party/arrow/cpp/src/arrow/acero/aggregate_node.h",
+				"third_party/arrow/cpp/src/arrow/acero/api.h",
+				"third_party/arrow/cpp/src/arrow/acero/asof_join_node.h",
+				"third_party/arrow/cpp/src/arrow/acero/backpressure_handler.h",
+				"third_party/arrow/cpp/src/arrow/acero/benchmark_util.h",
+				"third_party/arrow/cpp/src/arrow/acero/bloom_filter.h",
+				"third_party/arrow/cpp/src/arrow/acero/exec_plan.h",
+				"third_party/arrow/cpp/src/arrow/acero/hash_join.h",
+				"third_party/arrow/cpp/src/arrow/acero/hash_join_dict.h",
+				"third_party/arrow/cpp/src/arrow/acero/hash_join_node.h",
+				"third_party/arrow/cpp/src/arrow/acero/map_node.h",
+				"third_party/arrow/cpp/src/arrow/acero/options.h",
+				"third_party/arrow/cpp/src/arrow/acero/order_by_impl.h",
+				"third_party/arrow/cpp/src/arrow/acero/partition_util.h",
+				"third_party/arrow/cpp/src/arrow/acero/pch.h",
+				"third_party/arrow/cpp/src/arrow/acero/query_context.h",
+				"third_party/arrow/cpp/src/arrow/acero/schema_util.h",
+				"third_party/arrow/cpp/src/arrow/acero/task_util.h",
+				"third_party/arrow/cpp/src/arrow/acero/test_nodes.h",
+				"third_party/arrow/cpp/src/arrow/acero/time_series_util.h",
+				"third_party/arrow/cpp/src/arrow/acero/tpch_node.h",
+				"third_party/arrow/cpp/src/arrow/acero/type_fwd.h",
+				"third_party/arrow/cpp/src/arrow/acero/unmaterialized_table.h",
+				"third_party/arrow/cpp/src/arrow/acero/util.h",
+				"third_party/arrow/cpp/src/arrow/acero/visibility.h"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 4,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"third_party/arrow/cpp/debug/libarrow_acero.so.1600.0.0",
+				"third_party/arrow/cpp/debug/libarrow_acero.so.1600"
+			],
+			"targetId" : "arrow_acero_shared::@1f90ede8fcfe4ae4ca25",
+			"targetIndex" : 7,
+			"targetInstallNamelink" : "skip",
+			"type" : "target"
+		},
+		{
+			"backtrace" : 4,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"third_party/arrow/cpp/debug/libarrow_acero.so"
+			],
+			"targetId" : "arrow_acero_shared::@1f90ede8fcfe4ae4ca25",
+			"targetIndex" : 7,
+			"targetInstallNamelink" : "only",
+			"type" : "target"
+		},
+		{
+			"backtrace" : 6,
+			"component" : "Unspecified",
+			"destination" : "lib/cmake/ArrowAcero",
+			"paths" : 
+			[
+				"CmakeBuildDebug/third_party/arrow/cpp/src/arrow/acero/ArrowAceroConfig.cmake",
+				"CmakeBuildDebug/third_party/arrow/cpp/src/arrow/acero/ArrowAceroConfigVersion.cmake"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 7,
+			"component" : "Unspecified",
+			"destination" : "lib/cmake/ArrowAcero",
+			"exportName" : "arrow_acero_targets",
+			"exportTargets" : 
+			[
+				{
+					"id" : "arrow_acero_shared::@1f90ede8fcfe4ae4ca25",
+					"index" : 7
+				}
+			],
+			"paths" : 
+			[
+				"third_party/arrow/cpp/src/arrow/acero/CMakeFiles/Export/d7d2c1ddcde43433b8c5420fc45422e9/ArrowAceroTargets.cmake"
+			],
+			"type" : "export"
+		},
+		{
+			"backtrace" : 9,
+			"component" : "Unspecified",
+			"destination" : "lib/pkgconfig",
+			"paths" : 
+			[
+				"CmakeBuildDebug/third_party/arrow/cpp/src/arrow/acero/Debug/arrow-acero.pc"
+			],
+			"type" : "file"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp/src/arrow/acero",
+		"source" : "third_party/arrow/cpp/src/arrow/acero"
+	}
+}

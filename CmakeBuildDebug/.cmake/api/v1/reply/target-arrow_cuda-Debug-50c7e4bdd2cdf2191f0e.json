@@ -1,0 +1,53 @@
+{
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target",
+			"add_dependencies"
+		],
+		"files" : 
+		[
+			"third_party/arrow/cpp/src/arrow/gpu/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 23,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 76,
+				"parent" : 0
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "arrow_cuda_objlib::@fd4e63777b50988c5c49"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "arrow_cuda_shared::@fd4e63777b50988c5c49"
+		}
+	],
+	"id" : "arrow_cuda::@fd4e63777b50988c5c49",
+	"name" : "arrow_cuda",
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp/src/arrow/gpu",
+		"source" : "third_party/arrow/cpp/src/arrow/gpu"
+	},
+	"sources" : [],
+	"type" : "UTILITY"
+}

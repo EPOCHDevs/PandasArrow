@@ -1,0 +1,14 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : [],
+		"files" : [],
+		"nodes" : []
+	},
+	"installers" : [],
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp/tools/parquet",
+		"source" : "third_party/arrow/cpp/tools/parquet"
+	}
+}

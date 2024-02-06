@@ -1,0 +1,49 @@
+{
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target",
+			"add_dependencies"
+		],
+		"files" : 
+		[
+			"third_party/arrow/cpp/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 864,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 871,
+				"parent" : 0
+			}
+		]
+	},
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "toolchain::@590c79dd36ec6b04d69f"
+		}
+	],
+	"id" : "arrow_dependencies::@590c79dd36ec6b04d69f",
+	"name" : "arrow_dependencies",
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp",
+		"source" : "third_party/arrow/cpp"
+	},
+	"sources" : [],
+	"type" : "UTILITY"
+}

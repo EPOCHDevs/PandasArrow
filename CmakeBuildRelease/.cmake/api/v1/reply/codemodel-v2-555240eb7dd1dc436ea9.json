@@ -1,0 +1,975 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Release-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.17"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						32
+					]
+				},
+				{
+					"build" : "third_party",
+					"childIndexes" : 
+					[
+						2
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party-Release-9b836fc236528aa76e21.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.17"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "third_party"
+				},
+				{
+					"build" : "third_party/arrow",
+					"childIndexes" : 
+					[
+						3
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow-Release-2d5873c243594bbcc6fb.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.17"
+					},
+					"parentIndex" : 1,
+					"projectIndex" : 0,
+					"source" : "third_party/arrow",
+					"targetIndexes" : 
+					[
+						27
+					]
+				},
+				{
+					"build" : "third_party/arrow/cpp",
+					"childIndexes" : 
+					[
+						4,
+						29,
+						33
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp-Release-c6388242bd14e604514d.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 2,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp",
+					"targetIndexes" : 
+					[
+						8,
+						19,
+						23,
+						24,
+						25,
+						26,
+						28,
+						29,
+						30,
+						31,
+						39,
+						40,
+						41,
+						42,
+						43
+					]
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow",
+					"childIndexes" : 
+					[
+						5,
+						6,
+						7,
+						8,
+						12,
+						13,
+						14,
+						15,
+						21,
+						22,
+						23,
+						24,
+						25,
+						26,
+						27,
+						28
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow-Release-32d2137f113d2dee6cca.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 3,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						21,
+						22
+					]
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/testing",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.testing-Release-c651cdd95b25c6c623a3.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/testing"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/array",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.array-Release-d19ab9f420a7c9aa13fb.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/array"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/c",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.c-Release-c5ea45430e3367aab1ea.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/c"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/compute",
+					"childIndexes" : 
+					[
+						9,
+						11
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.compute-Release-cfb0b76ed4ebb9306f86.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/compute",
+					"targetIndexes" : 
+					[
+						9
+					]
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/compute/kernels",
+					"childIndexes" : 
+					[
+						10
+					],
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.compute.kernels-Release-0bf6f14330d359de9974.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 8,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/compute/kernels"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/compute/kernels/additional",
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.compute.kernels.additional-Release-055c973002377f1b8792.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 9,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/compute/kernels/additional"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/compute/row",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.compute.row-Release-823c5918469e7ee1977f.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 8,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/compute/row"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/io",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.io-Release-a72c76b9ed430c3bba2e.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/io"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/tensor",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.tensor-Release-518d4a87df7012b552e7.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/tensor"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/util",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.util-Release-a425ed9f93499ca128fd.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/util"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/vendored",
+					"childIndexes" : 
+					[
+						16,
+						17,
+						18,
+						19,
+						20
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.vendored-Release-dc6354d798ec7b7c3ded.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/vendored"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/vendored/datetime",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.vendored.datetime-Release-11156d4f5ee61f254e57.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 15,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/vendored/datetime"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/vendored/double-conversion",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.vendored.double-conversion-Release-a064b92aa70673fa6c07.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 15,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/vendored/double-conversion"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/vendored/pcg",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.vendored.pcg-Release-245f8eda87eb75aeb872.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 15,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/vendored/pcg"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/vendored/portable-snippets",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.vendored.portable-snippets-Release-9911bf799b504d734575.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 15,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/vendored/portable-snippets"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/vendored/xxhash",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.vendored.xxhash-Release-2ce0abed848a43ca53e2.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 15,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/vendored/xxhash"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/csv",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.csv-Release-d20f5518e0fe53b39cf2.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/csv"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/acero",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.acero-Release-ac783f7d818666e08066.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/acero",
+					"targetIndexes" : 
+					[
+						5,
+						6,
+						7
+					]
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/gpu",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.gpu-Release-f107564c53cc0888e047.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/gpu",
+					"targetIndexes" : 
+					[
+						10,
+						11,
+						12,
+						13,
+						14,
+						15
+					]
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/dataset",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.dataset-Release-dbc595eccc9f932bad6e.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/dataset",
+					"targetIndexes" : 
+					[
+						16,
+						17,
+						18
+					]
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/filesystem",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.filesystem-Release-d5122bb31fd193ca03c6.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/filesystem"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/ipc",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.ipc-Release-7ca5005923b9fdb226ba.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/ipc",
+					"targetIndexes" : 
+					[
+						20
+					]
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/json",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.json-Release-7729faecc555168120e2.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/json"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/arrow/extension",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.arrow.extension-Release-3f2cdd9b81207eaadf56.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 4,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/arrow/extension"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/parquet",
+					"childIndexes" : 
+					[
+						30,
+						31,
+						32
+					],
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.parquet-Release-7cd064e85750b174bd0a.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 3,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/parquet",
+					"targetIndexes" : 
+					[
+						33,
+						34,
+						35,
+						36,
+						37,
+						38
+					]
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/parquet/api",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.parquet.api-Release-e3223c4b23414afaa4c5.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 29,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/parquet/api"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/parquet/arrow",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.parquet.arrow-Release-5d3194b93ce8b0a7a107.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 29,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/parquet/arrow"
+				},
+				{
+					"build" : "third_party/arrow/cpp/src/parquet/encryption",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-third_party.arrow.cpp.src.parquet.encryption-Release-a9adaea22018d0e90620.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 29,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/src/parquet/encryption"
+				},
+				{
+					"build" : "third_party/arrow/cpp/tools/parquet",
+					"jsonFile" : "directory-third_party.arrow.cpp.tools.parquet-Release-dbb47c4c7209345db8a6.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.5"
+					},
+					"parentIndex" : 3,
+					"projectIndex" : 1,
+					"source" : "third_party/arrow/cpp/tools/parquet"
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"childIndexes" : 
+					[
+						1
+					],
+					"directoryIndexes" : 
+					[
+						0,
+						1,
+						2
+					],
+					"name" : "PandasCPP",
+					"targetIndexes" : 
+					[
+						27,
+						32
+					]
+				},
+				{
+					"directoryIndexes" : 
+					[
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17,
+						18,
+						19,
+						20,
+						21,
+						22,
+						23,
+						24,
+						25,
+						26,
+						27,
+						28,
+						29,
+						30,
+						31,
+						32,
+						33
+					],
+					"name" : "arrow",
+					"parentIndex" : 0,
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6,
+						7,
+						8,
+						9,
+						10,
+						11,
+						12,
+						13,
+						14,
+						15,
+						16,
+						17,
+						18,
+						19,
+						20,
+						21,
+						22,
+						23,
+						24,
+						25,
+						26,
+						28,
+						29,
+						30,
+						31,
+						33,
+						34,
+						35,
+						36,
+						37,
+						38,
+						39,
+						40,
+						41,
+						42,
+						43
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 4,
+					"id" : "arrow::@d7a5c5372ac5a67b4aa4",
+					"jsonFile" : "target-arrow-Release-d6391a2e0711dc9db002.json",
+					"name" : "arrow",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "arrow-all::@d7a5c5372ac5a67b4aa4",
+					"jsonFile" : "target-arrow-all-Release-9cf4e183393187f08372.json",
+					"name" : "arrow-all",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "arrow-benchmarks::@d7a5c5372ac5a67b4aa4",
+					"jsonFile" : "target-arrow-benchmarks-Release-f88ada5e6603ef06f6e4.json",
+					"name" : "arrow-benchmarks",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "arrow-integration::@d7a5c5372ac5a67b4aa4",
+					"jsonFile" : "target-arrow-integration-Release-cf459743b5d27403c44f.json",
+					"name" : "arrow-integration",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "arrow-tests::@d7a5c5372ac5a67b4aa4",
+					"jsonFile" : "target-arrow-tests-Release-11e62174eb45c4efad40.json",
+					"name" : "arrow-tests",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 22,
+					"id" : "arrow_acero::@1f90ede8fcfe4ae4ca25",
+					"jsonFile" : "target-arrow_acero-Release-eec5a772acd9672aaaba.json",
+					"name" : "arrow_acero",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 22,
+					"id" : "arrow_acero_objlib::@1f90ede8fcfe4ae4ca25",
+					"jsonFile" : "target-arrow_acero_objlib-Release-9ea0e5cdc8192576802f.json",
+					"name" : "arrow_acero_objlib",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 22,
+					"id" : "arrow_acero_shared::@1f90ede8fcfe4ae4ca25",
+					"jsonFile" : "target-arrow_acero_shared-Release-81543ea150b07adffc2e.json",
+					"name" : "arrow_acero_shared",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "arrow_benchmark_dependencies::@590c79dd36ec6b04d69f",
+					"jsonFile" : "target-arrow_benchmark_dependencies-Release-0ba0701e3a70b013d02b.json",
+					"name" : "arrow_benchmark_dependencies",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 8,
+					"id" : "arrow_compute::@7291be3f10b42711995d",
+					"jsonFile" : "target-arrow_compute-Release-4da00d13eed5c30bbf76.json",
+					"name" : "arrow_compute",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 23,
+					"id" : "arrow_cuda::@fd4e63777b50988c5c49",
+					"jsonFile" : "target-arrow_cuda-Release-50c7e4bdd2cdf2191f0e.json",
+					"name" : "arrow_cuda",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 23,
+					"id" : "arrow_cuda-all::@fd4e63777b50988c5c49",
+					"jsonFile" : "target-arrow_cuda-all-Release-b200c35fe8f93e6611c0.json",
+					"name" : "arrow_cuda-all",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 23,
+					"id" : "arrow_cuda-benchmarks::@fd4e63777b50988c5c49",
+					"jsonFile" : "target-arrow_cuda-benchmarks-Release-d7c8dbd994833c244487.json",
+					"name" : "arrow_cuda-benchmarks",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 23,
+					"id" : "arrow_cuda-tests::@fd4e63777b50988c5c49",
+					"jsonFile" : "target-arrow_cuda-tests-Release-cc251732a54a82d49668.json",
+					"name" : "arrow_cuda-tests",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 23,
+					"id" : "arrow_cuda_objlib::@fd4e63777b50988c5c49",
+					"jsonFile" : "target-arrow_cuda_objlib-Release-7cdc4bad2d4da6af9af4.json",
+					"name" : "arrow_cuda_objlib",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 23,
+					"id" : "arrow_cuda_shared::@fd4e63777b50988c5c49",
+					"jsonFile" : "target-arrow_cuda_shared-Release-202e830a0ea033ee2738.json",
+					"name" : "arrow_cuda_shared",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 24,
+					"id" : "arrow_dataset::@ad78816fbda1f6aa86c0",
+					"jsonFile" : "target-arrow_dataset-Release-beab74c6197555260c96.json",
+					"name" : "arrow_dataset",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 24,
+					"id" : "arrow_dataset_objlib::@ad78816fbda1f6aa86c0",
+					"jsonFile" : "target-arrow_dataset_objlib-Release-88073c6af2e61e2fc555.json",
+					"name" : "arrow_dataset_objlib",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 24,
+					"id" : "arrow_dataset_shared::@ad78816fbda1f6aa86c0",
+					"jsonFile" : "target-arrow_dataset_shared-Release-ad16e748cf4de7ff29ba.json",
+					"name" : "arrow_dataset_shared",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "arrow_dependencies::@590c79dd36ec6b04d69f",
+					"jsonFile" : "target-arrow_dependencies-Release-f29895a7cf75607038be.json",
+					"name" : "arrow_dependencies",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 26,
+					"id" : "arrow_ipc::@29c0fd9de3e66283b20b",
+					"jsonFile" : "target-arrow_ipc-Release-953b625b0f89658c6b70.json",
+					"name" : "arrow_ipc",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "arrow_objlib::@d7a5c5372ac5a67b4aa4",
+					"jsonFile" : "target-arrow_objlib-Release-d88421aaf396e2a2141f.json",
+					"name" : "arrow_objlib",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 4,
+					"id" : "arrow_shared::@d7a5c5372ac5a67b4aa4",
+					"jsonFile" : "target-arrow_shared-Release-47e1429634b1f27222f0.json",
+					"name" : "arrow_shared",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "arrow_test_dependencies::@590c79dd36ec6b04d69f",
+					"jsonFile" : "target-arrow_test_dependencies-Release-de3ceaef90b3f1dca1ce.json",
+					"name" : "arrow_test_dependencies",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "cscope::@590c79dd36ec6b04d69f",
+					"jsonFile" : "target-cscope-Release-f6f0c5290b8a43b42f78.json",
+					"name" : "cscope",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "ctags::@590c79dd36ec6b04d69f",
+					"jsonFile" : "target-ctags-Release-7b35cea69c744fdf8adc.json",
+					"name" : "ctags",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "etags::@590c79dd36ec6b04d69f",
+					"jsonFile" : "target-etags-Release-af63066a05612f1e75cc.json",
+					"name" : "etags",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 2,
+					"id" : "install_arrow::@a2dd1f1ea9051c7dee84",
+					"jsonFile" : "target-install_arrow-Release-b38d80e0e5d5e8df8e1f.json",
+					"name" : "install_arrow",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "iwyu::@590c79dd36ec6b04d69f",
+					"jsonFile" : "target-iwyu-Release-344f274c238b8d9326b2.json",
+					"name" : "iwyu",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "iwyu-all::@590c79dd36ec6b04d69f",
+					"jsonFile" : "target-iwyu-all-Release-7f825cd7cdd08120bfc0.json",
+					"name" : "iwyu-all",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "lint::@590c79dd36ec6b04d69f",
+					"jsonFile" : "target-lint-Release-64c885a84801a8b3ae52.json",
+					"name" : "lint",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "lint_cpp_cli::@590c79dd36ec6b04d69f",
+					"jsonFile" : "target-lint_cpp_cli-Release-2e7865f654e531c2a190.json",
+					"name" : "lint_cpp_cli",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "pandas_arrow::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-pandas_arrow-Release-cf7bfbb1cb36438b5151.json",
+					"name" : "pandas_arrow",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 29,
+					"id" : "parquet::@391ce8019d2f29893d38",
+					"jsonFile" : "target-parquet-Release-30bce7d676ea1bb37145.json",
+					"name" : "parquet",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 29,
+					"id" : "parquet-all::@391ce8019d2f29893d38",
+					"jsonFile" : "target-parquet-all-Release-78765fc763ab408ccbde.json",
+					"name" : "parquet-all",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 29,
+					"id" : "parquet-benchmarks::@391ce8019d2f29893d38",
+					"jsonFile" : "target-parquet-benchmarks-Release-ddbcea40f92ccdef1e17.json",
+					"name" : "parquet-benchmarks",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 29,
+					"id" : "parquet-tests::@391ce8019d2f29893d38",
+					"jsonFile" : "target-parquet-tests-Release-1c431773f11dda59f73a.json",
+					"name" : "parquet-tests",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 29,
+					"id" : "parquet_objlib::@391ce8019d2f29893d38",
+					"jsonFile" : "target-parquet_objlib-Release-109caeafd0602306af56.json",
+					"name" : "parquet_objlib",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 29,
+					"id" : "parquet_shared::@391ce8019d2f29893d38",
+					"jsonFile" : "target-parquet_shared-Release-1712ab1ffbec7c2135bd.json",
+					"name" : "parquet_shared",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "rapidjson::@590c79dd36ec6b04d69f",
+					"jsonFile" : "target-rapidjson-Release-cc66aa2dde22e0408d57.json",
+					"name" : "rapidjson",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "tags::@590c79dd36ec6b04d69f",
+					"jsonFile" : "target-tags-Release-f6ff83a95c861f96bed2.json",
+					"name" : "tags",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "toolchain::@590c79dd36ec6b04d69f",
+					"jsonFile" : "target-toolchain-Release-fb39fbc172595dda170b.json",
+					"name" : "toolchain",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "toolchain-benchmarks::@590c79dd36ec6b04d69f",
+					"jsonFile" : "target-toolchain-benchmarks-Release-f52cfbc5d9637bb7a41f.json",
+					"name" : "toolchain-benchmarks",
+					"projectIndex" : 1
+				},
+				{
+					"directoryIndex" : 3,
+					"id" : "toolchain-tests::@590c79dd36ec6b04d69f",
+					"jsonFile" : "target-toolchain-tests-Release-459ecbd7bc20fc0dee09.json",
+					"name" : "toolchain-tests",
+					"projectIndex" : 1
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/CmakeBuildRelease",
+		"source" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 6
+	}
+}

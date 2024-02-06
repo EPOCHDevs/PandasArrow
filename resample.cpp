@@ -236,7 +236,7 @@ GroupInfo makeGroupInfo(
         return { {}, timestamps_ax };
     }
 
-    ASSIGN_OR_ABORT(auto datum, arrow::compute::MinMax(timestamps_ax));
+    const auto datum = pd::ReturnOrThrowOnFailure(arrow::compute::MinMax(timestamps_ax));
     auto datum_struct = datum.scalar_as<arrow::StructScalar>();
     auto [min, max] = MinMax{ datum_struct.value[0], datum_struct.value[1] };
 

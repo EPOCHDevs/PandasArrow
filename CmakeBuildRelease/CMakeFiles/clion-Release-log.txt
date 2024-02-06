@@ -1,0 +1,39 @@
+/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/bin/cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_MAKE_PROGRAM=/home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/ninja/linux/x64/ninja -DCMAKE_C_COMPILER=/usr/bin/gcc -DCMAKE_CXX_COMPILER=/usr/bin/g++ -G Ninja -S /home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow -B /home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/CmakeBuildRelease
+CMake Error at third_party/CMakeLists.txt:1 (add_subdirectory):
+  add_subdirectory given source "arrow" which is not an existing directory.
+
+
+CMake Warning at /home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindBoost.cmake:1398 (message):
+  New Boost version may have incorrect or missing dependencies and imported
+  targets
+Call Stack (most recent call first):
+  /home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindBoost.cmake:1523 (_Boost_COMPONENT_DEPENDENCIES)
+  /home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindBoost.cmake:2134 (_Boost_MISSING_DEPENDENCIES)
+  /home/dewe/vcpkg/installed/x64-linux/share/boost/vcpkg-cmake-wrapper.cmake:11 (_find_package)
+  /home/dewe/vcpkg/scripts/buildsystems/vcpkg.cmake:813 (include)
+  CMakeLists.txt:13 (find_package)
+
+
+CMake Warning at /home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindBoost.cmake:1398 (message):
+  New Boost version may have incorrect or missing dependencies and imported
+  targets
+Call Stack (most recent call first):
+  /home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindBoost.cmake:1523 (_Boost_COMPONENT_DEPENDENCIES)
+  /home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindBoost.cmake:2134 (_Boost_MISSING_DEPENDENCIES)
+  /home/dewe/vcpkg/installed/x64-linux/share/boost/vcpkg-cmake-wrapper.cmake:11 (_find_package)
+  /home/dewe/vcpkg/scripts/buildsystems/vcpkg.cmake:813 (include)
+  CMakeLists.txt:13 (find_package)
+
+
+CMake Warning at /home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindBoost.cmake:1398 (message):
+  New Boost version may have incorrect or missing dependencies and imported
+  targets
+Call Stack (most recent call first):
+  /home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindBoost.cmake:1523 (_Boost_COMPONENT_DEPENDENCIES)
+  /home/dewe/.local/share/JetBrains/Toolbox/apps/clion/bin/cmake/linux/x64/share/cmake-3.27/Modules/FindBoost.cmake:2134 (_Boost_MISSING_DEPENDENCIES)
+  /home/dewe/vcpkg/installed/x64-linux/share/boost/vcpkg-cmake-wrapper.cmake:11 (_find_package)
+  /home/dewe/vcpkg/scripts/buildsystems/vcpkg.cmake:813 (include)
+  CMakeLists.txt:13 (find_package)
+
+
+-- Configuring incomplete, errors occurred!

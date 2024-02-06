@@ -1,0 +1,91 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install",
+			"arrow_install_all_headers",
+			"arrow_add_pkg_config"
+		],
+		"files" : 
+		[
+			"third_party/arrow/cpp/cmake_modules/BuildUtils.cmake",
+			"third_party/arrow/cpp/src/arrow/compute/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 20,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 936,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 1,
+				"line" : 24,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 945,
+				"parent" : 3
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "include/arrow/compute",
+			"paths" : 
+			[
+				"third_party/arrow/cpp/src/arrow/compute/api.h",
+				"third_party/arrow/cpp/src/arrow/compute/api_additional.h",
+				"third_party/arrow/cpp/src/arrow/compute/api_aggregate.h",
+				"third_party/arrow/cpp/src/arrow/compute/api_scalar.h",
+				"third_party/arrow/cpp/src/arrow/compute/api_vector.h",
+				"third_party/arrow/cpp/src/arrow/compute/cast.h",
+				"third_party/arrow/cpp/src/arrow/compute/exec.h",
+				"third_party/arrow/cpp/src/arrow/compute/expression.h",
+				"third_party/arrow/cpp/src/arrow/compute/function.h",
+				"third_party/arrow/cpp/src/arrow/compute/function_options.h",
+				"third_party/arrow/cpp/src/arrow/compute/kernel.h",
+				"third_party/arrow/cpp/src/arrow/compute/key_hash.h",
+				"third_party/arrow/cpp/src/arrow/compute/key_map.h",
+				"third_party/arrow/cpp/src/arrow/compute/light_array.h",
+				"third_party/arrow/cpp/src/arrow/compute/ordering.h",
+				"third_party/arrow/cpp/src/arrow/compute/registry.h",
+				"third_party/arrow/cpp/src/arrow/compute/type_fwd.h",
+				"third_party/arrow/cpp/src/arrow/compute/util.h"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 4,
+			"component" : "Unspecified",
+			"destination" : "lib/pkgconfig",
+			"paths" : 
+			[
+				"CmakeBuildRelease/third_party/arrow/cpp/src/arrow/compute/Release/arrow-compute.pc"
+			],
+			"type" : "file"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp/src/arrow/compute",
+		"source" : "third_party/arrow/cpp/src/arrow/compute"
+	}
+}

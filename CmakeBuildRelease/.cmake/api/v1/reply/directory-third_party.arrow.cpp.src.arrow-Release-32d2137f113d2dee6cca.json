@@ -1,0 +1,248 @@
+{
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"install",
+			"add_arrow_lib",
+			"arrow_install_cmake_package",
+			"arrow_add_pkg_config",
+			"arrow_install_all_headers"
+		],
+		"files" : 
+		[
+			"third_party/arrow/cpp/cmake_modules/BuildUtils.cmake",
+			"third_party/arrow/cpp/src/arrow/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 654,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 397,
+				"parent" : 1
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 478,
+				"parent" : 1
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 163,
+				"parent" : 3
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 166,
+				"parent" : 3
+			},
+			{
+				"command" : 3,
+				"file" : 0,
+				"line" : 482,
+				"parent" : 1
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 945,
+				"parent" : 6
+			},
+			{
+				"command" : 0,
+				"file" : 1,
+				"line" : 708,
+				"parent" : 0
+			},
+			{
+				"command" : 4,
+				"file" : 1,
+				"line" : 781,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 936,
+				"parent" : 9
+			},
+			{
+				"command" : 0,
+				"file" : 1,
+				"line" : 784,
+				"parent" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 1,
+				"line" : 788,
+				"parent" : 0
+			}
+		]
+	},
+	"installers" : 
+	[
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"third_party/arrow/cpp/release/libarrow.so.1600.0.0",
+				"third_party/arrow/cpp/release/libarrow.so.1600"
+			],
+			"targetId" : "arrow_shared::@d7a5c5372ac5a67b4aa4",
+			"targetIndex" : 22,
+			"targetInstallNamelink" : "skip",
+			"type" : "target"
+		},
+		{
+			"backtrace" : 2,
+			"component" : "Unspecified",
+			"destination" : "lib",
+			"paths" : 
+			[
+				"third_party/arrow/cpp/release/libarrow.so"
+			],
+			"targetId" : "arrow_shared::@d7a5c5372ac5a67b4aa4",
+			"targetIndex" : 22,
+			"targetInstallNamelink" : "only",
+			"type" : "target"
+		},
+		{
+			"backtrace" : 4,
+			"component" : "Unspecified",
+			"destination" : "lib/cmake/Arrow",
+			"paths" : 
+			[
+				"CmakeBuildRelease/third_party/arrow/cpp/src/arrow/ArrowConfig.cmake",
+				"CmakeBuildRelease/third_party/arrow/cpp/src/arrow/ArrowConfigVersion.cmake"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 5,
+			"component" : "Unspecified",
+			"destination" : "lib/cmake/Arrow",
+			"exportName" : "arrow_targets",
+			"exportTargets" : 
+			[
+				{
+					"id" : "arrow_shared::@d7a5c5372ac5a67b4aa4",
+					"index" : 22
+				}
+			],
+			"paths" : 
+			[
+				"third_party/arrow/cpp/src/arrow/CMakeFiles/Export/817832ed7b630b992c3753a0fa15add4/ArrowTargets.cmake"
+			],
+			"type" : "export"
+		},
+		{
+			"backtrace" : 7,
+			"component" : "Unspecified",
+			"destination" : "lib/pkgconfig",
+			"paths" : 
+			[
+				"CmakeBuildRelease/third_party/arrow/cpp/src/arrow/Release/arrow.pc"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 8,
+			"component" : "Unspecified",
+			"destination" : "share/gdb/auto-load/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/third_party/arrow/../installed/arrow/lib",
+			"paths" : 
+			[
+				{
+					"from" : "CmakeBuildRelease/third_party/arrow/cpp/src/arrow/libarrow_gdb.py",
+					"to" : "libarrow.so.1600.0.0-gdb.py"
+				}
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 10,
+			"component" : "Unspecified",
+			"destination" : "include/arrow",
+			"paths" : 
+			[
+				"third_party/arrow/cpp/src/arrow/api.h",
+				"third_party/arrow/cpp/src/arrow/array.h",
+				"third_party/arrow/cpp/src/arrow/buffer.h",
+				"third_party/arrow/cpp/src/arrow/buffer_builder.h",
+				"third_party/arrow/cpp/src/arrow/builder.h",
+				"third_party/arrow/cpp/src/arrow/chunk_resolver.h",
+				"third_party/arrow/cpp/src/arrow/chunked_array.h",
+				"third_party/arrow/cpp/src/arrow/compare.h",
+				"third_party/arrow/cpp/src/arrow/config.h",
+				"third_party/arrow/cpp/src/arrow/datum.h",
+				"third_party/arrow/cpp/src/arrow/device.h",
+				"third_party/arrow/cpp/src/arrow/extension_type.h",
+				"third_party/arrow/cpp/src/arrow/memory_pool.h",
+				"third_party/arrow/cpp/src/arrow/memory_pool_test.h",
+				"third_party/arrow/cpp/src/arrow/pch.h",
+				"third_party/arrow/cpp/src/arrow/pretty_print.h",
+				"third_party/arrow/cpp/src/arrow/record_batch.h",
+				"third_party/arrow/cpp/src/arrow/result.h",
+				"third_party/arrow/cpp/src/arrow/scalar.h",
+				"third_party/arrow/cpp/src/arrow/sparse_tensor.h",
+				"third_party/arrow/cpp/src/arrow/status.h",
+				"third_party/arrow/cpp/src/arrow/stl.h",
+				"third_party/arrow/cpp/src/arrow/stl_allocator.h",
+				"third_party/arrow/cpp/src/arrow/stl_iterator.h",
+				"third_party/arrow/cpp/src/arrow/table.h",
+				"third_party/arrow/cpp/src/arrow/table_builder.h",
+				"third_party/arrow/cpp/src/arrow/tensor.h",
+				"third_party/arrow/cpp/src/arrow/type.h",
+				"third_party/arrow/cpp/src/arrow/type_fwd.h",
+				"third_party/arrow/cpp/src/arrow/type_traits.h",
+				"third_party/arrow/cpp/src/arrow/visit_array_inline.h",
+				"third_party/arrow/cpp/src/arrow/visit_data_inline.h",
+				"third_party/arrow/cpp/src/arrow/visit_scalar_inline.h",
+				"third_party/arrow/cpp/src/arrow/visit_type_inline.h",
+				"third_party/arrow/cpp/src/arrow/visitor.h",
+				"third_party/arrow/cpp/src/arrow/visitor_generate.h"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 11,
+			"component" : "Unspecified",
+			"destination" : "lib/cmake/Arrow",
+			"paths" : 
+			[
+				"CmakeBuildRelease/third_party/arrow/cpp/src/arrow/ArrowOptions.cmake"
+			],
+			"type" : "file"
+		},
+		{
+			"backtrace" : 12,
+			"component" : "Unspecified",
+			"destination" : "lib/cmake/Arrow",
+			"paths" : 
+			[
+				"third_party/arrow/cpp/src/arrow/arrow-config.cmake"
+			],
+			"type" : "file"
+		}
+	],
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp/src/arrow",
+		"source" : "third_party/arrow/cpp/src/arrow"
+	}
+}

@@ -14,7 +14,7 @@ TEST_CASE("Test date_range with end date", "[date_range]")
 {
     auto start = date(2022, 1, 1);
     auto end = date(2022, 1, 7);
-    auto freq = "D";
+    auto freq = "1D";
     auto tz = "UTC";
 
     auto result = pd::date_range(start, end, freq, tz);
@@ -28,7 +28,7 @@ TEST_CASE("Test date_range with period", "[date_range]")
 {
     auto start = date(2022, 1, 1);
     auto period = 7;
-    auto freq = "D";
+    auto freq = "1D";
     auto tz = "UTC";
 
     auto result = pd::date_range(start, period, freq, tz);
@@ -40,13 +40,13 @@ TEST_CASE("Test date_range with period", "[date_range]")
     start = date(2022, 1, 1);
     period = 10;
 
-    result = date_range(start, period, "D");
+    result = date_range(start, period, "1D");
     REQUIRE(result->length() == 10);
 
     result = date_range(start, period, "SM");
     REQUIRE(result->length() == 10);
 
-    result = date_range(start, period, "W");
+    result = date_range(start, period, "1W");
     REQUIRE(result->length() == 10);
 }
 
@@ -56,10 +56,10 @@ TEST_CASE("Test date_range with different frequency", "[date_range]")
     date end(2022, 1, 10);
     std::shared_ptr<arrow::Array> result;
 
-    result = date_range(start, end, "D");
+    result = date_range(start, end, "1D");
     REQUIRE(result->length() == 10);
 
-    result = date_range(start, end, "W");
+    result = date_range(start, end, "1W");
     REQUIRE(result->length() == 2);
 
     result = date_range(start, end, "SM");

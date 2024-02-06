@@ -5,6 +5,8 @@
 #include "filesystem"
 #include "ndframe.h"
 #include "tabulate/table.hpp"
+#include "set"
+
 
 namespace pd {
 

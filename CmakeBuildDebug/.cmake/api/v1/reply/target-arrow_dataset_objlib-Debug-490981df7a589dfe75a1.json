@@ -1,0 +1,392 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/CMakeFiles/arrow_dataset_objlib.dir/./Unity/unity_1_cxx.cxx.o"
+		},
+		{
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/CMakeFiles/arrow_dataset_objlib.dir/./Unity/unity_0_cxx.cxx.o"
+		}
+	],
+	"backtrace" : 3,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"_add_library",
+			"add_library",
+			"add_arrow_lib",
+			"add_dependencies",
+			"target_link_libraries",
+			"target_compile_definitions",
+			"add_definitions",
+			"include",
+			"include_directories",
+			"target_include_directories"
+		],
+		"files" : 
+		[
+			"/home/dewe/vcpkg/scripts/buildsystems/vcpkg.cmake",
+			"third_party/arrow/cpp/cmake_modules/BuildUtils.cmake",
+			"third_party/arrow/cpp/src/arrow/dataset/CMakeLists.txt",
+			"third_party/arrow/cpp/cmake_modules/SetupCxxFlags.cmake",
+			"third_party/arrow/cpp/CMakeLists.txt",
+			"third_party/arrow/cpp/src/arrow/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 2
+			},
+			{
+				"command" : 2,
+				"file" : 2,
+				"line" : 71,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 244,
+				"parent" : 1
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 639,
+				"parent" : 2
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 371,
+				"parent" : 1
+			},
+			{
+				"command" : 4,
+				"file" : 1,
+				"line" : 274,
+				"parent" : 1
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 248,
+				"parent" : 1
+			},
+			{
+				"command" : 5,
+				"file" : 2,
+				"line" : 108,
+				"parent" : 0
+			},
+			{
+				"file" : 4
+			},
+			{
+				"command" : 7,
+				"file" : 4,
+				"line" : 445,
+				"parent" : 8
+			},
+			{
+				"file" : 3,
+				"parent" : 9
+			},
+			{
+				"command" : 6,
+				"file" : 3,
+				"line" : 106,
+				"parent" : 10
+			},
+			{
+				"command" : 6,
+				"file" : 3,
+				"line" : 110,
+				"parent" : 10
+			},
+			{
+				"command" : 6,
+				"file" : 3,
+				"line" : 99,
+				"parent" : 10
+			},
+			{
+				"command" : 6,
+				"file" : 3,
+				"line" : 500,
+				"parent" : 10
+			},
+			{
+				"file" : 5
+			},
+			{
+				"command" : 6,
+				"file" : 5,
+				"line" : 331,
+				"parent" : 15
+			},
+			{
+				"command" : 6,
+				"file" : 5,
+				"line" : 304,
+				"parent" : 15
+			},
+			{
+				"command" : 8,
+				"file" : 4,
+				"line" : 579,
+				"parent" : 8
+			},
+			{
+				"command" : 8,
+				"file" : 4,
+				"line" : 580,
+				"parent" : 8
+			},
+			{
+				"command" : 8,
+				"file" : 4,
+				"line" : 583,
+				"parent" : 8
+			},
+			{
+				"command" : 9,
+				"file" : 1,
+				"line" : 270,
+				"parent" : 1
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : " -Wno-noexcept-type -Wno-subobject-linkage  -fdiagnostics-color=always  -Wall -Wno-conversion -Wno-sign-conversion -Wunused-result -Wdate-time -fno-semantic-interposition -msse4.2  -g -Werror -O0  -std=c++23 -fPIC -fdiagnostics-color=always"
+				}
+			],
+			"defines" : 
+			[
+				{
+					"backtrace" : 7,
+					"define" : "ARROW_DS_EXPORTING"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "ARROW_HAVE_RUNTIME_AVX2"
+				},
+				{
+					"backtrace" : 12,
+					"define" : "ARROW_HAVE_RUNTIME_AVX512"
+				},
+				{
+					"backtrace" : 11,
+					"define" : "ARROW_HAVE_RUNTIME_BMI2"
+				},
+				{
+					"backtrace" : 13,
+					"define" : "ARROW_HAVE_RUNTIME_SSE4_2"
+				},
+				{
+					"backtrace" : 14,
+					"define" : "ARROW_HAVE_SSE4_2"
+				},
+				{
+					"backtrace" : 16,
+					"define" : "ARROW_WITH_ZLIB"
+				},
+				{
+					"backtrace" : 17,
+					"define" : "URI_STATIC_BUILD"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 18,
+					"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/CmakeBuildDebug/third_party/arrow/cpp/src"
+				},
+				{
+					"backtrace" : 19,
+					"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/third_party/arrow/cpp/src"
+				},
+				{
+					"backtrace" : 20,
+					"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/third_party/arrow/cpp/src/generated"
+				},
+				{
+					"backtrace" : 21,
+					"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/third_party/arrow/cpp/src/parquet"
+				},
+				{
+					"backtrace" : 5,
+					"isSystem" : true,
+					"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/third_party/arrow/cpp/thirdparty/flatbuffers/include"
+				},
+				{
+					"backtrace" : 5,
+					"isSystem" : true,
+					"path" : "/home/dewe/SAMResearch/StratifyX/cpp/third_party/pandas_arrow/third_party/arrow/cpp/thirdparty/hadoop/include"
+				},
+				{
+					"backtrace" : 5,
+					"isSystem" : true,
+					"path" : "/home/dewe/vcpkg/installed/x64-linux/include"
+				},
+				{
+					"backtrace" : 5,
+					"isSystem" : true,
+					"path" : "/home/dewe/vcpkg/installed/x64-linux/share/rapidjson/../../include"
+				}
+			],
+			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					5,
+					5
+				],
+				"standard" : "23"
+			},
+			"sourceIndexes" : 
+			[
+				0,
+				1
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 4,
+			"id" : "arrow_acero_shared::@1f90ede8fcfe4ae4ca25"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "parquet_shared::@391ce8019d2f29893d38"
+		},
+		{
+			"backtrace" : 6,
+			"id" : "toolchain::@590c79dd36ec6b04d69f"
+		},
+		{
+			"backtrace" : 5,
+			"id" : "arrow_shared::@d7a5c5372ac5a67b4aa4"
+		}
+	],
+	"id" : "arrow_dataset_objlib::@ad78816fbda1f6aa86c0",
+	"name" : "arrow_dataset_objlib",
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp/src/arrow/dataset",
+		"source" : "third_party/arrow/cpp/src/arrow/dataset"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6,
+				7,
+				8,
+				9,
+				10,
+				11,
+				12,
+				13,
+				14
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 0,
+			"compileGroupIndex" : 0,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/dataset/CMakeFiles/arrow_dataset_objlib.dir/Unity/unity_1_cxx.cxx",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 0,
+			"compileGroupIndex" : 0,
+			"path" : "CmakeBuildDebug/third_party/arrow/cpp/src/arrow/dataset/CMakeFiles/arrow_dataset_objlib.dir/Unity/unity_0_cxx.cxx",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/dataset.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/dataset_writer.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/discovery.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/file_base.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/file_ipc.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/partition.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/plan.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/projector.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/scanner.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/scan_node.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/file_csv.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/file_json.cc",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 3,
+			"path" : "third_party/arrow/cpp/src/arrow/dataset/file_parquet.cc",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "OBJECT_LIBRARY"
+}

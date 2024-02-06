@@ -1,0 +1,35 @@
+{
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target"
+		],
+		"files" : 
+		[
+			"third_party/arrow/cpp/src/arrow/acero/CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 18,
+				"parent" : 0
+			}
+		]
+	},
+	"id" : "arrow_acero::@1f90ede8fcfe4ae4ca25",
+	"name" : "arrow_acero",
+	"paths" : 
+	{
+		"build" : "third_party/arrow/cpp/src/arrow/acero",
+		"source" : "third_party/arrow/cpp/src/arrow/acero"
+	},
+	"sources" : [],
+	"type" : "UTILITY"
+}
