@@ -1,6 +1,7 @@
 //
 // Created by dewe on 12/28/22.
 //
+#include <climits>
 #include "scalar.h"
 #include <iostream>
 #include "filesystem"

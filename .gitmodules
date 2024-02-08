@@ -1,0 +1,6 @@
+[submodule "third_party/arrow"]
+	path = third_party/arrow
+	url = https://github.com/SAM-Research/arrow.git
+[submodule "third_party/cudf"]
+	path = third_party/cudf
+	url = https://github.com/SAM-Research/cudf.git

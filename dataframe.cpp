@@ -16,13 +16,10 @@
 #include "arrow/compute/api_aggregate.h"
 #include "arrow/compute/api_vector.h"
 #include "arrow/compute/cast.h"
-//#include "arrow/compute/exec/aggregate.h"
 #include "arrow/compute/registry.h"
 #include "arrow/table.h"
 #include "arrow/type.h"
 #include "arrow/type_traits.h"
-#include "arrow/util/checked_cast.h"
-#include "arrow/util/int_util_overflow.h"
 #include "arrow/util/key_value_metadata.h"
 #include "arrow/util/vector.h"
 #include "datetimelike.h"
@@ -30,8 +27,6 @@
 #include "macros.h"
 #include "resample.h"
 #include "concat.h"
-#include <arrow/api.h>
-#include <arrow/ipc/reader.h>
 #include <arrow/ipc/writer.h>
 
 

@@ -1,6 +1,7 @@
 //
 // Created by dewe on 1/22/23.
 //
+#include <climits>
 #include "concat.h"
 #include <tbb/parallel_for.h>
 #include "dataframe.h"

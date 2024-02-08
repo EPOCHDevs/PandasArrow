@@ -6,6 +6,7 @@
 #include "ndframe.h"
 #include "tabulate/table.hpp"
 #include "set"
+#include <cudf/interop.hpp>
 
 
 namespace pd {
@@ -68,6 +69,7 @@ std::pair<std::string, std::vector<T>> GetRow(std::function<std::string()> const
 }
 
 
+constexpr const char * RESERVED_INDEX_NAME = "__INDEX_NAME__";
 class DataFrame : public NDFrame<DataFrame>
 {
 public:
@@ -131,6 +133,7 @@ public:
         return (m_array == nullptr) ? std::array<int64_t, 2>{ 0, 0 } :
                                       std::array<int64_t, 2>{ num_rows(), num_columns() };
     }
+
 
     inline ArrayPtr fieldArray() const
     {
