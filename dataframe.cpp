@@ -28,7 +28,7 @@
 #include "resample.h"
 #include "concat.h"
 #include <arrow/ipc/writer.h>
-
+#include "data_variant.h"
 
 namespace pd {
 
@@ -637,8 +637,7 @@ Scalar DataFrame::sum() const
 Series DataFrame::forAxis(std::string const& functionName,
                           pd::AxisType axis) const
 {
-    arrow::ScalarVector result;
-
+    std::vector<pd::ScalarPtr> result;
     pd::ArrayPtr newIndex;
     if (axis == AxisType::Columns)
     {
@@ -663,7 +662,6 @@ Series DataFrame::forAxis(std::string const& functionName,
     else
     {
         result.reserve(num_columns());
-
         for (const auto& column : m_array->columns())
         {
             result.emplace_back(arrow::compute::CallFunction(functionName, { column })->scalar());
@@ -688,6 +686,26 @@ Series DataFrame::count(pd::AxisType axis) const
 Series DataFrame::mean(pd::AxisType axis) const
 {
     return forAxis("mean", axis);
+}
+
+Series DataFrame::std(pd::AxisType axis) const
+{
+    return forAxis("stddev", axis);
+}
+
+Series DataFrame::var(pd::AxisType axis) const
+{
+    return forAxis("mean", axis);
+}
+
+Series DataFrame::max(pd::AxisType axis) const
+{
+    return forAxis("max", axis);
+}
+
+Series DataFrame::min(pd::AxisType axis) const
+{
+    return forAxis("min", axis);
 }
 
 DataFrame DataFrame::unary(std::string const& functionName) const

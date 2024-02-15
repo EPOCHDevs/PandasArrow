@@ -308,6 +308,11 @@ public:
 
     [[nodiscard]] Series count(pd::AxisType axis) const;
 
+    Series std(pd::AxisType axis) const;
+    Series var(pd::AxisType axis) const;
+    Series max(pd::AxisType axis) const;
+    Series min(pd::AxisType axis) const;
+
     bool equals_(DataFrame const& other) const override
     {
         return m_array->Equals(*other.m_array) && m_index->Equals(other.indexArray());

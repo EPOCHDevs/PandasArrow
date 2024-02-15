@@ -2,8 +2,6 @@
 // Created by dewe on 12/31/22.
 //
 #include "core.h"
-#include <arrow/compute/cast.h>
-#include <boost/chrono/duration.hpp>
 #include <future>
 #include "arrow/compute/exec.h"
 #include "dataframe.h"

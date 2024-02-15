@@ -18,6 +18,7 @@ find_package(tabulate CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
+find_package(RapidJSON CONFIG REQUIRED)
 
 add_library(pandas_arrow series.cpp scalar.cpp
         dataframe.cpp core.cpp resample.cpp concat.cpp)

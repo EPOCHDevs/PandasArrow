@@ -85,7 +85,8 @@ enum class TimeGrouperOrigin
 enum class AxisType
 {
     Index,
-    Columns
+    Columns,
+//    All
 };
 
 struct Slice

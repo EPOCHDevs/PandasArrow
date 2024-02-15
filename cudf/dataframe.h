@@ -3,6 +3,7 @@
 // Created by dewe on 2/7/24.
 //
 #include "series.h"
+#include <thrust/device_vector.h>
 
 
 namespace pd {
@@ -19,16 +20,24 @@ namespace pd {
 
         DataFrame GetDataFrame();
 
-        GPUDataframe operator+(auto const &other) const {
+        GPUDataframe operator+(auto const &other) const
+        {
             return binary_operator(other, cudf::binary_operator::ADD);
         }
 
-        GPUDataframe operator*(auto const &other) const {
+        GPUDataframe operator*(auto const &other) const
+        {
             return binary_operator(other, cudf::binary_operator::MUL);
+        }
+
+        GPUDataframe operator-(auto const &other) const
+        {
+            return binary_operator(other, cudf::binary_operator::SUB);
         }
 
     private:
         using GPUSeries::series;
+        using GPUSeries::data;
 
         GPUDataframe binary_operator(GPUDataframe const &other,
                                      cudf::binary_operator op) const;
