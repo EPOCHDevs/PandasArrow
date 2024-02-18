@@ -7,7 +7,6 @@
 #include <arrow/io/api.h>
 #include <tabulate/table.hpp>
 #include <unordered_set>
-#include "arrow/compute/api_additional.h"
 #include "boost/format.hpp"
 #include "datetimelike.h"
 #include "filesystem"
@@ -775,8 +774,9 @@ Series Series::strptime(const std::string& format, arrow::TimeUnit::type unit, b
 
 Series Series::shift(int32_t shift_value, std::shared_ptr<arrow::Scalar> const& fill_value) const
 {
-    return ReturnSeriesOrThrowOnError(
-        arrow::compute::Shift(m_array, arrow::compute::ShiftOptions(shift_value, fill_value)));
+    throw std::runtime_error("currently lacking implementation");
+//    return ReturnSeriesOrThrowOnError(
+//        arrow::compute::Shift(m_array, arrow::compute::ShiftOptions(shift_value, fill_value)));
 }
 
 bool Series::is_valid(int row) const
@@ -786,7 +786,8 @@ bool Series::is_valid(int row) const
 
 Series Series::pct_change(int64_t periods) const
 {
-    return ReturnSeriesOrThrowOnError(arrow::compute::PctChange(m_array, periods));
+    throw std::runtime_error("currently lacking implementation");
+//    return ReturnSeriesOrThrowOnError(arrow::compute::PctChange(m_array, periods));
 }
 
 GenericFunctionSeriesReturnRename(ffill, fill_null_forward, Series)
@@ -943,21 +944,25 @@ Series Series::argsort(bool ascending) const
 
 double Series::cov(const Series& s2) const
 {
-    return ReturnScalarOrThrowOnError<double>(
-        arrow::compute::Covariance(m_array, s2.m_array, arrow::compute::VarianceOptions(1)));
+    throw std::runtime_error("currently lacking implementation");
+
+//    return ReturnScalarOrThrowOnError<double>(
+//        arrow::compute::Covariance(m_array, s2.m_array, arrow::compute::VarianceOptions(1)));
 }
 
 double Series::corr(const Series& s2, CorrelationType method) const
 {
-    switch (method)
-    {
-        case CorrelationType::Pearson:
-            return ReturnScalarOrThrowOnError<double>(
-                arrow::compute::Correlation(m_array, s2.m_array, arrow::compute::VarianceOptions(1)));
-        case CorrelationType::Kendall:
-        case CorrelationType::Spearman:
-            throw std::runtime_error("Series currently only supports Pearson CorrelationType");
-    }
+    throw std::runtime_error("currently lacking implementation");
+
+//    switch (method)
+//    {
+//        case CorrelationType::Pearson:
+//            return ReturnScalarOrThrowOnError<double>(
+//                arrow::compute::Correlation(m_array, s2.m_array, arrow::compute::VarianceOptions(1)));
+//        case CorrelationType::Kendall:
+//        case CorrelationType::Spearman:
+//            throw std::runtime_error("Series currently only supports Pearson CorrelationType");
+//    }
     return 0;
 }
 
