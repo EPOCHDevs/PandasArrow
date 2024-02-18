@@ -17,24 +17,19 @@ rapids_cpm_find(
         "CUDF_VERSION_Arrow ${ARROW_VERSION}"
         "BUILD_TESTS OFF"   # Disable building tests
         "BUILD_BENCHMARKS OFF" # Disable building benchmarks
-        BUILD_EXPORT_SET rapid_cudf_test-exports
-        INSTALL_EXPORT_SET rapid_cudf_test-exports
-)
+        BUILD_EXPORT_SET rapid_cudf_test-exports)
 
-include(${rapids-cmake-dir}/cpm/libcudacxx.cmake)
-rapids_cpm_libcudacxx(BUILD_EXPORT_SET rapid_cudf_test-exports INSTALL_EXPORT_SET rapid_cudf_test-exports)
-
-include(${rapids-cmake-dir}/cpm/cccl.cmake)
-rapids_cpm_cccl(BUILD_EXPORT_SET rapid_cudf_test-exports INSTALL_EXPORT_SET rapid_cudf_test-exports)
-
-include(${rapids-cmake-dir}/cpm/thrust.cmake)
-rapids_cpm_thrust(BUILD_EXPORT_SET rapid_cudf_test-exports INSTALL_EXPORT_SET rapid_cudf_test-exports)
+#include(${rapids-cmake-dir}/cpm/libcudacxx.cmake)
+#rapids_cpm_libcudacxx(BUILD_EXPORT_SET rapid_cudf_test-exports INSTALL_EXPORT_SET rapid_cudf_test-exports)
+#
+#include(${rapids-cmake-dir}/cpm/cccl.cmake)
+#rapids_cpm_cccl(BUILD_EXPORT_SET rapid_cudf_test-exports INSTALL_EXPORT_SET rapid_cudf_test-exports)
+#
+#include(${rapids-cmake-dir}/cpm/thrust.cmake)
+#rapids_cpm_thrust(BUILD_EXPORT_SET rapid_cudf_test-exports INSTALL_EXPORT_SET rapid_cudf_test-exports)
 
 include(${rapids-cmake-dir}/cpm/spdlog.cmake)
-rapids_cpm_spdlog(BUILD_EXPORT_SET rapid_cudf_test-exports INSTALL_EXPORT_SET rapid_cudf_test-exports)
+rapids_cpm_spdlog(BUILD_EXPORT_SET rapid_cudf_test-exports )
 
 include(${rapids-cmake-dir}/cpm/fmt.cmake)
-rapids_cpm_fmt(BUILD_EXPORT_SET rapid_cudf_test-exports INSTALL_EXPORT_SET rapid_cudf_test-exports)
-
-include(${rapids-cmake-dir}/cpm/cuco.cmake)
-rapids_cpm_cuco(BUILD_EXPORT_SET rapid_cudf_test-exports INSTALL_EXPORT_SET rapid_cudf_test-exports)
+rapids_cpm_fmt(BUILD_EXPORT_SET rapid_cudf_test-exports)
