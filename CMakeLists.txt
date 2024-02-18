@@ -45,7 +45,7 @@ add_library(pandas_arrow
         src/cudf/scalar.cpp
         src/cudf/series.cpp)
 
-target_link_libraries(pandas_arrow PUBLIC
+target_link_libraries(pandas_arrow PRIVATE
         ${Boost_LIBRARIES}
         TBB::tbb tabulate::tabulate
 #        arrow_shared parquet_shared arrow_cuda_shared ${LIB_CUDF}
