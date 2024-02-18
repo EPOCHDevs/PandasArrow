@@ -37,4 +37,4 @@ include(${rapids-cmake-dir}/cpm/fmt.cmake)
 rapids_cpm_fmt(BUILD_EXPORT_SET rapid_cudf_test-exports INSTALL_EXPORT_SET rapid_cudf_test-exports)
 
 include(${rapids-cmake-dir}/cpm/cuco.cmake)
-rapids_cpm_fmt(BUILD_EXPORT_SET rapid_cudf_test-exports INSTALL_EXPORT_SET rapid_cudf_test-exports)
+rapids_cpm_cuco(BUILD_EXPORT_SET rapid_cudf_test-exports INSTALL_EXPORT_SET rapid_cudf_test-exports)
