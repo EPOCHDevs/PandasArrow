@@ -1,6 +1,6 @@
 include_guard(GLOBAL)
 
-set(CUDF_VERSION "24.02.00") # stable version
+set(CUDF_VERSION "24.02.01") # stable version
 set(ARROW_VERSION "14.0.1") # WE NEED TO KEEP THIS VERSION AT 14.0.1 UNTIL WE HAVE arro/utils/span.h fix
 
 rapids_cpm_find(
