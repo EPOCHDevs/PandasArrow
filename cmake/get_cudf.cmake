@@ -1,6 +1,6 @@
 include_guard(GLOBAL)
 
-set(CUDF_VERSION "24.02") # stable version
+set(CUDF_VERSION "24.02.00") # stable version
 set(ARROW_VERSION "14.0.1") # WE NEED TO KEEP THIS VERSION AT 14.0.1 UNTIL WE HAVE arro/utils/span.h fix
 
 rapids_cpm_find(
@@ -8,7 +8,6 @@ rapids_cpm_find(
         GLOBAL_TARGETS cudf
         CPM_ARGS
         GIT_REPOSITORY https://github.com/rapidsai/cudf.git
-        GIT_TAG "branch-${CUDF_VERSION}"   # Use the same version tag as specified
         GIT_SHALLOW TRUE SOURCE_SUBDIR cpp
         OPTIONS "CUDF_ENABLE_ARROW_PARQUET ON"
         "CUDF_USE_PER_THREAD_DEFAULT_STREAM ON"
