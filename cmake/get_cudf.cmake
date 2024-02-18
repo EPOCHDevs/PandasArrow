@@ -13,7 +13,7 @@ rapids_cpm_find(
         OPTIONS "CUDF_ENABLE_ARROW_PARQUET ON"
         "CUDF_USE_PER_THREAD_DEFAULT_STREAM ON"
         "CUDF_USE_ARROW_STATIC OFF"
-        "BUILD_SHARED_LIBS OFF"
+        "BUILD_SHARED_LIBS ON"
         "CUDF_VERSION_Arrow ${ARROW_VERSION}"
         "BUILD_TESTS OFF"   # Disable building tests
         "BUILD_BENCHMARKS OFF" # Disable building benchmarks
@@ -34,4 +34,7 @@ include(${rapids-cmake-dir}/cpm/spdlog.cmake)
 rapids_cpm_spdlog(BUILD_EXPORT_SET rapid_cudf_test-exports INSTALL_EXPORT_SET rapid_cudf_test-exports)
 
 include(${rapids-cmake-dir}/cpm/fmt.cmake)
+rapids_cpm_fmt(BUILD_EXPORT_SET rapid_cudf_test-exports INSTALL_EXPORT_SET rapid_cudf_test-exports)
+
+include(${rapids-cmake-dir}/cpm/cuco.cmake)
 rapids_cpm_fmt(BUILD_EXPORT_SET rapid_cudf_test-exports INSTALL_EXPORT_SET rapid_cudf_test-exports)
