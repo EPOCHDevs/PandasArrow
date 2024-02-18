@@ -1,7 +1,7 @@
 include_guard(GLOBAL)
 
 set(CUDF_VERSION "24.04")
-set(ARROW_VERSION "14.0.1")
+set(ARROW_VERSION "14.0.1") # WE NEED TO KEEP THIS VERSION AT 14.0.1 UNTIL WE HAVE arro/utils/span.h fix
 
 rapids_cpm_find(
         cudf ${CUDF_VERSION}
@@ -12,8 +12,8 @@ rapids_cpm_find(
         GIT_SHALLOW TRUE SOURCE_SUBDIR cpp
         OPTIONS "CUDF_ENABLE_ARROW_PARQUET ON"
         "CUDF_USE_PER_THREAD_DEFAULT_STREAM ON"
-        "CUDF_USE_ARROW_STATIC ON"
-        "BUILD_SHARED_LIBS OFF"
+        "CUDF_USE_ARROW_STATIC OFF"
+        "BUILD_SHARED_LIBS ON"
         "CUDF_VERSION_Arrow ${ARROW_VERSION}"
         "BUILD_TESTS OFF"   # Disable building tests
         "BUILD_BENCHMARKS OFF" # Disable building benchmarks
