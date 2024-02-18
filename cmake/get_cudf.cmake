@@ -13,7 +13,7 @@ rapids_cpm_find(
         OPTIONS "CUDF_ENABLE_ARROW_PARQUET ON"
         "CUDF_USE_PER_THREAD_DEFAULT_STREAM ON"
         "CUDF_USE_ARROW_STATIC OFF"
-        "BUILD_SHARED_LIBS ON"
+        "BUILD_SHARED_LIBS OFF"
         "CUDF_VERSION_Arrow ${ARROW_VERSION}"
         "BUILD_TESTS OFF"   # Disable building tests
         "BUILD_BENCHMARKS OFF" # Disable building benchmarks
