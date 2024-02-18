@@ -1,7 +1,7 @@
 include_guard(GLOBAL)
 
 set(CUDF_VERSION "24.04")
-set(ARROW_VERSION "15.0.0")
+set(ARROW_VERSION "14.0.1")
 
 rapids_cpm_find(
         cudf ${CUDF_VERSION}

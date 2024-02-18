@@ -352,19 +352,27 @@ std::shared_ptr<arrow::TimestampArray> date_range(
 
 std::shared_ptr<arrow::Int64Array> range(int64_t start, int64_t end)
 {
+    const int64_t length = (end - start);
     arrow::Int64Builder builder;
-    auto rangeView = std::views::iota(start, end);
-    pd::ThrowOnFailure(builder.AppendValues(rangeView.begin(), rangeView.end()));
 
+    pd::ThrowOnFailure(builder.Reserve(length));
+    for(int64_t i = 0; i < length; i++)
+    {
+        builder.UnsafeAppend(i);
+    }
     return dynamic_pointer_cast<arrow::Int64Array>(builder.Finish().MoveValueUnsafe());
 }
 
-std::shared_ptr<arrow::UInt64Array> range(::uint64_t start, uint64_t end)
+std::shared_ptr<arrow::UInt64Array> range(uint64_t start, uint64_t end)
 {
+    const uint64_t length = (end - start);
     arrow::UInt64Builder builder;
-    auto rangeView = std::views::iota(start, end);
-    pd::ThrowOnFailure(builder.AppendValues(rangeView.begin(), rangeView.end()));
 
+    pd::ThrowOnFailure(builder.Reserve(length));
+    for(uint64_t i = 0; i < length; i++)
+    {
+        builder.UnsafeAppend(i);
+    }
     return dynamic_pointer_cast<arrow::UInt64Array>(builder.Finish().MoveValueUnsafe());
 }
 

@@ -25,6 +25,7 @@ option(Boost_USE_STATIC_LIBS  ON)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 
 # add third party dependencies
 rapids_cuda_init_runtime(USE_STATIC ON)
@@ -55,11 +56,10 @@ target_include_directories(pandas_arrow
         PRIVATE ${Boost_INCLUDE_DIRS}
         PUBLIC .)
 
-target_compile_options(pandas_arrow PRIVATE -Werror)
-#target_compile_definitions(pandas_arrow PUBLIC -DLIBCUDACXX_ENABLE_EXPERIMENTAL_MEMORY_RESOURCE)
-
+#target_compile_options(pandas_arrow PRIVATE -Werror)
 add_library(pd::pandas_arrow ALIAS pandas_arrow)
 
 IF( BUILD_TEST )
     add_subdirectory(tests)
 ENDIF()
+
