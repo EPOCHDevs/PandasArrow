@@ -16,6 +16,12 @@ rapids_cpm_find(
         "CUDF_VERSION_Arrow ${ARROW_VERSION}"
         "BUILD_TESTS OFF"   # Disable building tests
         "BUILD_BENCHMARKS OFF" # Disable building benchmarks
+        "CUDA_WARNINGS_AS_ERRORS OFF"
+        "CUDA_STATIC_RUNTIME ON"
+        "DISABLE_DEPRECATION_WARNINGS ON"
+        "CUDF_USE_PER_THREAD_DEFAULT_STREAM ON"
+        "USE_NVTX OFF"
+        "CUDF_BUILD_STREAMS_TEST_UTIL OFF"
         BUILD_EXPORT_SET rapid_cudf_test-exports)
 
 include(${rapids-cmake-dir}/cpm/spdlog.cmake)
