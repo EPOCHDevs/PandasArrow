@@ -47,7 +47,8 @@ add_library(pandas_arrow
 
 target_link_libraries(pandas_arrow PRIVATE
         ${Boost_LIBRARIES} TBB::tbb tabulate::tabulate
-        PUBLIC cudf::cudf spdlog::spdlog fmt::fmt)
+        PRIVATE cudf::cudf
+        PUBLIC spdlog::spdlog fmt::fmt)
 
 target_include_directories(pandas_arrow
         PRIVATE ${Boost_INCLUDE_DIRS}
