@@ -46,15 +46,12 @@ add_library(pandas_arrow
         src/cudf/series.cpp)
 
 target_link_libraries(pandas_arrow PRIVATE
-        ${Boost_LIBRARIES}
-        TBB::tbb tabulate::tabulate
-#        arrow_shared parquet_shared arrow_cuda_shared ${LIB_CUDF}
-        cudf::cudf
-        spdlog::spdlog fmt::fmt)
+        ${Boost_LIBRARIES} TBB::tbb tabulate::tabulate
+        PUBLIC cudf::cudf spdlog::spdlog fmt::fmt)
 
 target_include_directories(pandas_arrow
         PRIVATE ${Boost_INCLUDE_DIRS}
-        PUBLIC .)
+        PUBLIC src)
 
 #target_compile_options(pandas_arrow PRIVATE -Werror)
 add_library(pd::pandas_arrow ALIAS pandas_arrow)
