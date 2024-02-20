@@ -35,6 +35,7 @@ include(${SR_CMAKE}/get_cudf.cmake)
 find_package(Boost REQUIRED COMPONENTS filesystem system date_time )
 find_package(tabulate CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
+find_package(RapidJSON REQUIRED)
 
 add_library(pandas_arrow
         src/series.cpp
