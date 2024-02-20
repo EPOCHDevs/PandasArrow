@@ -1,0 +1,12 @@
+{
+  "name": "pandas-arrow",
+  "version": "0.20",
+  "dependencies": [
+    "tbb",
+    "tabulate",
+    "rapidjson",
+    "boost-date-time",
+    "boost-system",
+    "glog",
+    "boost-filesystem"]
+}
