@@ -2,8 +2,10 @@ cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
 
 set(CMAKE_TOOLCHAIN_FILE $ENV{HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
 set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc"  CACHE PATH "CUDA COMPILER")
-set(SR_CMAKE "$ENV{HOME}/SAMResearch/cmake"  CACHE PATH "SAMResearch CMAKE DIRECTORY")
-set(SR_CACHE "$ENV{HOME}/SAMResearch/cache"  CACHE PATH "SAMResearch CACHE DIRECTORY")
+
+set(SAM_RESEARCH "$ENV{HOME}/SAMResearch"  CACHE PATH "SAM RESEARCH FOLDER")
+set(SR_CMAKE "${SAM_RESEARCH}/cmake"  CACHE PATH "SAMResearch CMAKE DIRECTORY")
+set(SR_CACHE "${SAM_RESEARCH}/cache"  CACHE PATH "SAMResearch CACHE DIRECTORY")
 
 ########################################### INCLUDE RAPIDS CMAKE FILES #################################################
 include(${SR_CMAKE}/fetch_rapids.cmake)
@@ -47,9 +49,8 @@ add_library(pandas_arrow
         src/cudf/series.cpp)
 
 target_link_libraries(pandas_arrow PRIVATE
-        ${Boost_LIBRARIES} tabulate::tabulate
-        PUBLIC TBB::tbb nvcomp::nvcomp
-        cudf::cudf spdlog::spdlog fmt::fmt Arrow::arrow_static Parquet::parquet_static)
+        ${Boost_LIBRARIES} tabulate::tabulate spdlog::spdlog fmt::fmt TBB::tbb nvcomp::nvcomp Parquet::parquet_static
+        PUBLIC cudf::cudf Arrow::arrow_static )
 
 target_include_directories(pandas_arrow
         PRIVATE ${Boost_INCLUDE_DIRS}
