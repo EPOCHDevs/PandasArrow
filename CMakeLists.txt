@@ -1,18 +1,7 @@
 cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
 
-set(CMAKE_TOOLCHAIN_FILE $ENV{HOME}/vcpkg/scripts/buildsystems/vcpkg.cmake CACHE STRING "Vcpkg toolchain file")
-set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc"  CACHE PATH "CUDA COMPILER")
-
-set(SAM_RESEARCH "$ENV{HOME}/SAMResearch"  CACHE PATH "SAM RESEARCH FOLDER")
-set(SR_CMAKE "${SAM_RESEARCH}/cmake"  CACHE PATH "SAMResearch CMAKE DIRECTORY")
-set(SR_CACHE "${SAM_RESEARCH}/cache"  CACHE PATH "SAMResearch CACHE DIRECTORY")
-
-########################################### INCLUDE RAPIDS CMAKE FILES #################################################
-include(${SR_CMAKE}/fetch_rapids.cmake)
-include(rapids-cuda)
-include(rapids-cpm)
-include(${rapids-cmake-dir}/cuda/set_runtime.cmake)
-########################################################################################################################
+set(EPOCH_LAB "$ENV{HOME}/EpochLab"  CACHE PATH "SAM RESEARCH FOLDER")
+include(${EPOCH_LAB}/shared_header.cmake)
 
 rapids_cuda_init_architectures(PandasArrow)
 project(PandasArrow
@@ -30,7 +19,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 rapids_cuda_init_runtime(USE_STATIC ON)
 rapids_cpm_init()
 
-include(${SR_CMAKE}/get_cudf.cmake)
+include(${EPOCH_CMAKE}/get_cudf.cmake)
 
 find_package(Boost REQUIRED COMPONENTS filesystem system date_time )
 find_package(tabulate CONFIG REQUIRED)
