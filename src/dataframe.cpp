@@ -29,6 +29,8 @@
 #include "concat.h"
 #include <arrow/ipc/writer.h>
 #include "data_variant.h"
+#include "tabulate/table.hpp"
+
 
 namespace pd {
 

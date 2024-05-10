@@ -3,7 +3,6 @@
 // Created by dewe on 2/7/24.
 //
 #include "series.h"
-#include <thrust/device_vector.h>
 
 
 namespace pd {

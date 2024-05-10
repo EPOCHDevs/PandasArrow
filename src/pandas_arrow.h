@@ -9,7 +9,6 @@
 #include "group_by.h"
 #include "resample.h"
 #include "stringlike.h"
-#include "cudf/dataframe.h"
 
 
 namespace pd {

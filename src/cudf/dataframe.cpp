@@ -6,6 +6,7 @@
 #include <cudf/aggregation.hpp>
 #include <cudf/filling.hpp>
 #include "../dataframe.h"
+#include <thrust/device_vector.h>
 
 
 namespace pd
