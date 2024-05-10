@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
 
+set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc"  CACHE PATH "CUDA COMPILER")
+
 option(BUILD_TEST OFF)
 option(ENABLE_GPU OFF)
 
