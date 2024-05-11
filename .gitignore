@@ -15,3 +15,5 @@ vcpkg_installed
 third_party/installed
 third_party/arrow
 third_party/cudf
+
+main.cpp
