@@ -2,6 +2,7 @@
 // Created by dewe on 12/27/22.
 //
 #include "dataframe.h"
+#include "aws_s3_reader.h"
 #include <arrow/api.h>
 #include <arrow/compute/exec.h>
 #include <arrow/io/api.h>
@@ -200,7 +201,10 @@ DataFrame DataFrame::setColumns(std::vector<std::string> const& column_names)
 
 DataFrame DataFrame::readParquet(std::filesystem::path const& path)
 {
-    auto&& infileStatus = arrow::io::ReadableFile::Open(path);
+    const auto pathStr = path.string();
+    const auto isS3 = pathStr.starts_with("s3://");
+    auto&& infileStatus =
+        isS3 ? arrow::AWSS3Reader::Instance().CreateReadableFile(pathStr.substr(5)) : arrow::io::ReadableFile::Open(path);
     if (infileStatus.ok())
     {
         auto infile = std::move(infileStatus).ValueUnsafe();

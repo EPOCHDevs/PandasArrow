@@ -38,6 +38,7 @@ find_package(Arrow CONFIG REQUIRED)
 find_package(Parquet CONFIG REQUIRED)
 
 add_library(pandas_arrow
+        src/aws_s3_reader.cpp
         src/series.cpp
         src/scalar.cpp
         src/dataframe.cpp
@@ -54,12 +55,18 @@ if (ENABLE_GPU)
 
     target_link_libraries(pandas_arrow
             PRIVATE spdlog::spdlog fmt::fmt nvcomp::nvcomp cudf::cudf)
+else()
+    find_package(spdlog CONFIG REQUIRED)
+    find_package(fmt CONFIG REQUIRED)
+
+    target_link_libraries(pandas_arrow
+            PRIVATE spdlog::spdlog fmt::fmt)
 endif()
 
-target_link_libraries(pandas_arrow PRIVATE TBB::tbb parquet_static  PUBLIC arrow_static)
+target_link_libraries(pandas_arrow PRIVATE TBB::tbb parquet_static  PUBLIC arrow_static curl ssl crypto)
 
 target_include_directories(pandas_arrow
-        PRIVATE ${Boost_INCLUDE_DIRS} ${AWSSDK_INCLUDE_DIRS}
+        PRIVATE ${Boost_INCLUDE_DIRS}
         PUBLIC src)
 
 add_library(pd::pandas_arrow ALIAS pandas_arrow)
@@ -67,6 +74,6 @@ add_library(pd::pandas_arrow ALIAS pandas_arrow)
 IF( BUILD_TEST )
     add_subdirectory(tests)
 ENDIF()
-#
-#add_executable(main main.cpp)
-#target_link_libraries(main pandas_arrow)
+
+add_executable(main main.cpp)
+target_link_libraries(main PRIVATE pandas_arrow)
