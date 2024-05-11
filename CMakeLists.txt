@@ -74,6 +74,3 @@ add_library(pd::pandas_arrow ALIAS pandas_arrow)
 IF( BUILD_TEST )
     add_subdirectory(tests)
 ENDIF()
-
-#add_executable(main main.cpp)
-#target_link_libraries(main PRIVATE pandas_arrow)
