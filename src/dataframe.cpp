@@ -1137,7 +1137,7 @@ Resampler DataFrame::resample(
     std::string const& rule,
     bool closed_right,
     bool label_right,
-    std::variant<ptime, TimeGrouperOrigin> const& origin,
+    TimeGrouperOrigin const& origin,
     time_duration const& offset,
     std::string const& tz) const
 {

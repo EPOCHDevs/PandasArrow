@@ -290,7 +290,7 @@ public:
         std::string const& rule,
         bool closed_right = false,
         bool label_right = false,
-        std::variant<ptime, TimeGrouperOrigin> const& origin = TimeGrouperOrigin::StartDay,
+        TimeGrouperOrigin const& origin = {},
         time_duration const& offset = time_duration(),
         std::string const& tz = "") const;
 

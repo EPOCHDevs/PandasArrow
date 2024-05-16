@@ -56,7 +56,7 @@ Resampler resample(
     std::string const& rule,
     bool closed_right = false,
     bool label_right = false,
-    std::variant<ptime, TimeGrouperOrigin> const& origin = TimeGrouperOrigin::StartDay,
+    TimeGrouperOrigin const& origin = {},
     time_duration const& offset = time_duration(),
     std::string const& tz = "")
 {
@@ -96,7 +96,7 @@ Resampler resample(
     std::variant<DateOffset, time_duration> const& rule,
     bool closed_right = false,
     bool label_right = false,
-    std::variant<ptime, TimeGrouperOrigin> const& origin = TimeGrouperOrigin::StartDay,
+    TimeGrouperOrigin const& origin = {},
     time_duration const& offset = time_duration(),
     std::string const& tz = "")
 {
@@ -127,7 +127,7 @@ GroupInfo makeGroupInfo(
     std::variant<DateOffset, time_duration> const& rule,
     bool closed_right = false,
     bool label_right = false,
-    std::variant<ptime, TimeGrouperOrigin> const& origin = TimeGrouperOrigin::StartDay,
+    TimeGrouperOrigin const& origin = {},
     time_duration const& offset = time_duration(),
     std::string const& tz = "");
 
@@ -136,7 +136,7 @@ std::pair<ptime, ptime> adjustDatesAnchored(
     ptime const& end,
     time_duration const& freq,
     bool closed_right = false,
-    std::variant<ptime, TimeGrouperOrigin> const& origin = TimeGrouperOrigin::StartDay,
+    TimeGrouperOrigin const& origin = {},
     time_duration const& offset = time_duration(),
     std::string const& tz = "");
 
@@ -145,7 +145,7 @@ std::pair<ptime, ptime> getTimestampRangeEdges(
     ptime const& last,
     time_duration const& freq,
     bool closed_right,
-    std::variant<ptime, TimeGrouperOrigin> const& origin,
+    TimeGrouperOrigin const& origin,
     time_duration const& offset);
 
 } // namespace pd

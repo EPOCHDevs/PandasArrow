@@ -73,13 +73,18 @@ enum class JoinType
     Outer
 };
 
-enum class TimeGrouperOrigin
+struct TimeGrouperOrigin
 {
-    Epoch, // origin is 1970-01-01
-    Start, // origin is the first value of the timeseries
-    StartDay, // origin is the first day at midnight of the timeseries
-    End, // origin is the last value of the timeseries
-    EndDay, // origin is the ceiling midnight of the last day
+    enum Type
+    {
+        Epoch, // origin is 1970-01-01
+        Start, // origin is the first value of the timeseries
+        StartDay, // origin is the first day at midnight of the timeseries
+        End, // origin is the last value of the timeseries
+        EndDay, // origin is the ceiling midnight of the last day
+        Custom
+    } type{StartDay};
+    ptime custom{};
 };
 
 enum class AxisType

@@ -90,7 +90,7 @@ std::pair<ptime, ptime> adjustDatesAnchored(
     ptime const& end,
     time_duration const& freq,
     bool closed_right,
-    std::variant<ptime, TimeGrouperOrigin> const& origin_opt,
+    TimeGrouperOrigin const& origin,
     time_duration const& offset,
     std::string const& tz)
 {
@@ -102,29 +102,26 @@ std::pair<ptime, ptime> adjustDatesAnchored(
 
     ptime origin_time(date(1970, 1, 1));
     ; // origin == "epoch"
-    if (std::holds_alternative<TimeGrouperOrigin>(origin_opt))
+
+    if (origin.type == TimeGrouperOrigin::StartDay)
     {
-        auto origin = std::get<1>(origin_opt);
-        if (origin == TimeGrouperOrigin::StartDay)
-        {
-            origin_time = ptime(first.date());
-        }
-        else if (origin == TimeGrouperOrigin::Start)
-        {
-            origin_time = first;
-        }
-        else if (origin == TimeGrouperOrigin::End)
-        {
-            origin_time = last;
-        }
-        else if (origin == TimeGrouperOrigin::EndDay)
-        {
-            origin_time = ptime(last.date());
-        }
+        origin_time = ptime(first.date());
+    }
+    else if (origin.type == TimeGrouperOrigin::Start)
+    {
+        origin_time = first;
+    }
+    else if (origin.type == TimeGrouperOrigin::End)
+    {
+        origin_time = last;
+    }
+    else if (origin.type == TimeGrouperOrigin::EndDay)
+    {
+        origin_time = ptime(last.date());
     }
     else
     {
-        origin_time = std::get<0>(origin_opt);
+        origin_time = origin.custom;
     }
 
     origin_time += offset;
@@ -220,7 +217,7 @@ GroupInfo makeGroupInfo(
     std::variant<DateOffset, time_duration> const& rule,
     bool closed_right,
     bool label_right,
-    std::variant<ptime, TimeGrouperOrigin> const& origin,
+    TimeGrouperOrigin const& origin,
     time_duration const& offset,
     std::string const& tz)
 {
