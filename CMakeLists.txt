@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
 
 set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc"  CACHE PATH "CUDA COMPILER")
 
+option(BUILD_MAIN OFF)
 option(BUILD_TEST OFF)
 option(ENABLE_GPU OFF)
 
@@ -44,7 +45,8 @@ add_library(pandas_arrow
         src/dataframe.cpp
         src/core.cpp
         src/resample.cpp
-        src/concat.cpp)
+        src/concat.cpp
+        src/json_utils.cpp)
 
 if (ENABLE_GPU)
     target_sources(pandas_arrow PRIVATE
@@ -70,6 +72,11 @@ target_include_directories(pandas_arrow
         PUBLIC src)
 
 add_library(pd::pandas_arrow ALIAS pandas_arrow)
+
+IF (BUILD_MAIN)
+    add_executable(main main.cpp)
+    target_link_libraries(main PRIVATE pandas_arrow)
+ENDIF()
 
 IF( BUILD_TEST )
     add_subdirectory(tests)

@@ -31,6 +31,7 @@
 #include <arrow/ipc/writer.h>
 #include "data_variant.h"
 #include "tabulate/table.hpp"
+#include "json_utils.h"
 
 
 namespace pd {
@@ -273,6 +274,71 @@ arrow::Status DataFrame::toCSV(std::filesystem::path const& filepath, const std:
     // Write the RecordBatch to CSV
     auto concatenated = concatenateArraysToRecordBatch(m_array, m_index, indexField);
     return arrow::csv::WriteCSV(*concatenated, arrow::csv::WriteOptions::Defaults(), fileOutputStream.get());
+}
+
+    arrow::Result<rapidjson::Document> DataFrame::toJSON(std::vector<std::string> columns,
+        std::string const& index,
+        bool includeIndex) const {
+    columns = columns.empty() ? this->columnNames() : columns;
+
+    auto array = m_array;
+    if (includeIndex) {
+        array = array->AddColumn(array->num_columns(), arrow::field(index, m_index->type()), m_index).MoveValueUnsafe();
+    }
+
+    rapidjson::Document document;
+    document.SetArray();
+    rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
+
+    for (int64_t row = 0; row < m_array->num_rows(); ++row) {
+        rapidjson::Value json_row(rapidjson::kObjectType);
+
+        for (const auto& col_name : columns) {
+            rapidjson::Value key(col_name.c_str(), allocator);
+
+            rapidjson::Value value;
+            if (auto column = m_array->GetColumnByName(col_name)) {
+                value = ConvertArrayToJson(column, row, allocator);
+            }
+            else {
+                value.SetNull();
+            }
+            json_row.AddMember(key, value, allocator);
+        }
+        document.PushBack(json_row, allocator);
+    }
+
+    return document;
+}
+
+    arrow::Result<std::shared_ptr<arrow::Buffer>> DataFrame::toBinary(std::vector<std::string> columns,
+    std::string const& index,
+    bool includeIndex) const {
+    columns = columns.empty() ? this->columnNames() : columns;
+
+    auto array = m_array;
+    if (includeIndex) {
+        array = array->AddColumn(array->num_columns(), arrow::field(index, m_index->type()), m_index).MoveValueUnsafe();
+    }
+
+    std::shared_ptr<arrow::io::BufferOutputStream> output_stream;
+    ARROW_ASSIGN_OR_RAISE(output_stream, arrow::io::BufferOutputStream::Create());
+
+    // Create IPC writer
+    std::shared_ptr<arrow::ipc::RecordBatchWriter> writer;
+    ARROW_ASSIGN_OR_RAISE(writer, arrow::ipc::MakeStreamWriter(output_stream.get(), array->schema()));
+
+    // Write the RecordBatch
+    ARROW_RETURN_NOT_OK(writer->WriteRecordBatch(*array));
+
+    // Finalize the writer
+    ARROW_RETURN_NOT_OK(writer->Close());
+
+    // Retrieve the buffer
+    std::shared_ptr<arrow::Buffer> buffer;
+    ARROW_ASSIGN_OR_RAISE(buffer, output_stream->Finish());
+
+    return buffer;
 }
 
 
