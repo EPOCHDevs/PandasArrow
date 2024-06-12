@@ -206,7 +206,7 @@ public:
 
     arrow::Status toParquet(std::filesystem::path const& filepath, const std::string& indexField="index");
     arrow::Status toCSV(std::filesystem::path const& filepath, const std::string& indexField="index") const;
-    arrow::Result<rapidjson::Document> toJSON(std::vector<std::string> columns={}, std::string const& index="", bool includeIndex=true) const;
+    arrow::Result<rapidjson::Value> toJSON(rapidjson::Document::AllocatorType& allocator, std::vector<std::string> columns={}, std::string const& index="", bool includeIndex=true) const;
     arrow::Result<std::shared_ptr<arrow::Buffer>> toBinary(std::vector<std::string> columns={}, std::string const& index="", bool includeIndex=true) const;
 
     // indexer

@@ -276,7 +276,8 @@ arrow::Status DataFrame::toCSV(std::filesystem::path const& filepath, const std:
     return arrow::csv::WriteCSV(*concatenated, arrow::csv::WriteOptions::Defaults(), fileOutputStream.get());
 }
 
-    arrow::Result<rapidjson::Document> DataFrame::toJSON(std::vector<std::string> columns,
+    arrow::Result<rapidjson::Value> DataFrame::toJSON(rapidjson::Document::AllocatorType& allocator,
+        std::vector<std::string> columns,
         std::string const& index,
         bool includeIndex) const {
     columns = columns.empty() ? this->columnNames() : columns;
@@ -286,9 +287,8 @@ arrow::Status DataFrame::toCSV(std::filesystem::path const& filepath, const std:
         array = array->AddColumn(array->num_columns(), arrow::field(index, m_index->type()), m_index).MoveValueUnsafe();
     }
 
-    rapidjson::Document document;
+    rapidjson::Value document;
     document.SetArray();
-    rapidjson::Document::AllocatorType& allocator = document.GetAllocator();
 
     for (int64_t row = 0; row < m_array->num_rows(); ++row) {
         rapidjson::Value json_row(rapidjson::kObjectType);

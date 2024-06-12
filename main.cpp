@@ -9,10 +9,15 @@
 
 
 int main() {
-    auto file = pd::DataFrame::readParquet("/home/adesola/EpochLab/Database/S3/DailyBars/Stocks/AAPL.parquet.gzip");
+    auto file = pd::DataFrame::readParquet("/home/adesola/EpochLab/Database/S3/MinuteBarstatus/Stocks/AAPL.parquet.gzip");
 
     auto start = std::chrono::high_resolution_clock::now();
-    auto jsonDataResult = file.toJSON();
+
+    rapidjson::Document doc;
+    doc.SetObject();
+
+    auto jsonDataResult = file.toJSON(doc.GetAllocator());
+
     auto end = std::chrono::high_resolution_clock::now();
 
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
@@ -26,12 +31,12 @@ int main() {
     std::cout << "Conversion to Buffer took " << duration << " milliseconds to serialize to Binary length " << file.num_rows() << std::endl;
 
     if (jsonDataResult.ok()) {
-        const rapidjson::Document& jsonData = jsonDataResult.ValueOrDie();
+        doc.AddMember("data", jsonDataResult.ValueOrDie(), doc.GetAllocator());
 
         // Convert the RapidJSON Document to a string
         rapidjson::StringBuffer buffer;
         rapidjson::Writer<rapidjson::StringBuffer> writer(buffer);
-        jsonData.Accept(writer);
+        doc.Accept(writer);
 
         // Print the JSON string
         SPDLOG_TRACE(buffer.GetString());
