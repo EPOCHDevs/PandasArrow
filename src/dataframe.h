@@ -9,8 +9,8 @@
 
 namespace pd {
 
-constexpr int PD_MAX_ROW_TO_PRINT = { 7000 };
-constexpr int PD_MAX_COL_TO_PRINT = { 100 };
+#define PD_MAX_ROW_TO_PRINT 1000
+#define PD_MAX_COL_TO_PRINT 100
 
 template<class T>
 concept LiteralType = std::is_floating_point_v<T> || std::is_integral_v<T> || std::is_same_v<T, std::string>;
@@ -203,11 +203,16 @@ public:
 
     static DataFrame readParquet(std::filesystem::path const& path);
     static DataFrame readCSV(std::filesystem::path const& path);
+    static DataFrame readBinary(const std::basic_string_view<uint8_t> &blob, std::optional<std::string> const &index=std::nullopt);
+    static DataFrame readJSON(const rapidjson::Document &doc, std::shared_ptr<arrow::Schema> const& schema, std::optional<std::string> const& index=std::nullopt);
+    static DataFrame readJSON(const std::string &doc, std::shared_ptr<arrow::Schema> const& schema, std::optional<std::string> const& index=std::nullopt);
 
     arrow::Status toParquet(std::filesystem::path const& filepath, const std::string& indexField="index");
     arrow::Status toCSV(std::filesystem::path const& filepath, const std::string& indexField="index") const;
-    arrow::Result<rapidjson::Value> toJSON(rapidjson::Document::AllocatorType& allocator, std::vector<std::string> columns={}, std::string const& index="", bool includeIndex=true) const;
-    arrow::Result<std::shared_ptr<arrow::Buffer>> toBinary(std::vector<std::string> columns={}, std::string const& index="", bool includeIndex=true) const;
+    arrow::Result<rapidjson::Value> toJSON(rapidjson::Document::AllocatorType& allocator,
+                                           std::vector<std::string> columns={},
+                                           std::optional<std::string> const &index={}) const;
+    arrow::Result<std::shared_ptr<arrow::Buffer>> toBinary(std::vector<std::string> columns={}, std::optional<std::string> const &index={}) const;
 
     // indexer
     class Series operator[](std::string const& column) const;
