@@ -25,7 +25,7 @@ using namespace boost::gregorian;
 
 namespace pd {
 
-    boost::posix_time::ptime EPOCH(boost::gregorian::date(1970, 1, 1));
+    const boost::posix_time::ptime EPOCH(boost::gregorian::date(1970, 1, 1));
 
 const auto NULL_INDEX = std::shared_ptr<arrow::Array>{ nullptr };
 using ScalarPtr = std::shared_ptr<arrow::Scalar>;
