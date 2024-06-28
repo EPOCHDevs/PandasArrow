@@ -79,7 +79,8 @@ int main() {
             jsonDurations += timer.duration();
 
             timer.reset();
-            binaryDF = pd::DataFrame::readBinary(blob.second);
+            std::basic_string_view<char> imm{reinterpret_cast<const char*>(blob.second.data() ), blob.second.size()}; // test no loss
+            binaryDF = pd::DataFrame::readBinary(std::basic_string_view<uint8_t>{reinterpret_cast<const uint8_t*>(imm.data()), imm.size()});
             binaryDurations += timer.duration();
         }
 

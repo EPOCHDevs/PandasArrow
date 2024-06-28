@@ -25,6 +25,8 @@ using namespace boost::gregorian;
 
 namespace pd {
 
+    boost::posix_time::ptime EPOCH(boost::gregorian::date(1970, 1, 1));
+
 const auto NULL_INDEX = std::shared_ptr<arrow::Array>{ nullptr };
 using ScalarPtr = std::shared_ptr<arrow::Scalar>;
 using ArrayPtr = std::shared_ptr<arrow::Array>;
@@ -260,22 +262,18 @@ inline time_duration duration_from_string(std::string const& freq,
     return duration_from_string(freq_unit, freq_value_override.value_or(freq_value));
 }
 
-inline int64_t toTimestampNS(const std::string& date_string)
-{
-    boost::posix_time::ptime date_time = boost::posix_time::from_iso_extended_string(date_string);
-    boost::posix_time::ptime epoch(boost::gregorian::date(1970, 1, 1));
-    boost::posix_time::time_duration duration = date_time - epoch;
-    return duration.total_nanoseconds();
-}
-
 /**
  * Converts ptime to nanosecond since Unix epoch.
  */
 template<class T = int64_t>
-static inline T fromPTime(ptime const& _time)
+static inline T fromPTime(ptime const& date_time) {
+    boost::posix_time::time_duration duration = date_time - EPOCH;
+    return duration.total_nanoseconds();
+}
+
+inline int64_t toTimestampNS(const std::string& date_string)
 {
-    return static_cast<T>(
-        std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::seconds(to_time_t(_time))).count());
+    return fromPTime( boost::posix_time::from_iso_extended_string(date_string));
 }
 
 inline std::shared_ptr<arrow::TimestampArray> toDateTime(
@@ -416,180 +414,142 @@ class Scalar;
 
 
 namespace arrow {
-template<typename T>
-struct ArrayT
-{
-    static auto Make(std::vector<T> const& x)
-    {
-        auto builder = std::make_shared<typename arrow::CTypeTraits<T>::BuilderType>();
-        pd::ThrowOnFailure(builder->AppendValues(x));
-        return std::dynamic_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(
-            builder->Finish().MoveValueUnsafe());
-    }
+    template<typename T>
+    struct ArrayT {
+        static auto Make(std::vector<T> const &x) {
+            auto builder = std::make_shared<typename arrow::CTypeTraits<T>::BuilderType>();
+            pd::ThrowOnFailure(builder->AppendValues(x));
+            return std::dynamic_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(
+                    builder->Finish().MoveValueUnsafe());
+        }
 
-    static auto Make(std::valarray<T> const& x)
-    {
-        auto builder = std::make_shared<typename arrow::CTypeTraits<T>::BuilderType>();
-        pd::ThrowOnFailure(builder->AppendValues(std::begin(x), std::end(x)));
-        return std::dynamic_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(
-            builder->Finish().MoveValueUnsafe());
-    }
+        static auto Make(std::valarray<T> const &x) {
+            auto builder = std::make_shared<typename arrow::CTypeTraits<T>::BuilderType>();
+            pd::ThrowOnFailure(builder->AppendValues(std::begin(x), std::end(x)));
+            return std::dynamic_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(
+                    builder->Finish().MoveValueUnsafe());
+        }
 
-    static auto Make(std::vector<T> const& x, std::vector<bool> const& map)
-    {
-        auto builder = std::make_shared<typename arrow::CTypeTraits<T>::BuilderType>();
-        pd::ThrowOnFailure(builder->AppendValues(x, map));
-        return std::dynamic_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(
-            builder->Finish().MoveValueUnsafe());
-    }
-};
+        static auto Make(std::vector<T> const &x, std::vector<bool> const &map) {
+            auto builder = std::make_shared<typename arrow::CTypeTraits<T>::BuilderType>();
+            pd::ThrowOnFailure(builder->AppendValues(x, map));
+            return std::dynamic_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(
+                    builder->Finish().MoveValueUnsafe());
+        }
+    };
 
-struct ScalarArray
-{
-    static std::shared_ptr<arrow::Array> Make(arrow::ScalarVector const& x,
-                                              const std::shared_ptr<arrow::DataType>& dt=nullptr)
-    {
-        if (x.empty())
-        {
-            if (dt)
-            {
-                return pd::ReturnOrThrowOnFailure(arrow::MakeEmptyArray(dt));
+    struct ScalarArray {
+        static std::shared_ptr<arrow::Array> Make(arrow::ScalarVector const &x,
+                                                  const std::shared_ptr<arrow::DataType> &dt = nullptr) {
+            if (x.empty()) {
+                if (dt) {
+                    return pd::ReturnOrThrowOnFailure(arrow::MakeEmptyArray(dt));
+                } else {
+                    throw std::runtime_error("Empty ScalarArray requires a valid data_Type is passed");
+                }
             }
-            else
-            {
-                throw std::runtime_error("Empty ScalarArray requires a valid data_Type is passed");
+            auto builder = arrow::MakeBuilder(x.back()->type).MoveValueUnsafe();
+            pd::ThrowOnFailure(builder->AppendScalars(x));
+            return builder->Finish().MoveValueUnsafe();
+        }
+
+        static std::shared_ptr<arrow::Array> Make(std::vector<pd::Scalar> const &x);
+    };
+
+    struct DateArray : ArrayT<date> {
+        static auto Make(std::vector<date> const &dates) {
+            std::vector<int64_t> timestamps64(dates.size());
+            std::ranges::transform(dates, timestamps64.begin(), [](auto const &t) { return pd::fromDate(t); });
+            return pd::toDateTime(timestamps64);
+        }
+
+        static auto Make(std::vector<date> const &x, std::vector<bool> const &map) {
+            TimestampBuilder builder(std::make_shared<arrow::TimestampType>(arrow::TimeUnit::NANO), default_memory_pool());
+
+            std::vector<int64_t> ts(x.size());
+            std::ranges::transform(x, ts.begin(), [](auto const &t) { return pd::fromDate(t); });
+
+            pd::ThrowOnFailure(builder.AppendValues(ts, map));
+
+            return std::dynamic_pointer_cast<arrow::TimestampArray>(builder.Finish().MoveValueUnsafe());
+        }
+    };
+
+    struct DateTimeArray : ArrayT<ptime> {
+        static std::shared_ptr<arrow::TimestampArray> Make(std::vector<ptime> const &x) {
+            std::vector<int64_t> timestamps64(x.size());
+            std::ranges::transform(x, timestamps64.begin(), [](auto const &t) { return pd::fromPTime(t); });
+            return pd::toDateTime(timestamps64);
+        }
+
+        static std::shared_ptr<arrow::TimestampArray> Make(std::vector<ptime> const &x, std::vector<bool> const &map) {
+            TimestampBuilder builder(std::make_shared<arrow::TimestampType>(arrow::TimeUnit::NANO), default_memory_pool());
+
+            std::vector<int64_t> ts(x.size());
+            std::ranges::transform(x, ts.begin(), [](auto const &t) { return pd::fromPTime(t); });
+
+            pd::ThrowOnFailure(builder.AppendValues(ts, map));
+
+            return std::dynamic_pointer_cast<arrow::TimestampArray>(builder.Finish().MoveValueUnsafe());
+        }
+    };
+
+    template<class T>
+    std::shared_ptr<arrow::Array> ArrayFromJSON(std::string_view json) {
+        rapidjson::Document doc;
+        doc.Parse(json.data());
+        if (!doc.IsArray()) {
+            throw std::runtime_error("Input JSON is not an array");
+        }
+
+        typename arrow::CTypeTraits<T>::BuilderType builder;
+
+        for (const auto &val: doc.GetArray()) {
+            if (val.IsNull()) {
+                pd::ThrowOnFailure(builder.AppendNull());
+            } else if (val.IsInt()) {
+                if constexpr (std::is_integral_v<T>)
+                    pd::ThrowOnFailure(builder.Append(val.GetInt()));
+                else
+                    throw std::runtime_error("Unsupported data type");
+            } else if (val.IsBool()) {
+                pd::ThrowOnFailure(builder.Append(val.GetBool()));
+            } else if (val.IsInt64()) {
+                if constexpr (std::is_integral_v<T>)
+                    pd::ThrowOnFailure(builder.Append(val.GetInt64()));
+                else
+                    throw std::runtime_error("Unsupported data type");
+            } else if (val.IsUint64()) {
+                if constexpr (std::is_integral_v<T>)
+                    pd::ThrowOnFailure(builder.Append(val.GetUint64()));
+                else
+                    throw std::runtime_error("Unsupported data type");
+            } else if (val.IsUint()) {
+                if constexpr (std::is_integral_v<T>)
+                    pd::ThrowOnFailure(builder.Append(val.GetUint()));
+                else
+                    throw std::runtime_error("Unsupported data type");
+            } else if (val.IsFloat()) {
+                if constexpr (std::is_floating_point_v<T>)
+                    pd::ThrowOnFailure(builder.Append(val.GetFloat()));
+                else
+                    throw std::runtime_error("Unsupported data type");
+            } else if (val.IsDouble()) {
+                if constexpr (std::is_floating_point_v<T>)
+                    pd::ThrowOnFailure(builder.Append(val.GetDouble()));
+                else
+                    throw std::runtime_error("Unsupported data type");
+            } else if (val.IsString()) {
+                if constexpr (std::is_same<T, std::string>::value)
+                    pd::ThrowOnFailure(builder.Append(val.GetString()));
+                else
+                    throw std::runtime_error("Unsupported data type");
+            } else {
+                throw std::runtime_error("Unsupported data type in JSON array");
             }
         }
-        auto builder = arrow::MakeBuilder(x.back()->type).MoveValueUnsafe();
-        pd::ThrowOnFailure(builder->AppendScalars(x));
-        return builder->Finish().MoveValueUnsafe();
+
+        return pd::ReturnOrThrowOnFailure(builder.Finish());
     }
-
-    static std::shared_ptr<arrow::Array> Make(std::vector<pd::Scalar> const& x);
-};
-
-struct DateArray : ArrayT<date>
-{
-    static auto Make(std::vector<date> const& dates)
-    {
-        std::vector<int64_t> timestamps64(dates.size());
-        std::ranges::transform(dates, timestamps64.begin(), [](auto const& t) { return pd::fromDate(t); });
-        return pd::toDateTime(timestamps64);
-    }
-
-    static auto Make(std::vector<date> const& x, std::vector<bool> const& map)
-    {
-        TimestampBuilder builder(std::make_shared<arrow::TimestampType>(arrow::TimeUnit::NANO), default_memory_pool());
-
-        std::vector<int64_t> ts(x.size());
-        std::ranges::transform(x, ts.begin(), [](auto const& t) { return pd::fromDate(t); });
-
-        pd::ThrowOnFailure(builder.AppendValues(ts, map));
-
-        return std::dynamic_pointer_cast<arrow::TimestampArray>(builder.Finish().MoveValueUnsafe());
-    }
-};
-
-struct DateTimeArray : ArrayT<ptime>
-{
-    static std::shared_ptr<arrow::TimestampArray> Make(std::vector<ptime> const& x)
-    {
-        std::vector<int64_t> timestamps64(x.size());
-        std::ranges::transform(x, timestamps64.begin(), [](auto const& t) { return pd::fromPTime(t); });
-        return pd::toDateTime(timestamps64);
-    }
-
-    static std::shared_ptr<arrow::TimestampArray> Make(std::vector<ptime> const& x, std::vector<bool> const& map)
-    {
-        TimestampBuilder builder(std::make_shared<arrow::TimestampType>(arrow::TimeUnit::NANO), default_memory_pool());
-
-        std::vector<int64_t> ts(x.size());
-        std::ranges::transform(x, ts.begin(), [](auto const& t) { return pd::fromPTime(t); });
-
-        pd::ThrowOnFailure(builder.AppendValues(ts, map));
-
-        return std::dynamic_pointer_cast<arrow::TimestampArray>(builder.Finish().MoveValueUnsafe());
-    }
-};
-
-template<class T>
-std::shared_ptr<arrow::Array> ArrayFromJSON(std::string_view json)
-{
-    rapidjson::Document doc;
-    doc.Parse(json.data());
-    if (!doc.IsArray())
-    {
-        throw std::runtime_error("Input JSON is not an array");
-    }
-
-    typename arrow::CTypeTraits<T>::BuilderType builder;
-
-    for (const auto& val : doc.GetArray())
-    {
-        if (val.IsNull())
-        {
-            pd::ThrowOnFailure(builder.AppendNull());
-        }
-        else if (val.IsInt())
-        {
-            if constexpr (std::is_integral_v<T>)
-                pd::ThrowOnFailure(builder.Append(val.GetInt()));
-            else
-                throw std::runtime_error("Unsupported data type");
-        }
-        else if (val.IsBool())
-        {
-            pd::ThrowOnFailure(builder.Append(val.GetBool()));
-        }
-        else if (val.IsInt64())
-        {
-            if constexpr (std::is_integral_v<T>)
-                pd::ThrowOnFailure(builder.Append(val.GetInt64()));
-            else
-                throw std::runtime_error("Unsupported data type");
-        }
-        else if (val.IsUint64())
-        {
-            if constexpr (std::is_integral_v<T>)
-                pd::ThrowOnFailure(builder.Append(val.GetUint64()));
-            else
-                throw std::runtime_error("Unsupported data type");
-        }
-        else if (val.IsUint())
-        {
-            if constexpr (std::is_integral_v<T>)
-                pd::ThrowOnFailure(builder.Append(val.GetUint()));
-            else
-                throw std::runtime_error("Unsupported data type");
-        }
-        else if (val.IsFloat())
-        {
-            if constexpr (std::is_floating_point_v<T>)
-                pd::ThrowOnFailure(builder.Append(val.GetFloat()));
-            else
-                throw std::runtime_error("Unsupported data type");
-        }
-        else if (val.IsDouble())
-        {
-            if constexpr (std::is_floating_point_v<T>)
-                pd::ThrowOnFailure(builder.Append(val.GetDouble()));
-            else
-                throw std::runtime_error("Unsupported data type");
-        }
-        else if (val.IsString())
-        {
-            if constexpr (std::is_same<T, std::string>::value)
-                pd::ThrowOnFailure(builder.Append(val.GetString()));
-            else
-                throw std::runtime_error("Unsupported data type");
-        }
-        else
-        {
-            throw std::runtime_error("Unsupported data type in JSON array");
-        }
-    }
-
-    return pd::ReturnOrThrowOnFailure(builder.Finish());
-}
 
 } // namespace arrow
