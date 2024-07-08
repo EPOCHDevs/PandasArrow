@@ -209,7 +209,7 @@ namespace pd {
         }
     }
 
-    arrow::Status DataFrame::toParquet(std::filesystem::path const &filepath, const std::string &indexField) {
+    arrow::Status DataFrame::toParquet(std::filesystem::path const &filepath, const std::string &indexField) const {
         ARROW_ASSIGN_OR_RAISE(
                 std::shared_ptr<arrow::Table> table,
                 arrow::Table::FromRecordBatches(std::vector{concatenateArraysToRecordBatch(m_array, m_index, indexField)}));
