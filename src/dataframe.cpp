@@ -264,6 +264,7 @@ namespace pd {
 
         auto defaultOption = arrow::ipc::IpcWriteOptions::Defaults();
         defaultOption.metadata_version = arrow::ipc::MetadataVersion::V4;
+        defaultOption.write_legacy_ipc_format = true;
         ARROW_ASSIGN_OR_RAISE(writer, arrow::ipc::MakeStreamWriter(output_stream.get(), array->schema(), defaultOption));
         // Write the RecordBatch
         ARROW_RETURN_NOT_OK(writer->WriteRecordBatch(*array, std::make_shared<arrow::KeyValueMetadata>(metadata)));
