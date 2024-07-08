@@ -212,7 +212,7 @@ public:
     arrow::Result<rapidjson::Value> toJSON(rapidjson::Document::AllocatorType& allocator,
                                            std::vector<std::string> columns={},
                                            std::optional<std::string> const &index={}) const;
-    arrow::Result<std::shared_ptr<arrow::Buffer>> toBinary(std::vector<std::string> columns={}, std::optional<std::string> const &index={}) const;
+    arrow::Result<std::shared_ptr<arrow::Buffer>> toBinary(std::vector<std::string> columns={}, std::optional<std::string> const &index={}, std::unordered_map<std::string, std::string> const& metadata={}) const;
 
     // indexer
     class Series operator[](std::string const& column) const;

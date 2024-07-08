@@ -247,7 +247,8 @@ namespace pd {
     }
 
     arrow::Result<std::shared_ptr<arrow::Buffer>> DataFrame::toBinary(std::vector<std::string> columns,
-                                                                      std::optional<std::string> const &index) const {
+                                                                      std::optional<std::string> const &index,
+                                                                      std::unordered_map<std::string, std::string> const& metadata) const {
         columns = columns.empty() ? this->columnNames() : columns;
 
         auto array = m_array;
@@ -261,9 +262,8 @@ namespace pd {
         // Create IPC writer
         std::shared_ptr<arrow::ipc::RecordBatchWriter> writer;
         ARROW_ASSIGN_OR_RAISE(writer, arrow::ipc::MakeStreamWriter(output_stream.get(), array->schema()));
-
         // Write the RecordBatch
-        ARROW_RETURN_NOT_OK(writer->WriteRecordBatch(*array));
+        ARROW_RETURN_NOT_OK(writer->WriteRecordBatch(*array, std::make_shared<arrow::KeyValueMetadata>(metadata)));
 
         // Finalize the writer
         ARROW_RETURN_NOT_OK(writer->Close());
