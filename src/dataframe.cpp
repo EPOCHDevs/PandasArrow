@@ -261,11 +261,7 @@ namespace pd {
 
         // Create IPC writer
         std::shared_ptr<arrow::ipc::RecordBatchWriter> writer;
-
-        auto defaultOption = arrow::ipc::IpcWriteOptions::Defaults();
-        defaultOption.metadata_version = arrow::ipc::MetadataVersion::V4;
-        defaultOption.write_legacy_ipc_format = true;
-        ARROW_ASSIGN_OR_RAISE(writer, arrow::ipc::MakeStreamWriter(output_stream.get(), array->schema(), defaultOption));
+        ARROW_ASSIGN_OR_RAISE(writer, arrow::ipc::MakeStreamWriter(output_stream.get(), array->schema()));
         // Write the RecordBatch
         ARROW_RETURN_NOT_OK(writer->WriteRecordBatch(*array, std::make_shared<arrow::KeyValueMetadata>(metadata)));
 
