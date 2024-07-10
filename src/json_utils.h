@@ -48,11 +48,12 @@
 //    conversion for Arrow types that have corresponding C types (bool, integer,
 //    float).
 
-const rapidjson::Value kNullJsonSingleton = rapidjson::Value();
+static rapidjson::Value kNullJsonSingleton = rapidjson::Value();
 
 
 arrow::Result<rapidjson::Value> ConvertToVector(
         std::shared_ptr<arrow::RecordBatch> batch,
+        bool rowFormat,
         rapidjson::Document::AllocatorType& allocator);
 
 /// \brief Iterator over rows values of a document for a given field
@@ -151,6 +152,53 @@ private:
     /// Return a flattened iterator over values at nested location
     arrow::Iterator<const rapidjson::Value*> FieldValues();
 };  // JsonValueConverter
+
+/// \brief Converter that holds state for converting columnar JSON to Arrow Arrays.
+class JsonColumnConverter {
+public:
+    explicit JsonColumnConverter(const rapidjson::Value& columns)
+        : columns_(columns) {}
+
+    /// \brief For field passed in, append corresponding values to builder
+    arrow::Status Convert(const arrow::Field& field, arrow::ArrayBuilder* builder) {
+        return Convert(field, field.name(), builder);
+    }
+
+    /// \brief For field passed in, append corresponding values to builder
+    arrow::Status Convert(const arrow::Field& field, const std::string& field_name,
+                          arrow::ArrayBuilder* builder) {
+        field_name_ = field_name;
+        builder_ = builder;
+        ARROW_RETURN_NOT_OK(arrow::VisitTypeInline(*field.type().get(), this));
+        return arrow::Status::OK();
+    }
+
+    // Default implementation
+    arrow::Status Visit(const arrow::DataType& type) {
+        return arrow::Status::NotImplemented(
+                "Cannot convert json value to Arrow array of type ", type.ToString());
+    }
+
+    arrow::Status Visit(const arrow::Int64Type& type);
+
+    arrow::Status Visit(const arrow::DoubleType& type);
+
+    arrow::Status Visit(const arrow::StringType& type);
+
+    arrow::Status Visit(const arrow::BooleanType& type);
+
+    arrow::Status Visit(const arrow::StructType& type);
+
+    arrow::Status Visit(const arrow::ListType& type);
+
+private:
+    std::string field_name_;
+    arrow::ArrayBuilder* builder_;
+    const rapidjson::Value& columns_;
+
+    /// Return a flattened iterator over values at nested location
+    arrow::Iterator<const rapidjson::Value*> ColumnValues();
+};  // JsonColumnConverter
 
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> ConvertToRecordBatch(
         const rapidjson::Document& doc, std::shared_ptr<arrow::Schema> schema);

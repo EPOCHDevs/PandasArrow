@@ -3,6 +3,127 @@
 //
 #include "json_utils.h"
 
+/// \brief Builder that holds state for a single conversion to columnar JSON format.
+///
+/// Implements Visit() methods for each type of Arrow Array that set the values
+/// of the corresponding fields in each column.
+class ColumnBatchBuilder {
+public:
+    explicit ColumnBatchBuilder(int64_t num_rows, rapidjson::Document::AllocatorType& alloc) :
+                                                                                               field_(nullptr),
+                                                                                               allocator(alloc),
+                                                                                               columns_(rapidjson::kObjectType) {}
+
+    /// \brief Set which field to convert.
+    void SetField(const arrow::Field* field) { field_ = field; }
+
+    /// \brief Retrieve converted columns from builder.
+    rapidjson::Value Result() && { return std::move(columns_); }
+
+    // Default implementation
+    arrow::Status Visit(const arrow::Array& array) {
+        return arrow::Status::NotImplemented(
+                "Cannot convert to json document for array of type ", array.type()->ToString());
+    }
+
+    // Handles booleans, integers, floats
+    template <typename ArrayType, typename DataClass = typename ArrayType::TypeClass>
+    arrow::enable_if_primitive_ctype<DataClass, arrow::Status> Visit(
+            const ArrayType& array) {
+        rapidjson::Value column_data(rapidjson::kArrayType);
+        for (int64_t i = 0; i < array.length(); ++i) {
+            if (!array.IsNull(i)) {
+                column_data.PushBack(array.Value(i), allocator);
+            } else {
+                column_data.PushBack(rapidjson::Value(), allocator);
+            }
+        }
+
+        rapidjson::Value col_name(field_->name(), allocator);
+        columns_.AddMember(col_name, column_data, allocator);
+        return arrow::Status::OK();
+    }
+
+    arrow::Status Visit(const arrow::StringArray& array) {
+        rapidjson::Value column_data(rapidjson::kArrayType);
+        for (int64_t i = 0; i < array.length(); ++i) {
+            if (!array.IsNull(i)) {
+                std::string_view value_view = array.Value(i);
+                rapidjson::Value value;
+                value.SetString(value_view.data(),
+                                static_cast<rapidjson::SizeType>(value_view.size()),
+                                allocator);
+                column_data.PushBack(value, allocator);
+            } else {
+                column_data.PushBack(rapidjson::Value(), allocator);
+            }
+        }
+
+        rapidjson::Value col_name(field_->name(), allocator);
+        columns_.AddMember(col_name, column_data, allocator);
+        return arrow::Status::OK();
+    }
+
+    arrow::Status Visit(const arrow::StructArray& array) {
+        const arrow::StructType* type = array.struct_type();
+
+        ColumnBatchBuilder child_builder(array.length(), allocator);
+        for (int i = 0; i < type->num_fields(); ++i) {
+            const arrow::Field* child_field = type->field(i).get();
+            child_builder.SetField(child_field);
+            ARROW_RETURN_NOT_OK(arrow::VisitArrayInline(*array.field(i).get(), &child_builder));
+        }
+        rapidjson::Value columns = std::move(child_builder).Result();
+
+        for (int i = 0; i < type->num_fields(); ++i) {
+            rapidjson::Value col_name(type->field(i)->name(), allocator);
+            columns_.AddMember(col_name, columns[i], allocator);
+        }
+
+        return arrow::Status::OK();
+    }
+
+    arrow::Status Visit(const arrow::ListArray& array) {
+        rapidjson::Value column_data(rapidjson::kArrayType);
+        std::shared_ptr<arrow::Array> values = array.values();
+        ColumnBatchBuilder child_builder(values->length(), allocator);
+        const arrow::Field* value_field = array.list_type()->value_field().get();
+        child_builder.SetField(value_field);
+        ARROW_RETURN_NOT_OK(arrow::VisitArrayInline(*values.get(), &child_builder));
+
+        rapidjson::Value columns = std::move(child_builder).Result();
+
+        int64_t values_i = 0;
+        for (int64_t i = 0; i < array.length(); ++i) {
+            if (array.IsNull(i)) {
+                column_data.PushBack(rapidjson::Value(), allocator);
+                continue;
+            }
+
+            auto array_len = array.value_length(i);
+            rapidjson::Value value_array(rapidjson::kArrayType);
+            value_array.Reserve(array_len, allocator);
+
+            for (int64_t j = 0; j < array_len; ++j) {
+                value_array.PushBack(columns[values_i], allocator);
+                ++values_i;
+            }
+            column_data.PushBack(value_array, allocator);
+        }
+
+        rapidjson::Value col_name(field_->name(), allocator);
+        columns_.AddMember(col_name, column_data, allocator);
+
+        return arrow::Status::OK();
+    }
+
+private:
+    const arrow::Field* field_;
+    rapidjson::Value columns_;
+    rapidjson::Document::AllocatorType& allocator;
+};  // ColumnBatchBuilder
+
+
 /// \brief Builder that holds state for a single conversion.
 ///
 /// Implements Visit() methods for each type of Arrow Array that set the values
@@ -24,7 +145,7 @@ public:
     void SetField(const arrow::Field* field) { field_ = field; }
 
     /// \brief Retrieve converted rows from builder.
-    rapidjson::Value Rows() && { return std::move(rows_); }
+    rapidjson::Value Result() && { return std::move(rows_); }
 
     // Default implementation
     arrow::Status Visit(const arrow::Array& array) {
@@ -38,9 +159,12 @@ public:
             const ArrayType& array) {
         assert(static_cast<int64_t>(rows_.Size()) == array.length());
         for (int64_t i = 0; i < array.length(); ++i) {
+            rapidjson::Value str_key(field_->name(), allocator);
             if (!array.IsNull(i)) {
-                rapidjson::Value str_key(field_->name(), allocator);
                 rows_[i].AddMember(str_key, array.Value(i), allocator);
+            }
+            else {
+                rows_[i].AddMember(str_key, kNullJsonSingleton, allocator);
             }
         }
 
@@ -74,7 +198,7 @@ public:
             child_builder.SetField(child_field);
             ARROW_RETURN_NOT_OK(arrow::VisitArrayInline(*array.field(i).get(), &child_builder));
         }
-        rapidjson::Value rows = std::move(child_builder).Rows();
+        rapidjson::Value rows = std::move(child_builder).Result();
 
         for (int64_t i = 0; i < array.length(); ++i) {
             if (!array.IsNull(i)) {
@@ -98,7 +222,7 @@ public:
         child_builder.SetField(value_field);
         ARROW_RETURN_NOT_OK(arrow::VisitArrayInline(*values.get(), &child_builder));
 
-        rapidjson::Value rows = std::move(child_builder).Rows();
+        rapidjson::Value rows = std::move(child_builder).Result();
 
         int64_t values_i = 0;
         for (int64_t i = 0; i < array.length(); ++i) {
@@ -131,18 +255,24 @@ private:
     rapidjson::Document::AllocatorType allocator;
 };  // RowBatchBuilder
 
-/// Convert a single batch of Arrow data into Documents
-arrow::Result<rapidjson::Value> ConvertToVector(
-        std::shared_ptr<arrow::RecordBatch> batch,
-        rapidjson::Document::AllocatorType& allocator) {
-    RowBatchBuilder builder{batch->num_rows(), allocator};
-
+template<class BuilderType>
+arrow::Result<rapidjson::Value> ConvertToVectorT(auto& batch, auto& allocator)
+{
+    BuilderType builder{batch->num_rows(), allocator};
     for (int i = 0; i < batch->num_columns(); ++i) {
         builder.SetField(batch->schema()->field(i).get());
         ARROW_RETURN_NOT_OK(arrow::VisitArrayInline(*batch->column(i).get(), &builder));
     }
 
-    return std::move(builder).Rows();
+    return std::move(builder).Result();
+}
+
+/// Convert a single batch of Arrow data into Documents
+arrow::Result<rapidjson::Value> ConvertToVector(
+        std::shared_ptr<arrow::RecordBatch> batch,
+        bool rowFormat,
+        rapidjson::Document::AllocatorType& allocator) {
+    return rowFormat ? ConvertToVectorT<RowBatchBuilder>(batch, allocator) : ConvertToVectorT<ColumnBatchBuilder>(batch, allocator);
 }
 
 const rapidjson::Value* DocValuesIterator::NextArrayOrRow(const rapidjson::Value* value, size_t* path_i,
@@ -347,30 +477,151 @@ arrow::Iterator<const rapidjson::Value*> JsonValueConverter::FieldValues() {
     return arrow::MakeFunctionIterator(fn);
 }
 
+arrow::Status JsonColumnConverter::Visit(const arrow::Int64Type& type) {
+    arrow::Int64Builder* builder = static_cast<arrow::Int64Builder*>(builder_);
+    const auto& column = columns_[field_name_.c_str()];
+    for (rapidjson::SizeType i = 0; i < column.Size(); ++i) {
+        if (column[i].IsNull()) {
+            ARROW_RETURN_NOT_OK(builder->AppendNull());
+        } else {
+            ARROW_RETURN_NOT_OK(builder->Append(column[i].GetInt64()));
+        }
+    }
+    return arrow::Status::OK();
+}
+
+arrow::Status JsonColumnConverter::Visit(const arrow::DoubleType& type) {
+    arrow::DoubleBuilder* builder = static_cast<arrow::DoubleBuilder*>(builder_);
+    const auto& column = columns_[field_name_.c_str()];
+    for (rapidjson::SizeType i = 0; i < column.Size(); ++i) {
+        if (column[i].IsNull()) {
+            ARROW_RETURN_NOT_OK(builder->AppendNull());
+        } else {
+            ARROW_RETURN_NOT_OK(builder->Append(column[i].GetDouble()));
+        }
+    }
+    return arrow::Status::OK();
+}
+
+arrow::Status JsonColumnConverter::Visit(const arrow::StringType& type) {
+    arrow::StringBuilder* builder = static_cast<arrow::StringBuilder*>(builder_);
+    const auto& column = columns_[field_name_.c_str()];
+    for (rapidjson::SizeType i = 0; i < column.Size(); ++i) {
+        if (column[i].IsNull()) {
+            ARROW_RETURN_NOT_OK(builder->AppendNull());
+        } else {
+            ARROW_RETURN_NOT_OK(builder->Append(column[i].GetString()));
+        }
+    }
+    return arrow::Status::OK();
+}
+
+arrow::Status JsonColumnConverter::Visit(const arrow::BooleanType& type) {
+    arrow::BooleanBuilder* builder = static_cast<arrow::BooleanBuilder*>(builder_);
+    const auto& column = columns_[field_name_.c_str()];
+    for (rapidjson::SizeType i = 0; i < column.Size(); ++i) {
+        if (column[i].IsNull()) {
+            ARROW_RETURN_NOT_OK(builder->AppendNull());
+        } else {
+            ARROW_RETURN_NOT_OK(builder->Append(column[i].GetBool()));
+        }
+    }
+    return arrow::Status::OK();
+}
+
+arrow::Status JsonColumnConverter::Visit(const arrow::StructType& type) {
+    arrow::StructBuilder* builder = static_cast<arrow::StructBuilder*>(builder_);
+    for (int i = 0; i < type.num_fields(); ++i) {
+        std::shared_ptr<arrow::Field> child_field = type.field(i);
+        std::shared_ptr<arrow::ArrayBuilder> child_builder = builder->child_builder(i);
+
+        JsonColumnConverter child_converter(columns_);
+        ARROW_RETURN_NOT_OK(child_converter.Convert(*child_field.get(), child_builder.get()));
+    }
+
+    for (rapidjson::SizeType i = 0; i < columns_[field_name_.c_str()].Size(); ++i) {
+        ARROW_RETURN_NOT_OK(builder->Append(!columns_[field_name_.c_str()][i].IsNull()));
+    }
+
+    return arrow::Status::OK();
+}
+
+arrow::Status JsonColumnConverter::Visit(const arrow::ListType& type) {
+    arrow::ListBuilder* builder = static_cast<arrow::ListBuilder*>(builder_);
+    const auto& column = columns_[field_name_.c_str()];
+
+    // Values and offsets need to be interleaved in ListBuilder, so first collect the values
+    std::unique_ptr<arrow::ArrayBuilder> tmp_value_builder;
+    ARROW_ASSIGN_OR_RAISE(tmp_value_builder,
+                          arrow::MakeBuilder(builder->value_builder()->type()));
+
+    JsonColumnConverter child_converter(columns_);
+    ARROW_RETURN_NOT_OK(child_converter.Convert(*type.value_field().get(), "", tmp_value_builder.get()));
+
+    std::shared_ptr<arrow::Array> values_array;
+    ARROW_RETURN_NOT_OK(tmp_value_builder->Finish(&values_array));
+    std::shared_ptr<arrow::ArrayData> values_data = values_array->data();
+
+    arrow::ArrayBuilder* value_builder = builder->value_builder();
+    int64_t offset = 0;
+    for (rapidjson::SizeType i = 0; i < column.Size(); ++i) {
+        ARROW_RETURN_NOT_OK(builder->Append(!column[i].IsNull()));
+        if (!column[i].IsNull() && column[i].Size() > 0) {
+            ARROW_RETURN_NOT_OK(
+                    value_builder->AppendArraySlice(*values_data.get(), offset, column[i].Size()));
+            offset += column[i].Size();
+        }
+    }
+
+    return arrow::Status::OK();
+}
+
 arrow::Result<std::shared_ptr<arrow::RecordBatch>> ConvertToRecordBatch(
         const rapidjson::Document& doc, std::shared_ptr<arrow::Schema> schema) {
-    // RecordBatchBuilder will create array builders for us for each field in our
-    // schema. By passing the number of output rows (`rows.size()`) we can
-    // pre-allocate the correct size of arrays, except of course in the case of
-    // string, byte, and list arrays, which have dynamic lengths.
-    std::unique_ptr<arrow::RecordBatchBuilder> batch_builder;
-    ARROW_ASSIGN_OR_RAISE(
-            batch_builder,
-            arrow::RecordBatchBuilder::Make(schema, arrow::default_memory_pool(), doc.GetArray().Size()));
+    // Check if the JSON document is columnar or row-wise
+    bool is_columnar = doc.IsObject();
+    for (auto it = doc.MemberBegin(); it != doc.MemberEnd(); ++it) {
+        if (it->value.IsArray()) {
+            is_columnar = true;
+        } else {
+            is_columnar = false;
+            break;
+        }
+    }
 
-    // Inner converter will take rows and be responsible for appending values
-    // to provided array builders.
-    JsonValueConverter converter(doc.GetArray());
-    for (int i = 0; i < batch_builder->num_fields(); ++i) {
-        std::shared_ptr<arrow::Field> field = schema->field(i);
-        arrow::ArrayBuilder* builder = batch_builder->GetField(i);
-        ARROW_RETURN_NOT_OK(converter.Convert(*field.get(), builder));
+    // Create a RecordBatchBuilder
+    std::unique_ptr<arrow::RecordBatchBuilder> batch_builder;
+    if (is_columnar) {
+        ARROW_ASSIGN_OR_RAISE(
+                batch_builder,
+                arrow::RecordBatchBuilder::Make(schema, arrow::default_memory_pool(), doc.MemberBegin()->value.Size()));
+    } else {
+        ARROW_ASSIGN_OR_RAISE(
+                batch_builder,
+                arrow::RecordBatchBuilder::Make(schema, arrow::default_memory_pool(), doc.GetArray().Size()));
+    }
+
+    // Use appropriate converter based on the JSON structure
+    if (is_columnar) {
+        JsonColumnConverter converter(doc);
+        for (int i = 0; i < batch_builder->num_fields(); ++i) {
+            std::shared_ptr<arrow::Field> field = schema->field(i);
+            arrow::ArrayBuilder* builder = batch_builder->GetField(i);
+            ARROW_RETURN_NOT_OK(converter.Convert(*field.get(), builder));
+        }
+    } else {
+        JsonValueConverter converter(doc.GetArray());
+        for (int i = 0; i < batch_builder->num_fields(); ++i) {
+            std::shared_ptr<arrow::Field> field = schema->field(i);
+            arrow::ArrayBuilder* builder = batch_builder->GetField(i);
+            ARROW_RETURN_NOT_OK(converter.Convert(*field.get(), builder));
+        }
     }
 
     std::shared_ptr<arrow::RecordBatch> batch;
     ARROW_ASSIGN_OR_RAISE(batch, batch_builder->Flush());
 
     // Use RecordBatch::ValidateFull() to make sure arrays were correctly constructed.
-            DCHECK_OK(batch->ValidateFull());
+    DCHECK_OK(batch->ValidateFull());
     return batch;
 }  // ConvertToRecordBatch

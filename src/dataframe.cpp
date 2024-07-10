@@ -234,7 +234,8 @@ namespace pd {
 
     arrow::Result<rapidjson::Value> DataFrame::toJSON(rapidjson::Document::AllocatorType &allocator,
                                                       std::vector<std::string> columns,
-                                                      std::optional<std::string> const &index) const {
+                                                      std::optional<std::string> const &index,
+                                                      bool toRecords) const {
         columns = columns.empty() ? this->columnNames() : columns;
 
         auto array = m_array;
@@ -243,7 +244,8 @@ namespace pd {
                                      m_index)
                             .MoveValueUnsafe();
         }
-        return ConvertToVector(array, allocator);
+
+        return ConvertToVector(array, toRecords, allocator);
     }
 
     arrow::Result<std::shared_ptr<arrow::Buffer>> DataFrame::toBinary(std::vector<std::string> columns,

@@ -211,7 +211,7 @@ public:
     arrow::Status toCSV(std::filesystem::path const& filepath, const std::string& indexField="index") const;
     arrow::Result<rapidjson::Value> toJSON(rapidjson::Document::AllocatorType& allocator,
                                            std::vector<std::string> columns={},
-                                           std::optional<std::string> const &index={}) const;
+                                           std::optional<std::string> const &index={}, bool toRecords=true) const;
     arrow::Result<std::shared_ptr<arrow::Buffer>> toBinary(std::vector<std::string> columns={}, std::optional<std::string> const &index={}, std::unordered_map<std::string, std::string> const& metadata={}) const;
 
     // indexer
