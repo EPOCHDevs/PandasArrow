@@ -19,9 +19,9 @@ namespace arrow{
         }
 
         fs::S3Options options = fs::S3Options::Defaults();
-        const auto aws_access_key = getenv("AWS_ACCESS_KEY");
-        const auto aws_secret_key = getenv("AWS_SECRET_KEY");
-        const auto aws_region = getenv("AWS_REGION");
+        const auto aws_access_key = getenv("AWS_DB_ACCESS_KEY_ID");
+        const auto aws_secret_key = getenv("AWS_DB_SECRET_ACCESS_KEY");
+        const auto aws_region = getenv("AWS_DB_REGION");
 
         if (aws_access_key && aws_secret_key && aws_region) {
             options.ConfigureAccessKey(aws_access_key, aws_secret_key);
@@ -29,7 +29,7 @@ namespace arrow{
         else {
             auto awsRoot = std::filesystem::path(getenv("HOME")) / ".aws";
             if (!std::filesystem::exists(awsRoot)) {
-                throw std::runtime_error(fmt::format("Either Set all AWS ENV Variables. AWS_ACCESS_KEY, AWS_SECRET_KEY and AWS_REGION."));
+                throw std::runtime_error(fmt::format("Either Set all AWS ENV Variables. AWS_DB_ACCESS_KEY_ID, AWS_DB_SECRET_ACCESS_KEY and AWS_DB_REGION."));
             }
             options.ConfigureDefaultCredentials();
         }

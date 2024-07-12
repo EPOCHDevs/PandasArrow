@@ -38,6 +38,8 @@ std::pair<std::shared_ptr<arrow::Buffer>, std::basic_string_view<uint8_t>> GetBl
     return {buffer, {buffer->data(), static_cast<size_t>(buffer->size()) } };
 }
 
+
+
 int main() {
     auto xlarge = pd::DataFrame::readParquet("/home/adesola/EpochLab/Database/S3/DailyBars/Options/SPY.parquet.gzip");
     auto large = pd::DataFrame::readParquet("/home/adesola/EpochLab/Database/S3/MinuteBars/Stocks/AAPL.parquet.gzip");

@@ -74,8 +74,11 @@ target_include_directories(pandas_arrow
 add_library(pd::pandas_arrow ALIAS pandas_arrow)
 
 IF (BUILD_MAIN)
-    add_executable(main main.cpp)
-    target_link_libraries(main PRIVATE pandas_arrow)
+    add_executable(benchmark benchmark.cpp)
+    target_link_libraries(benchmark PRIVATE pandas_arrow)
+
+    add_executable(generate_stream_file generate_stream_file.cpp)
+    target_link_libraries(generate_stream_file PRIVATE pandas_arrow)
 ENDIF()
 
 IF( BUILD_TEST )
