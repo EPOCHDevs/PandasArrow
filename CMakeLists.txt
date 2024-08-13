@@ -46,7 +46,8 @@ add_library(pandas_arrow
         src/core.cpp
         src/resample.cpp
         src/concat.cpp
-        src/json_utils.cpp)
+        src/json_utils.cpp
+        src/list_s3_files.cpp)
 
 if (ENABLE_GPU)
     target_sources(pandas_arrow PRIVATE
@@ -79,6 +80,9 @@ IF (BUILD_MAIN)
 
     add_executable(generate_stream_file generate_stream_file.cpp)
     target_link_libraries(generate_stream_file PRIVATE pandas_arrow)
+
+    add_executable(scan_s3 scan_s3.cpp)
+    target_link_libraries(scan_s3 PRIVATE pandas_arrow)
 ENDIF()
 
 IF( BUILD_TEST )

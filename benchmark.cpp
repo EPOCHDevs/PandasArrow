@@ -42,7 +42,7 @@ std::pair<std::shared_ptr<arrow::Buffer>, std::basic_string_view<uint8_t>> GetBl
 
 int main() {
     auto xlarge = pd::DataFrame::readParquet("/home/adesola/EpochLab/Database/S3/DailyBars/Options/SPY.parquet.gzip");
-    auto large = pd::DataFrame::readParquet("/home/adesola/EpochLab/Database/S3/MinuteBars/Stocks/AAPL.parquet.gzip");
+    auto large = pd::DataFrame::readParquet("s3://epoch-db/MinuteBars/Stocks/AAPL.parquet.gzip");
     auto mid = large.slice(0, 100000);
     auto small = large.slice(0, 10000);
     auto xsmall = large.slice(0, 2);
