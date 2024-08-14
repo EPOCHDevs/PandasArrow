@@ -2105,7 +2105,7 @@ TEST_CASE("Test resample on series with custom function", "[Resample]")
 
     auto custom_resampler = [](DataFrame const& df) { return (df.sum() + 5).scalar; };
 
-    ASSIGN_OR_ABORT(Series result, series.resample("3T").apply(custom_resampler));
+    pd::Series result = pd::ReturnOrThrowOnFailure(series.resample("3T").apply(custom_resampler));
 
     REQUIRE(result.size() == 3);
     REQUIRE(result[0] == 8L);

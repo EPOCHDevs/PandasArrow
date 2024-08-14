@@ -29,7 +29,11 @@ date DateOffset::add(date currentDate, const DateOffset& dateOffset)
             currentDate = date(currentDate.year(), (currentDate.month() - 1) / 3 * 3 + 3, 1) - days(1);
             break;
 
-        case Weekly:
+        case WeekStart:
+            currentDate += weeks(dateOffset.multiplier);
+            break;
+
+        case WeekEnd:
             currentDate += weeks(dateOffset.multiplier);
             break;
 
@@ -64,9 +68,13 @@ std::optional<DateOffset> DateOffset::FromString(const string& code)
     {
         type = DateOffset::Day;
     }
+    else if (freq_unit == "WS")
+    {
+        type = DateOffset::WeekStart;
+    }
     else if (freq_unit == "W")
     {
-        type = DateOffset::Weekly;
+        type = DateOffset::WeekEnd;
     }
     else if (freq_unit == "MS")
     {
@@ -124,6 +132,45 @@ std::pair<std::string, int> splitTimeSpan(std::string const& freq)
     return { freq_unit, freq_value };
 }
 
+arrow::compute::CalendarUnit getCalendarUnit(char start_unit) {
+    arrow::compute::CalendarUnit unit;
+    switch (start_unit) {
+        case 'n':
+            unit = arrow::compute::CalendarUnit::NANOSECOND;
+            break;
+        case 'u':
+            unit = arrow::compute::CalendarUnit::MICROSECOND;
+            break;
+        case 'm':
+            unit = arrow::compute::CalendarUnit::MILLISECOND;
+            break;
+        case 'S':
+            unit = arrow::compute::CalendarUnit::SECOND;
+            break;
+        case 'T':
+            unit = arrow::compute::CalendarUnit::MINUTE;
+            break;
+        case 'H':
+            unit = arrow::compute::CalendarUnit::HOUR;
+            break;
+        case 'D':
+            unit = arrow::compute::CalendarUnit::DAY;
+            break;
+        case 'Q':
+            unit = arrow::compute::CalendarUnit::QUARTER;
+            break;
+        case 'W':
+            unit = arrow::compute::CalendarUnit::WEEK;
+            break;
+        case 'M':
+            unit = arrow::compute::CalendarUnit::MONTH;
+            break;
+        default:
+            throw std::runtime_error("invalid unit got " + std::string{start_unit});
+    }
+    return unit;
+}
+
 template<class Iterator = day_iterator, typename FreqTime = int>
 std::shared_ptr<arrow::TimestampArray> date_range(
     date const& start,
@@ -158,7 +205,7 @@ std::shared_ptr<arrow::TimestampArray> date_range(
     date const& start,
     int period,
     FreqTime freq,
-    std::string const& tz = "")
+    std::string const& tz)
 {
     if (period <= 0)
     {
@@ -189,27 +236,28 @@ std::shared_ptr<arrow::TimestampArray> switchFunction(
     date const& start,
     auto const& end_or_period,
     const DateOffset& freq,
-    std::string const& tz)
-{
-    switch (freq.type)
-    {
+    std::string const& tz) {
+    switch (freq.type) {
         case DateOffset::Day:
             return date_range<day_iterator>(start, end_or_period, freq.multiplier, tz);
         case DateOffset::MonthEnd:
+            throw std::runtime_error("MonthEnd not supported use arrow month().groupby()");
         case DateOffset::MonthStart:
             return date_range<month_iterator>(start, end_or_period, freq.multiplier, tz);
-        case DateOffset::QuarterStart:
-        case DateOffset::QuarterEnd:
-        {
-            if (start.month() / 3 != 0)
-            {
+        case DateOffset::QuarterStart: {
+            if (start.month() / 3 != 0) {
                 throw std::runtime_error("A quarter freq requires month is on a quarter, +/- with DateOffset");
             }
             return date_range<month_iterator>(start, end_or_period, freq.multiplier * 3, tz);
         }
-        case DateOffset::Weekly:
+        case DateOffset::QuarterEnd:
+            throw std::runtime_error("QuarterEnd not supported use arrow quarter().groupby()");
+        case DateOffset::WeekEnd:
+            throw std::runtime_error("WeekEnd not supported use arrow weeks().groupby()");
+        case DateOffset::WeekStart:
             return date_range<week_iterator>(start, end_or_period, freq.multiplier, tz);
         case DateOffset::YearEnd:
+            throw std::runtime_error("YearEnd not supported use arrow year().groupby()");
         case DateOffset::YearStart:
             return date_range<year_iterator>(start, end_or_period, freq.multiplier, tz);
     }

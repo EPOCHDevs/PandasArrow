@@ -1073,6 +1073,30 @@ namespace pd {
         return pd::resample(*this, rule, closed_right, label_right, origin, offset, tz);
     }
 
+
+
+    Resampler DataFrame::downsample(
+            std::string const& rule,
+            bool closed_label_right,
+            bool weekStartsMonday,
+            bool startEpoch) const {
+        const auto [freq_unit, freq_value] = splitTimeSpan(rule);
+
+        arrow::compute::RoundTemporalOptions temporalOption(freq_value, getCalendarUnit(freq_unit[0]), weekStartsMonday, false, startEpoch);
+        auto binned = pd::ReturnOrThrowOnFailure(
+                              closed_label_right ? arrow::compute::CeilTemporal(m_index, temporalOption) : arrow::compute::FloorTemporal(m_index, temporalOption))
+                              .make_array();
+
+        if (freq_unit.ends_with("E") || freq_unit == "M" || freq_unit == "W" || freq_unit == "Y" || freq_unit == "Q") {
+            auto oneDay = arrow::MakeScalar(arrow::date32(), 1L).MoveValueUnsafe();
+            binned =
+                    pd::ReturnOrThrowOnFailure(arrow::compute::Cast(pd::ReturnOrThrowOnFailure(arrow::compute::Subtract(binned, oneDay)), arrow::int64())).make_array();
+            binned = pd::ReturnOrThrowOnFailure(arrow::compute::Cast(binned, arrow::timestamp(arrow::TimeUnit::NANO))).make_array();
+        }
+        return {
+                DataFrame{m_array, binned}};
+    }
+
     FOR_ALL_COLUMN(bfill)
     FOR_ALL_COLUMN(ffill)
     FOR_ALL_COLUMN(is_null)

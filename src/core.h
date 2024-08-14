@@ -3,21 +3,22 @@
 // Created by dewe on 12/28/22.
 //
 
-#include <arrow/api.h>
-#include <cmath>
-#include <rapidjson/document.h>
 #include "boost/date_time/gregorian/gregorian.hpp"
-#include "boost/date_time/local_time/local_time.hpp" //include all types plus i/o
+#include "boost/date_time/local_time/local_time.hpp"//include all types plus i/o
 #include "boost/date_time/posix_time/posix_time.hpp"
 #include "chrono"
 #include "random.h"
 #include "ranges"
+#include <arrow/api.h>
+#include <arrow/compute/api_scalar.h>
+#include <cmath>
+#include <rapidjson/document.h>
 
 
-namespace arrow
-{
+namespace arrow {
     using arrow::internal::checked_pointer_cast;
     using arrow::internal::checked_cast;
+
 }
 
 using namespace boost::posix_time;
@@ -127,7 +128,8 @@ struct DateOffset
         MonthEnd,
         QuarterStart,
         QuarterEnd,
-        Weekly,
+        WeekStart,
+        WeekEnd,
         MonthStart,
         YearEnd,
         YearStart
@@ -174,6 +176,8 @@ struct StringSlice
     std::optional<std::string> start{};
     std::optional<std::string> end = {};
 };
+
+arrow::compute::CalendarUnit getCalendarUnit(char start_unit);
 
 template<class T>
 __always_inline T ReturnOrThrowOnFailure(arrow::Result<T>&& result)

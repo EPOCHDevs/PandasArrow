@@ -7,7 +7,7 @@
 #include "optional"
 #include "ranges"
 #include "vector"
-
+#include <arrow/api.h>
 
 namespace pd::random {
 

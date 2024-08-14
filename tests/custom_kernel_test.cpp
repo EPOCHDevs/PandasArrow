@@ -2,7 +2,7 @@
 #include "arrow/util/decimal.h"
 #include "arrow/util/int128_internal.h"
 #include "catch.hpp"
-#include "pandas_arrow/pandas_arrow.h"
+#include "pandas_arrow.h"
 #include "vector"
 
 //TODO: Move to arrow folder

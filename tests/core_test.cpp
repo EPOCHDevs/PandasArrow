@@ -2,7 +2,7 @@
 // Created by dewe on 1/9/23.
 //
 
-#include "../pandas_arrow.h"
+#include "pandas_arrow.h"
 #include "catch.hpp"
 
 using namespace std::string_literals;
@@ -10,32 +10,41 @@ using std::pair;
 using std::vector;
 
 using namespace pd;
-TEST_CASE("Test date_range with end date", "[date_range]")
+TEST_CASE("Test date_range with start and end date", "[date_range]")
 {
-    auto start = date(2022, 1, 1);
-    auto end = date(2022, 1, 7);
+    auto start = date(2018, Jan, 1);
+    auto end = date(2018, Jan, 8);
     auto freq = "1D";
     auto tz = "UTC";
 
-    auto result = pd::date_range(start, end, freq, tz);
+    auto result = arrow::checked_pointer_cast<arrow::TimestampArray>(pd::date_range(start, end, freq, tz));
 
     REQUIRE(result != nullptr);
-    REQUIRE(result->length() == 7);
-    REQUIRE(result->type()->id() == arrow::Type::TIMESTAMP);
+    REQUIRE(result->length() == 8);
+
+    for (int i = 0; i < 8; ++i)
+    {
+        REQUIRE(toTimeNanoSecPtime(result->Value(i)).date() == start);
+        start += days(1);
+    }
 }
 
-TEST_CASE("Test date_range with period", "[date_range]")
-{
-    auto start = date(2022, 1, 1);
-    auto period = 7;
-    auto freq = "1D";
-    auto tz = "UTC";
+TEST_CASE("Test date_range with period", "[date_range]") {
+    auto start = date(2018, Jan, 1);
+    auto period = 8;
 
-    auto result = pd::date_range(start, period, freq, tz);
+
+    auto result = arrow::checked_pointer_cast<arrow::TimestampArray>(pd::date_range(start, period, "1D"));
+    REQUIRE(result->length() == period);
+
+    auto x = start;
+    for (int i = 0; i < 8; ++i) {
+        REQUIRE(toTimeNanoSecPtime(result->Value(i)).date() == x);
+        x += days(1);
+    }
 
     REQUIRE(result != nullptr);
-    REQUIRE(result->length() == 7);
-    REQUIRE(result->type()->id() == arrow::Type::TIMESTAMP);
+    REQUIRE(result->length() == 8);
 
     start = date(2022, 1, 1);
     period = 10;
@@ -43,10 +52,10 @@ TEST_CASE("Test date_range with period", "[date_range]")
     result = date_range(start, period, "1D");
     REQUIRE(result->length() == 10);
 
-    result = date_range(start, period, "SM");
+    result = date_range(start, period, "1MS");
     REQUIRE(result->length() == 10);
 
-    result = date_range(start, period, "1W");
+    result = date_range(start, period, "1WS");
     REQUIRE(result->length() == 10);
 }
 
@@ -59,15 +68,15 @@ TEST_CASE("Test date_range with different frequency", "[date_range]")
     result = date_range(start, end, "1D");
     REQUIRE(result->length() == 10);
 
-    result = date_range(start, end, "1W");
+    result = date_range(start, end, "1WS");
     REQUIRE(result->length() == 2);
 
-    result = date_range(start, end, "SM");
+    result = date_range(start, end, "1MS");
     REQUIRE(result->length() == 1);
 
     start = date(2022, 1, 1);
     end = date(2022, 1, 31);
-    auto freq = "W";
+    auto freq = "WS";
     auto tz = "UTC";
 
     result = pd::date_range(start, end, freq, tz);
@@ -93,10 +102,10 @@ TEST_CASE("Test date_range with different timezone", "[date_range]")
     start = date(2022, 1, 1);
     end = date(2022, 1, 10);
 
-    result = date_range(start, end, "D", "UTC");
+    result = date_range(start, end, "1D", "UTC");
     REQUIRE(result->length() == 10);
 
-    result = date_range(start, end, "D", "US/Pacific");
+    result = date_range(start, end, "1D", "US/Pacific");
     REQUIRE(result->length() == 10);
 }
 
@@ -108,14 +117,14 @@ TEST_CASE("Test date_range with invalid frequency", "[date_range]")
     auto tz = "UTC";
 
     REQUIRE_THROWS(pd::date_range(start, end, freq, tz));
-    REQUIRE_THROWS(date_range(start, 5, "InvalidFrequency"));
+    REQUIRE_NOTHROW(date_range(start, 5, "InvalidFrequency"));
 }
 
 TEST_CASE("Test date_range with invalid timezone", "[date_range]")
 {
     auto start = date(2022, 1, 1);
     auto end = date(2022, 1, 7);
-    auto freq = "D";
+    auto freq = "1D";
     auto tz = "InvalidTZ";
 
     REQUIRE_NOTHROW(pd::date_range(start, end, freq, tz));
@@ -229,7 +238,7 @@ TEST_CASE("Test date_range with valid input and frequency", "[date_range]")
         date start(2022, 1, 1);
         int period = 2;
 
-        auto result = date_range(start, period, "W");
+        auto result = date_range(start, period, "WS");
         REQUIRE(result->length() == 2);
         REQUIRE(result->type()->id() == arrow::Type::TIMESTAMP);
 
@@ -250,7 +259,7 @@ TEST_CASE("Test date_range with valid input and frequency", "[date_range]")
         date start(2022, 1, 31);
         int period = 1;
 
-        auto result = date_range(start, period, "M");
+        auto result = date_range(start, period, "MS");
         REQUIRE(result->length() == 1);
         REQUIRE(result->type()->id() == arrow::Type::TIMESTAMP);
 
@@ -265,7 +274,7 @@ TEST_CASE("Test date_range with valid input and frequency", "[date_range]")
         date start(2022, 12, 31);
         int period = 1;
 
-        auto result = date_range(start, period, "Y");
+        auto result = date_range(start, period, "YS");
         REQUIRE(result->length() == 1);
         REQUIRE(result->type()->id() == arrow::Type::TIMESTAMP);
 

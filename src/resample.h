@@ -101,6 +101,10 @@ Resampler resample(
     std::string const& tz = "")
 {
     GroupInfo group_info = makeGroupInfo(df.indexArray(), rule, closed_right, label_right, origin, offset, tz);
+    if (group_info.upsampling())
+    {
+        throw std::runtime_error("upSampling is not implemented.");
+    }
     auto new_index = toDateTime(group_info.downsample());
 
     std::optional<DataFrame> new_df;

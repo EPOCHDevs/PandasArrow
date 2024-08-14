@@ -2,7 +2,7 @@
 // Created by dewe on 1/15/23.
 //
 #include <catch.hpp>
-#include "../scalar.h"
+#include "scalar.h"
 
 TEST_CASE("Scalar construction")
 {

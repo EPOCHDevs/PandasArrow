@@ -68,125 +68,116 @@ std::pair<std::string, std::vector<T>> GetRow(std::function<std::string()> const
 
 
 constexpr const char * RESERVED_INDEX_NAME = "__INDEX_NAME__";
-class DataFrame : public NDFrame<DataFrame>
-{
+class DataFrame : public NDFrame<DataFrame> {
 public:
     using ArrayType = std::shared_ptr<arrow::RecordBatch>;
     using Shape = std::array<int64_t, 2>;
 
     template<class MapType>
-    size_t GetTableRowSize(MapType const& table);
+    size_t GetTableRowSize(MapType const &table);
 
-    DataFrame()
-    {
+    DataFrame() {
         m_index = pd::ReturnOrThrowOnFailure(arrow::MakeEmptyArray(arrow::null()));
     }
 
-    DataFrame(std::shared_ptr<arrow::RecordBatch> const& table, std::shared_ptr<arrow::Array> const& _index = nullptr);
+    DataFrame(std::shared_ptr<arrow::RecordBatch> const &table, std::shared_ptr<arrow::Array> const &_index = nullptr);
 
     DataFrame(
-        std::shared_ptr<arrow::Schema> const& schemas,
-        int64_t num_rows,
-        std::vector<std::shared_ptr<arrow::ArrayData>> const& table,
-        std::shared_ptr<arrow::Array> const& _index = nullptr)
-        : NDFrame<DataFrame>(arrow::RecordBatch::Make(schemas, num_rows, table), _index)
-    {
+            std::shared_ptr<arrow::Schema> const &schemas,
+            int64_t num_rows,
+            std::vector<std::shared_ptr<arrow::ArrayData>> const &table,
+            std::shared_ptr<arrow::Array> const &_index = nullptr)
+        : NDFrame<DataFrame>(arrow::RecordBatch::Make(schemas, num_rows, table), _index) {
     }
 
     DataFrame(
-        std::shared_ptr<arrow::Schema> const& schemas,
-        int64_t num_rows,
-        std::vector<std::shared_ptr<arrow::Array>> const& table,
-        std::shared_ptr<arrow::Array> const& _index = nullptr)
-        : NDFrame<DataFrame>(arrow::RecordBatch::Make(schemas, num_rows, table), _index)
-    {
+            std::shared_ptr<arrow::Schema> const &schemas,
+            int64_t num_rows,
+            std::vector<std::shared_ptr<arrow::Array>> const &table,
+            std::shared_ptr<arrow::Array> const &_index = nullptr)
+        : NDFrame<DataFrame>(arrow::RecordBatch::Make(schemas, num_rows, table), _index) {
     }
 
     template<class... ColumnTypes, size_t N = std::tuple_size_v<std::tuple<ColumnTypes...>>>
     DataFrame(
-        std::array<std::string, N> columns,
-        std::shared_ptr<arrow::Array> const& _index,
-        std::vector<ColumnTypes>&&... columnData);
+            std::array<std::string, N> columns,
+            std::shared_ptr<arrow::Array> const &_index,
+            std::vector<ColumnTypes> &&...columnData);
 
     template<class... ColumnTypes, size_t N = std::tuple_size_v<std::tuple<ColumnTypes...>>>
     DataFrame(
-        std::shared_ptr<arrow::Array> const& _index,
-        Row<ColumnTypes> &&... columnData);
+            std::shared_ptr<arrow::Array> const &_index,
+            Row<ColumnTypes> &&...columnData);
 
     template<class T>
     DataFrame(
-        std::vector<std::vector<T>> const& table,
-        std::vector<std::string> columns = {},
-        std::shared_ptr<arrow::Array> const& _index = nullptr);
+            std::vector<std::vector<T>> const &table,
+            std::vector<std::string> columns = {},
+            std::shared_ptr<arrow::Array> const &_index = nullptr);
 
     template<template<typename...> class MapType, typename V>
-    DataFrame(MapType<std::string, V> const& table, std::shared_ptr<arrow::Array> const& index = nullptr);
+    DataFrame(MapType<std::string, V> const &table, std::shared_ptr<arrow::Array> const &index = nullptr);
 
-    DataFrame(ArrayTable const& table, std::shared_ptr<arrow::Array> const& index = nullptr);
+    DataFrame(ArrayTable const &table, std::shared_ptr<arrow::Array> const &index = nullptr);
 
-    DataFrame(std::shared_ptr<arrow::StructArray> const& arr, std::vector<std::string> const& columns);
+    DataFrame(std::shared_ptr<arrow::StructArray> const &arr, std::vector<std::string> const &columns);
 
-    inline auto shape() const
-    {
-        return (m_array == nullptr) ? std::array<int64_t, 2>{ 0, 0 } :
-                                      std::array<int64_t, 2>{ num_rows(), num_columns() };
+    inline auto shape() const {
+        return (m_array == nullptr) ? std::array<int64_t, 2>{0, 0} : std::array<int64_t, 2>{num_rows(), num_columns()};
     }
 
 
-    inline ArrayPtr fieldArray() const
-    {
+    inline ArrayPtr fieldArray() const {
         return arrow::ArrayT<std::string>::Make(columnNames());
     }
 
-    TablePtr toTable(std::optional<std::string> const& index_name = {}) const;
+    TablePtr toTable(std::optional<std::string> const &index_name = {}) const;
 
     template<class T>
     static std::pair<arrow::FieldVector, arrow::ArrayVector> makeFieldArrayPair(
-        std::vector<std::vector<T>> const& table,
-        std::vector<std::string> const& columns);
+            std::vector<std::vector<T>> const &table,
+            std::vector<std::string> const &columns);
 
     template<template<typename...> class MapType, typename V>
-    static std::pair<arrow::FieldVector, arrow::ArrayVector> makeFieldArrayPair(MapType<std::string, V> const& table);
+    static std::pair<arrow::FieldVector, arrow::ArrayVector> makeFieldArrayPair(MapType<std::string, V> const &table);
 
     template<
-        size_t N,
-        size_t I = 0,
-        class... PrimitiveTypes,
-        typename TupleT = std::tuple<PrimitiveTypes...>,
-        typename TupleVectorT = std::tuple<std::vector<PrimitiveTypes>...>>
+            size_t N,
+            size_t I = 0,
+            class... PrimitiveTypes,
+            typename TupleT = std::tuple<PrimitiveTypes...>,
+            typename TupleVectorT = std::tuple<std::vector<PrimitiveTypes>...>>
     static void makeFieldArrayPairT(
-        TupleVectorT&& columnData,
-        arrow::ArrayVector& arrays,
-        arrow::FieldVector& fields,
-        std::array<std::string, N> const& columns);
+            TupleVectorT &&columnData,
+            arrow::ArrayVector &arrays,
+            arrow::FieldVector &fields,
+            std::array<std::string, N> const &columns);
 
     template<
-        size_t N,
-        size_t I = 0,
-        class... PrimitiveTypes,
-        typename TupleT = std::tuple<PrimitiveTypes...>,
-        typename TupleVectorT = std::tuple<std::pair<std::string, std::vector<PrimitiveTypes>>...>>
-    static void makeFieldArrayPairT(TupleVectorT&& columnData, arrow::ArrayVector& arrays, arrow::FieldVector& fields);
+            size_t N,
+            size_t I = 0,
+            class... PrimitiveTypes,
+            typename TupleT = std::tuple<PrimitiveTypes...>,
+            typename TupleVectorT = std::tuple<std::pair<std::string, std::vector<PrimitiveTypes>>...>>
+    static void makeFieldArrayPairT(TupleVectorT &&columnData, arrow::ArrayVector &arrays, arrow::FieldVector &fields);
 
     DataFrame transpose() const;
 
-    DataFrame& rename(std::unordered_map<std::string, std::string> const& columns);
+    DataFrame &rename(std::unordered_map<std::string, std::string> const &columns);
 
-    bool contains(std::string const& column) const;
+    bool contains(std::string const &column) const;
 
-    void add_prefix(std::string const& prefix, std::set<std::string> const& excludes = {});
+    void add_prefix(std::string const &prefix, std::set<std::string> const &excludes = {});
 
-    void add_suffix(std::string const& suffix, std::set<std::string> const& excludes = {});
+    void add_suffix(std::string const &suffix, std::set<std::string> const &excludes = {});
 
     static std::vector<std::string> makeDefaultColumnNames(size_t N);
 
-    inline int64_t num_rows() const
-    {
+    inline int64_t num_rows() const {
         return m_array->num_rows();
     }
 
-    inline int64_t num_columns() const
-    {
+    inline int64_t num_columns() const {
         return m_array->num_columns();
     }
 
@@ -197,68 +188,65 @@ public:
 
     std::vector<std::string> columns() const;
 
-    friend std::ostream& operator<<(std::ostream& a, DataFrame const& b);
+    friend std::ostream &operator<<(std::ostream &a, DataFrame const &b);
 
     DataFrame describe(bool include_all = true, bool percentiles = false);
 
-    static DataFrame readParquet(std::filesystem::path const& path);
-    static DataFrame readCSV(std::filesystem::path const& path);
-    static DataFrame readBinary(const std::basic_string_view<uint8_t> &blob, std::optional<std::string> const &index=std::nullopt);
-    static DataFrame readJSON(const rapidjson::Document &doc, std::shared_ptr<arrow::Schema> const& schema, std::optional<std::string> const& index=std::nullopt);
-    static DataFrame readJSON(const std::string &doc, std::shared_ptr<arrow::Schema> const& schema, std::optional<std::string> const& index=std::nullopt);
+    static DataFrame readParquet(std::filesystem::path const &path);
+    static DataFrame readCSV(std::filesystem::path const &path);
+    static DataFrame readBinary(const std::basic_string_view<uint8_t> &blob, std::optional<std::string> const &index = std::nullopt);
+    static DataFrame readJSON(const rapidjson::Document &doc, std::shared_ptr<arrow::Schema> const &schema, std::optional<std::string> const &index = std::nullopt);
+    static DataFrame readJSON(const std::string &doc, std::shared_ptr<arrow::Schema> const &schema, std::optional<std::string> const &index = std::nullopt);
 
-    arrow::Status toParquet(std::filesystem::path const& filepath, const std::string& indexField="index") const;
-    arrow::Status toCSV(std::filesystem::path const& filepath, const std::string& indexField="index") const;
-    arrow::Result<rapidjson::Value> toJSON(rapidjson::Document::AllocatorType& allocator,
-                                           std::vector<std::string> columns={},
-                                           std::optional<std::string> const &index={}, bool toRecords=true) const;
-    arrow::Result<std::shared_ptr<arrow::Buffer>> toBinary(std::vector<std::string> columns={}, std::optional<std::string> const &index={}, std::unordered_map<std::string, std::string> const& metadata={}) const;
+    arrow::Status toParquet(std::filesystem::path const &filepath, const std::string &indexField = "index") const;
+    arrow::Status toCSV(std::filesystem::path const &filepath, const std::string &indexField = "index") const;
+    arrow::Result<rapidjson::Value> toJSON(rapidjson::Document::AllocatorType &allocator,
+                                           std::vector<std::string> columns = {},
+                                           std::optional<std::string> const &index = {}, bool toRecords = true) const;
+    arrow::Result<std::shared_ptr<arrow::Buffer>> toBinary(std::vector<std::string> columns = {}, std::optional<std::string> const &index = {}, std::unordered_map<std::string, std::string> const &metadata = {}) const;
 
     // indexer
-    class Series operator[](std::string const& column) const;
+    class Series operator[](std::string const &column) const;
 
-    pd::DataFrame add_column(std::string const& newColumn, pd::ArrayPtr const& ptr) const;
+    pd::DataFrame add_column(std::string const &newColumn, pd::ArrayPtr const &ptr) const;
 
-    void add_column(std::string const& newColumn, pd::ArrayPtr const& ptr);
+    void add_column(std::string const &newColumn, pd::ArrayPtr const &ptr);
 
-    void add_column(std::string const& newColumn, pd::Series const& ptr);
+    void add_column(std::string const &newColumn, pd::Series const &ptr);
 
-    DataFrame operator[](std::vector<std::string> const& columns) const;
+    DataFrame operator[](std::vector<std::string> const &columns) const;
     DataFrame operator[](int64_t row) const;
 
-    DataFrame operator[](pd::Series const& filter) const;
+    DataFrame operator[](pd::Series const &filter) const;
 
     Scalar at(int64_t row, int64_t col) const;
 
-    Scalar at(int64_t row, std::string const& col) const
-    {
+    Scalar at(int64_t row, std::string const &col) const {
         auto idx = m_array->schema()->GetFieldIndex(col);
-        if (idx == -1)
-        {
+        if (idx == -1) {
             throw std::runtime_error(col + " is not a valid column");
         }
         return at(row, idx);
     }
 
-    pd::DataFrame reset_index(std::string const& columnName, bool drop) const;
+    pd::DataFrame reset_index(std::string const &columnName, bool drop) const;
 
-    pd::DataFrame reindex(std::shared_ptr<arrow::Array> const& newIndex,
-                          const std::optional<Scalar>& fillValue=std::nullopt) const noexcept;
+    pd::DataFrame reindex(std::shared_ptr<arrow::Array> const &newIndex,
+                          const std::optional<Scalar> &fillValue = std::nullopt) const noexcept;
 
-    pd::DataFrame reindexAsync(std::shared_ptr<arrow::Array> const& newIndex,
-                               const std::optional<Scalar>& fillValue=std::nullopt) const noexcept;
+    pd::DataFrame reindexAsync(std::shared_ptr<arrow::Array> const &newIndex,
+                               const std::optional<Scalar> &fillValue = std::nullopt) const noexcept;
 
-    Scalar at(std::shared_ptr<arrow::Scalar> const& row, std::string const& col) const
-    {
+    Scalar at(std::shared_ptr<arrow::Scalar> const &row, std::string const &col) const {
         return at(
-            arrow::compute::Index(m_index, arrow::compute::IndexOptions(row))->scalar_as<arrow::Int64Scalar>().value,
-            col);
+                arrow::compute::Index(m_index, arrow::compute::IndexOptions(row))->scalar_as<arrow::Int64Scalar>().value,
+                col);
     }
 
     template<typename T>
-    requires(not std::integral<T>) Scalar at(T const& row, std::string const& col)
-    const
-    {
+        requires(not std::integral<T>)
+    Scalar at(T const &row, std::string const &col)
+            const {
         return at(arrow::MakeScalar(row), col);
     }
 
@@ -270,21 +258,21 @@ public:
     [[nodiscard]] DataFrame is_finite() const;
     [[nodiscard]] DataFrame is_infinite() const;
 
-    void drop(std::vector<std::string> const&);
+    void drop(std::vector<std::string> const &);
 
-    inline void drop(std::string const& column) {
+    inline void drop(std::string const &column) {
         drop(std::vector{column});
     }
 
     DataFrame drop_na() const;
 
     DataFrame slice(int offset) const;
-    DataFrame slice(int offset, std::vector<std::string> const& columns) const;
+    DataFrame slice(int offset, std::vector<std::string> const &columns) const;
 
-    DataFrame slice(Slice, std::vector<std::string> const& columns) const;
-    DataFrame slice(DateTimeSlice, std::vector<std::string> const& columns) const;
+    DataFrame slice(Slice, std::vector<std::string> const &columns) const;
+    DataFrame slice(DateTimeSlice, std::vector<std::string> const &columns) const;
     DataFrame slice(Slice) const;
-    DataFrame timestamp_slice(Slice const& slice) const;
+    DataFrame timestamp_slice(Slice const &slice) const;
     DataFrame slice(DateTimeSlice) const;
 
     [[nodiscard]] Series index() const;
@@ -292,10 +280,9 @@ public:
     [[nodiscard]] DataFrame head(int length = 5) const;
     [[nodiscard]] DataFrame tail(int length = 5) const;
 
-    DataFrame setIndex(std::string const& column_name);
+    DataFrame setIndex(std::string const &column_name);
 
-    DataFrame setIndex(std::shared_ptr<arrow::Array> const& index) const
-    {
+    DataFrame setIndex(std::shared_ptr<arrow::Array> const &index) const {
         auto newClone = *this;
         newClone.m_index = index;
         return newClone;
@@ -303,9 +290,9 @@ public:
 
     DataFrame indexAsDateTime() const;
 
-    DataFrame setColumns(std::vector<std::string> const& column_names);
+    DataFrame setColumns(std::vector<std::string> const &column_names);
 
-    [[nodiscard]] pd::Series forAxis(std::string const& functionName, pd::AxisType) const;
+    [[nodiscard]] pd::Series forAxis(std::string const &functionName, pd::AxisType) const;
 
     [[nodiscard]] Scalar sum() const;
 
@@ -318,202 +305,206 @@ public:
     Series max(pd::AxisType axis) const;
     Series min(pd::AxisType axis) const;
 
-    bool equals_(DataFrame const& other) const override
-    {
+    bool equals_(DataFrame const &other) const override {
         return m_array->Equals(*other.m_array) && m_index->Equals(other.indexArray());
     }
 
     template<typename T>
-    requires(not std::same_as<DataFrame, T>) bool equals(std::vector<T> const& a) const;
+        requires(not std::same_as<DataFrame, T>)
+    bool equals(std::vector<T> const &a) const;
 
     template<typename T>
-    requires(not std::same_as<DataFrame, T>) bool approx_equals(std::vector<T> const& a) const;
+        requires(not std::same_as<DataFrame, T>)
+    bool approx_equals(std::vector<T> const &a) const;
 
-    DataFrame operator*(DataFrame const& s) const;
-    friend DataFrame operator*(Series const& s, DataFrame const& df);
+    DataFrame operator*(DataFrame const &s) const;
+    friend DataFrame operator*(Series const &s, DataFrame const &df);
 
-    DataFrame operator/(DataFrame const& s) const;
-    friend DataFrame operator/(Series const& s, DataFrame const& df);
+    DataFrame operator/(DataFrame const &s) const;
+    friend DataFrame operator/(Series const &s, DataFrame const &df);
 
-    DataFrame operator+(DataFrame const& s) const;
-    friend DataFrame operator+(Series const& s, DataFrame const& df);
+    DataFrame operator+(DataFrame const &s) const;
+    friend DataFrame operator+(Series const &s, DataFrame const &df);
 
-    DataFrame operator-(DataFrame const& s) const;
-    friend DataFrame operator-(Series const& s, DataFrame const& df);
+    DataFrame operator-(DataFrame const &s) const;
+    friend DataFrame operator-(Series const &s, DataFrame const &df);
 
-    DataFrame operator|(DataFrame const& s) const;
-    friend DataFrame operator|(Series const& s, DataFrame const& df);
+    DataFrame operator|(DataFrame const &s) const;
+    friend DataFrame operator|(Series const &s, DataFrame const &df);
 
-    DataFrame operator&(DataFrame const& s) const;
-    friend DataFrame operator&(Series const& s, DataFrame const& df);
+    DataFrame operator&(DataFrame const &s) const;
+    friend DataFrame operator&(Series const &s, DataFrame const &df);
 
-    DataFrame operator^(DataFrame const& s) const;
-    friend DataFrame operator^(Series const& s, DataFrame const& df);
+    DataFrame operator^(DataFrame const &s) const;
+    friend DataFrame operator^(Series const &s, DataFrame const &df);
 
-    DataFrame operator<<(DataFrame const& s) const;
-    friend DataFrame operator<<(Series const& s, DataFrame const& df);
+    DataFrame operator<<(DataFrame const &s) const;
+    friend DataFrame operator<<(Series const &s, DataFrame const &df);
 
-    DataFrame operator>>(DataFrame const& s) const;
-    friend DataFrame operator>>(Series const& s, DataFrame const& df);
+    DataFrame operator>>(DataFrame const &s) const;
+    friend DataFrame operator>>(Series const &s, DataFrame const &df);
 
-    DataFrame operator>(DataFrame const& s) const;
-    friend DataFrame operator>(Series const& s, DataFrame const& df);
+    DataFrame operator>(DataFrame const &s) const;
+    friend DataFrame operator>(Series const &s, DataFrame const &df);
 
-    DataFrame operator>=(DataFrame const& s) const;
-    friend DataFrame operator>=(Series const& s, DataFrame const& df);
+    DataFrame operator>=(DataFrame const &s) const;
+    friend DataFrame operator>=(Series const &s, DataFrame const &df);
 
-    DataFrame operator<(DataFrame const& s) const;
-    friend DataFrame operator<(Series const& s, DataFrame const& df);
+    DataFrame operator<(DataFrame const &s) const;
+    friend DataFrame operator<(Series const &s, DataFrame const &df);
 
-    DataFrame operator<=(DataFrame const& s) const;
-    friend DataFrame operator<=(Series const& s, DataFrame const& df);
+    DataFrame operator<=(DataFrame const &s) const;
+    friend DataFrame operator<=(Series const &s, DataFrame const &df);
 
-    DataFrame operator==(DataFrame const& s) const;
-    friend DataFrame operator==(Series const& s, DataFrame const& df);
+    DataFrame operator==(DataFrame const &s) const;
+    friend DataFrame operator==(Series const &s, DataFrame const &df);
 
-    DataFrame operator!=(DataFrame const& s) const;
-    friend DataFrame operator!=(Series const& s, DataFrame const& df);
+    DataFrame operator!=(DataFrame const &s) const;
+    friend DataFrame operator!=(Series const &s, DataFrame const &df);
 
-    DataFrame operator&&(DataFrame const& s) const;
-    friend DataFrame operator&&(Series const& s, DataFrame const& df);
+    DataFrame operator&&(DataFrame const &s) const;
+    friend DataFrame operator&&(Series const &s, DataFrame const &df);
 
-    DataFrame operator||(DataFrame const& s) const;
-    friend DataFrame operator||(Series const& s, DataFrame const& df);
+    DataFrame operator||(DataFrame const &s) const;
+    friend DataFrame operator||(Series const &s, DataFrame const &df);
 
-    virtual DataFrame operator+(Series const& s) const;
+    virtual DataFrame operator+(Series const &s) const;
 
-    virtual DataFrame operator+(Scalar const& s) const;
+    virtual DataFrame operator+(Scalar const &s) const;
 
-    DataFrame operator-(Series const& s) const;
+    DataFrame operator-(Series const &s) const;
 
-    DataFrame operator-(Scalar const& s) const;
+    DataFrame operator-(Scalar const &s) const;
 
-    DataFrame unary(std::string const& functionName) const;
+    DataFrame unary(std::string const &functionName) const;
 
-    inline DataFrame operator-() const
-    {
+    inline DataFrame operator-() const {
         return unary("negate");
     }
 
-    DataFrame operator~() const
-    {
+    DataFrame operator~() const {
         return unary("bit_wise_not");
     }
 
-    DataFrame operator/(Series const& a) const;
+    DataFrame operator/(Series const &a) const;
 
-    DataFrame operator/(Scalar const& a) const;
+    DataFrame operator/(Scalar const &a) const;
 
-    DataFrame operator==(Scalar const& a) const;
+    DataFrame operator==(Scalar const &a) const;
 
-    DataFrame operator==(Series const& a) const;
+    DataFrame operator==(Series const &a) const;
 
-    DataFrame operator!=(Scalar const& a) const;
+    DataFrame operator!=(Scalar const &a) const;
 
-    DataFrame operator!=(Series const& a) const;
+    DataFrame operator!=(Series const &a) const;
 
-    DataFrame operator<=(Scalar const& a) const;
+    DataFrame operator<=(Scalar const &a) const;
 
-    DataFrame operator<=(Series const& a) const;
+    DataFrame operator<=(Series const &a) const;
 
-    DataFrame operator>=(Scalar const& a) const;
+    DataFrame operator>=(Scalar const &a) const;
 
-    DataFrame operator>=(Series const& a) const;
+    DataFrame operator>=(Series const &a) const;
 
-    DataFrame operator>(Scalar const& a) const;
+    DataFrame operator>(Scalar const &a) const;
 
-    DataFrame operator>(Series const& a) const;
+    DataFrame operator>(Series const &a) const;
 
-    DataFrame operator<(Scalar const& a) const;
+    DataFrame operator<(Scalar const &a) const;
 
-    DataFrame operator<(Series const& a) const;
+    DataFrame operator<(Series const &a) const;
 
-    DataFrame operator|(Scalar const& a) const;
+    DataFrame operator|(Scalar const &a) const;
 
-    DataFrame operator|(Series const& a) const;
+    DataFrame operator|(Series const &a) const;
 
-    DataFrame operator&(Scalar const& a) const;
+    DataFrame operator&(Scalar const &a) const;
 
-    DataFrame operator&(Series const& a) const;
+    DataFrame operator&(Series const &a) const;
 
-    DataFrame operator||(Scalar const& a) const;
+    DataFrame operator||(Scalar const &a) const;
 
-    DataFrame operator||(Series const& a) const;
+    DataFrame operator||(Series const &a) const;
 
-    DataFrame operator&&(Scalar const& a) const;
+    DataFrame operator&&(Scalar const &a) const;
 
-    DataFrame operator&&(Series const& a) const;
+    DataFrame operator&&(Series const &a) const;
 
-    DataFrame operator^(Scalar const& a) const;
+    DataFrame operator^(Scalar const &a) const;
 
-    DataFrame operator^(Series const& a) const;
+    DataFrame operator^(Series const &a) const;
 
-    DataFrame operator<<(Scalar const& s) const;
+    DataFrame operator<<(Scalar const &s) const;
 
-    DataFrame operator<<(Series const& a) const;
+    DataFrame operator<<(Series const &a) const;
 
-    DataFrame operator>>(Scalar const& s) const;
+    DataFrame operator>>(Scalar const &s) const;
 
-    DataFrame operator>>(Series const& a) const;
+    DataFrame operator>>(Series const &a) const;
 
-    DataFrame operator*(Series const& a) const;
+    DataFrame operator*(Series const &a) const;
 
-    DataFrame operator*(Scalar const& a) const;
+    DataFrame operator*(Scalar const &a) const;
 
-    friend DataFrame operator+(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator+(Scalar const &a, DataFrame const &b);
 
-    friend DataFrame operator/(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator/(Scalar const &a, DataFrame const &b);
 
-    friend DataFrame operator*(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator*(Scalar const &a, DataFrame const &b);
 
-    friend DataFrame operator-(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator-(Scalar const &a, DataFrame const &b);
 
-    friend DataFrame operator|(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator|(Scalar const &a, DataFrame const &b);
 
-    friend DataFrame operator&(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator&(Scalar const &a, DataFrame const &b);
 
-    friend DataFrame operator^(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator^(Scalar const &a, DataFrame const &b);
 
-    friend DataFrame operator||(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator||(Scalar const &a, DataFrame const &b);
 
-    friend DataFrame operator&&(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator&&(Scalar const &a, DataFrame const &b);
 
-    friend DataFrame operator<<(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator<<(Scalar const &a, DataFrame const &b);
 
-    friend DataFrame operator>>(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator>>(Scalar const &a, DataFrame const &b);
 
-    friend DataFrame operator<(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator<(Scalar const &a, DataFrame const &b);
 
-    friend DataFrame operator<=(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator<=(Scalar const &a, DataFrame const &b);
 
-    friend DataFrame operator>(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator>(Scalar const &a, DataFrame const &b);
 
-    friend DataFrame operator>=(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator>=(Scalar const &a, DataFrame const &b);
 
-    friend DataFrame operator==(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator==(Scalar const &a, DataFrame const &b);
 
-    friend DataFrame operator!=(Scalar const& a, DataFrame const& b);
+    friend DataFrame operator!=(Scalar const &a, DataFrame const &b);
 
-    [[nodiscard]] Series argsort(std::vector<std::string> const& fields, bool ascending) const;
+    [[nodiscard]] Series argsort(std::vector<std::string> const &fields, bool ascending) const;
 
     [[nodiscard]] DataFrame sort_index(bool ascending = true, bool ignore_index = false);
 
     [[nodiscard]] DataFrame sort_values(
-        std::vector<std::string> const& by,
-        bool ascending = true,
-        bool ignore_index = false);
+            std::vector<std::string> const &by,
+            bool ascending = true,
+            bool ignore_index = false);
 
-    [[nodiscard]] class GroupBy group_by(std::string const&) const;
+    [[nodiscard]] class GroupBy group_by(std::string const &) const;
     [[nodiscard]] class Resampler resample(
-        std::string const& rule,
-        bool closed_right = false,
-        bool label_right = false,
-        TimeGrouperOrigin const& origin = {},
-        time_duration const& offset = time_duration(),
-        std::string const& tz = "") const;
+            std::string const &rule,
+            bool closed_right = false,
+            bool label_right = false,
+            TimeGrouperOrigin const &origin = {},
+            time_duration const &offset = time_duration(),
+            std::string const &tz = "") const;
+
+    class Resampler downsample(std::string const &rule,
+                         bool closed_label_right = true,
+                         bool weekStartsMonday=true,
+                         bool startEpoch=true) const;
 
     [[nodiscard]] Series coalesce();
-    [[nodiscard]] Series coalesce(std::vector<std::string> const& columns);
+    [[nodiscard]] Series coalesce(std::vector<std::string> const &columns);
 
     std::vector<std::string> columnNames() const;
     Series mean(AxisType axis) const;

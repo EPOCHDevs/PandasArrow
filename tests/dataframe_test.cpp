@@ -1,4 +1,4 @@
-#include "../pandas_arrow.h"
+#include "pandas_arrow.h"
 #include "catch.hpp"
 
 
