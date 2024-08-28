@@ -57,13 +57,14 @@ if (ENABLE_GPU)
             src/cudf/series.cpp)
 
     target_link_libraries(pandas_arrow
-            PRIVATE spdlog::spdlog fmt::fmt nvcomp::nvcomp cudf::cudf)
+            PUBLIC spdlog::spdlog fmt::fmt
+            PRIVATE nvcomp::nvcomp cudf::cudf)
 else()
     find_package(spdlog CONFIG REQUIRED)
     find_package(fmt CONFIG REQUIRED)
 
     target_link_libraries(pandas_arrow
-            PRIVATE spdlog::spdlog fmt::fmt)
+            PUBLIC spdlog::spdlog fmt::fmt)
 endif()
 
 target_link_libraries(pandas_arrow PRIVATE TBB::tbb parquet_static  PUBLIC arrow_static curl ssl crypto)
