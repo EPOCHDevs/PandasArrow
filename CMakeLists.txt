@@ -37,8 +37,6 @@ find_package(tabulate CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
 find_package(Arrow CONFIG REQUIRED)
 find_package(Parquet CONFIG REQUIRED)
-find_package(spdlog CONFIG REQUIRED)
-find_package(fmt CONFIG REQUIRED)
 
 add_library(pandas_arrow
         src/aws_s3_reader.cpp
@@ -61,6 +59,9 @@ if (ENABLE_GPU)
     target_link_libraries(pandas_arrow
             PRIVATE spdlog::spdlog fmt::fmt nvcomp::nvcomp cudf::cudf)
 else()
+    find_package(spdlog CONFIG REQUIRED)
+    find_package(fmt CONFIG REQUIRED)
+
     target_link_libraries(pandas_arrow
             PRIVATE spdlog::spdlog fmt::fmt)
 endif()
