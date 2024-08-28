@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 #pragma once
-#define RAPIDJSON_HAS_STDSTRING 1
+
 
 #include <arrow/api.h>
 #include <arrow/result.h>
