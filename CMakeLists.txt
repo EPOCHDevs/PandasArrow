@@ -37,8 +37,8 @@ find_package(tabulate CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
 find_package(Arrow CONFIG REQUIRED)
 find_package(Parquet CONFIG REQUIRED)
-find_package(spdlog CONFIG REQUIRED)
-find_package(fmt CONFIG REQUIRED)
+find_package(spdlog CONFIG 1.14.1 REQUIRED)
+find_package(fmt CONFIG 11.0.2 REQUIRED)
 
 add_library(pandas_arrow
         src/aws_s3_reader.cpp
