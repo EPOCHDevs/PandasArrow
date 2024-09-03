@@ -16,8 +16,6 @@ else ()
     project(PandasArrow LANGUAGES C CXX)
 endif ()
 
-add_definitions(-DGLOG_USE_GLOG_EXPORT)
-
 set(Boost_NO_WARN_NEW_VERSIONS ON)
 option(Boost_USE_STATIC_LIBS  ON)
 set(CMAKE_CXX_STANDARD 20)

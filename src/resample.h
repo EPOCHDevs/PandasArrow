@@ -2,7 +2,6 @@
 //
 // Created by dewe on 1/21/23.
 //
-#include "glog/logging.h"
 #include "group_by.h"
 
 namespace pd {
