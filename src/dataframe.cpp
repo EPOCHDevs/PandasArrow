@@ -240,8 +240,9 @@ namespace pd {
 
         auto array = m_array;
         if (index) {
-            array = array->AddColumn(array->num_columns(), arrow::field(*index, m_index->type()),
-                                     m_index)
+            auto indexPtr = pd::ReturnOrThrowOnFailure(arrow::compute::Cast(m_index, arrow::int64())).make_array();
+            array = array->AddColumn(array->num_columns(), arrow::field(*index, indexPtr->type()),
+                                     indexPtr)
                             .MoveValueUnsafe();
         }
 
@@ -255,7 +256,8 @@ namespace pd {
 
         auto array = m_array;
         if (index) {
-            array = array->AddColumn(array->num_columns(), arrow::field(*index, m_index->type()), m_index).MoveValueUnsafe();
+            auto indexPtr = pd::ReturnOrThrowOnFailure(arrow::compute::Cast(m_index, arrow::int64())).make_array();
+            array = array->AddColumn(array->num_columns(), arrow::field(*index, indexPtr->type()), indexPtr).MoveValueUnsafe();
         }
 
         std::shared_ptr<arrow::io::BufferOutputStream> output_stream;
@@ -295,6 +297,9 @@ namespace pd {
             auto indexPosition = batches[0]->schema()->GetFieldIndex(*index);
             if (indexPosition != -1) {
                 indexPtr = batches[0]->column(indexPosition);
+                if (indexPtr->type_id() == arrow::Type::INT64) {
+                    indexPtr = pd::ReturnOrThrowOnFailure(arrow::compute::Cast(indexPtr, arrow::timestamp(arrow::TimeUnit::NANO))).make_array();
+                }
                 batches[0] = pd::ReturnOrThrowOnFailure(batches[0]->RemoveColumn(indexPosition));
             } else {
                 SPDLOG_ERROR("no field \"{}\" exist in JSON.", *index);
@@ -316,6 +321,9 @@ namespace pd {
             auto indexPosition = batch->schema()->GetFieldIndex(*index);
             if (indexPosition != -1) {
                 indexPtr = batch->column(indexPosition);
+                if (indexPtr->type_id() == arrow::Type::INT64) {
+                    indexPtr = pd::ReturnOrThrowOnFailure(arrow::compute::Cast(indexPtr, arrow::timestamp(arrow::TimeUnit::NANO))).make_array();
+                }
                 batch = pd::ReturnOrThrowOnFailure(batch->RemoveColumn(indexPosition));
             } else {
                 SPDLOG_ERROR("no field \"{}\" exist in JSON.", *index);

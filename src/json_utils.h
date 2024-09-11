@@ -132,6 +132,8 @@ public:
 
     arrow::Status Visit(const arrow::Int64Type& type);
 
+    arrow::Status Visit(const arrow::TimestampType& type);
+
     arrow::Status Visit(const arrow::DoubleType& type);
 
     arrow::Status Visit(const arrow::StringType& type);
@@ -180,6 +182,8 @@ public:
     }
 
     arrow::Status Visit(const arrow::Int64Type& type);
+
+    arrow::Status Visit(const arrow::TimestampType& type);
 
     arrow::Status Visit(const arrow::DoubleType& type);
 

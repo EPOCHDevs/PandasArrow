@@ -260,7 +260,8 @@ arrow::Result<rapidjson::Value> ConvertToVectorT(auto& batch, auto& allocator)
 {
     BuilderType builder{batch->num_rows(), allocator};
     for (int i = 0; i < batch->num_columns(); ++i) {
-        builder.SetField(batch->schema()->field(i).get());
+        auto f = batch->schema()->field(i).get();
+        builder.SetField(f);
         ARROW_RETURN_NOT_OK(arrow::VisitArrayInline(*batch->column(i).get(), &builder));
     }
 
@@ -350,16 +351,34 @@ arrow::Status JsonValueConverter::Visit(const arrow::Int64Type& type) {
         if (value->IsNull()) {
             ARROW_RETURN_NOT_OK(builder->AppendNull());
         } else {
-            if (value->IsUint()) {
+            if (value->IsInt64()) {
+                ARROW_RETURN_NOT_OK(builder->Append(value->GetInt64()));
+            }
+            else if (value->IsUint()) {
                 ARROW_RETURN_NOT_OK(builder->Append(value->GetUint()));
             } else if (value->IsInt()) {
                 ARROW_RETURN_NOT_OK(builder->Append(value->GetInt()));
             } else if (value->IsUint64()) {
                 ARROW_RETURN_NOT_OK(builder->Append(value->GetUint64()));
-            } else if (value->IsInt64()) {
-                ARROW_RETURN_NOT_OK(builder->Append(value->GetInt64()));
             } else {
                 return arrow::Status::Invalid("Value is not an integer");
+            }
+        }
+    }
+    return arrow::Status::OK();
+}
+
+arrow::Status JsonValueConverter::Visit(const arrow::TimestampType& ) {
+    arrow::TimestampBuilder* builder = static_cast<arrow::TimestampBuilder*>(builder_);
+    for (const auto& maybe_value : FieldValues()) {
+        ARROW_ASSIGN_OR_RAISE(auto value, maybe_value);
+        if (value->IsNull()) {
+            ARROW_RETURN_NOT_OK(builder->AppendNull());
+        } else {
+            if (value->IsInt64()) {
+                ARROW_RETURN_NOT_OK(builder->Append(value->GetInt64()));
+            } else {
+                return arrow::Status::Invalid("Value is not a timestamp");
             }
         }
     }
@@ -479,6 +498,19 @@ arrow::Iterator<const rapidjson::Value*> JsonValueConverter::FieldValues() {
 
 arrow::Status JsonColumnConverter::Visit(const arrow::Int64Type& type) {
     arrow::Int64Builder* builder = static_cast<arrow::Int64Builder*>(builder_);
+    const auto& column = columns_[field_name_.c_str()];
+    for (rapidjson::SizeType i = 0; i < column.Size(); ++i) {
+        if (column[i].IsNull()) {
+            ARROW_RETURN_NOT_OK(builder->AppendNull());
+        } else {
+            ARROW_RETURN_NOT_OK(builder->Append(column[i].GetInt64()));
+        }
+    }
+    return arrow::Status::OK();
+}
+
+arrow::Status JsonColumnConverter::Visit(const arrow::TimestampType& type) {
+    auto builder = static_cast<arrow::TimestampBuilder*>(builder_);
     const auto& column = columns_[field_name_.c_str()];
     for (rapidjson::SizeType i = 0; i < column.Size(); ++i) {
         if (column[i].IsNull()) {

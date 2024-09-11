@@ -41,8 +41,7 @@ std::pair<std::shared_ptr<arrow::Buffer>, std::basic_string_view<uint8_t>> GetBl
 
 
 int main() {
-    auto xlarge = pd::DataFrame::readParquet("/home/adesola/EpochLab/Database/S3/DailyBars/Options/SPY.parquet.gzip");
-    auto large = pd::DataFrame::readParquet("s3://epoch-db/MinuteBars/Stocks/AAPL.parquet.gzip");
+    auto large = pd::DataFrame::readParquet("s3://epoch-db/MinuteBars/Stocks/AAPL.parquet.gzip").setIndex("t");
     auto mid = large.slice(0, 100000);
     auto small = large.slice(0, 10000);
     auto xsmall = large.slice(0, 2);
@@ -50,7 +49,7 @@ int main() {
     int n_runs = 10;
 
     std::once_flag f1, f2, f3;
-    for (auto && df: {xsmall, small, mid, large, xlarge})
+    for (auto && df: {xsmall, small, mid, large})
     {
         int64_t jsonRowDurations{}, jsonColumnDurations{}, binaryDurations{};
         std::chrono::TimeIt timer;
