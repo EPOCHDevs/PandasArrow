@@ -11,8 +11,8 @@
 namespace arrow{
     AWSS3Reader::AWSS3Reader() {
         arrow::fs::S3GlobalOptions s3_options;
-
-        s3_options.log_level = fs::S3LogLevel::Error;
+        auto logLevel = getenv("STRATIFYX_AWS_LOG_LEVEL");
+        s3_options.log_level = logLevel ? static_cast<fs::S3LogLevel>(atoi(logLevel)) : fs::S3LogLevel::Error;
         const auto status = fs::InitializeS3(s3_options);
         if (!status.ok()) {
             throw std::runtime_error(fmt::format("Failed to initialize S3 access: {}.", status.ToString()));
@@ -35,6 +35,7 @@ namespace arrow{
             options.ConfigureDefaultCredentials();
             SPDLOG_INFO("Found all Credentials in .aws file");
         }
+
 
         if (aws_region) {
             options.region=aws_region;
