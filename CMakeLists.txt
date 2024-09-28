@@ -55,16 +55,16 @@ if (ENABLE_GPU)
             src/cudf/series.cpp)
 
     target_link_libraries(pandas_arrow
-            PRIVATE spdlog::spdlog fmt::fmt nvcomp::nvcomp cudf::cudf)
-else()
-    find_package(spdlog CONFIG REQUIRED)
-    find_package(fmt CONFIG REQUIRED)
-
-    target_link_libraries(pandas_arrow
-            PRIVATE spdlog::spdlog fmt::fmt)
+            PRIVATE nvcomp::nvcomp cudf::cudf)
 endif()
 
-target_link_libraries(pandas_arrow PRIVATE TBB::tbb parquet_static  PUBLIC arrow_static curl ssl crypto)
+find_package(spdlog CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
+
+target_link_libraries(pandas_arrow
+        PRIVATE TBB::tbb parquet_static spdlog::spdlog_header_only fmt::fmt-header-only
+        PUBLIC arrow_static curl ssl crypto )
+
 target_compile_definitions(pandas_arrow PUBLIC -DRAPIDJSON_HAS_STDSTRING=1)
 target_include_directories(pandas_arrow
         PRIVATE ${Boost_INCLUDE_DIRS}
