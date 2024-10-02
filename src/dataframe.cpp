@@ -48,11 +48,6 @@ namespace pd {
 
     DataFrame::DataFrame(const ArrayTable &table, const shared_ptr<arrow::Array> &index)
         : NDFrame(GetTableRowSize(table), index) {
-        //    if (m_index->length() == 0)
-        //    {
-        //        throw std::runtime_error("Cannot Create DataFrame with empty columns");
-        //    }
-
         int nRows = m_index->length();
 
         arrow::FieldVector fieldVectors;

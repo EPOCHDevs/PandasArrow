@@ -7,6 +7,8 @@
 #include <arrow/scalar.h>
 #include <cmath>
 #include <iostream>
+#include <fmt/format.h>
+
 #include "scalar.h"
 #include "sstream"
 #include "span"
@@ -155,6 +157,10 @@ NDFrame<BaseT>::NDFrame(ArrayType const& array, std::shared_ptr<arrow::Array> co
 template<class BaseT>
 NDFrame<BaseT>::NDFrame(int64_t num_rows, std::shared_ptr<arrow::Array> const& _index) : m_array(nullptr)
 {
+    if (num_rows != _index->length()) {
+        throw std::runtime_error(fmt::format("NDFrame: Number of rows({}) does not match array length({})", num_rows, _index->length()));
+    }
+
     if (_index)
     {
         m_index = _index;
