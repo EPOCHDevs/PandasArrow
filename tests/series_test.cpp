@@ -1091,7 +1091,7 @@ TEST_CASE("Test Series::cast() function")
     }
 }
 
-TEST_CASE("Test Series::shift() and Series::pct_change() functions")
+TEST_CASE("Test Series::shift() and Series::pct_change() functions", "[.shift_pct]")
 {
     std::vector<double> vec1 = { 1.0, 2.0, 3.0, 4.0, 5.0 };
     auto array1 = arrow::ArrayT<double>::Make(vec1);
@@ -1791,7 +1791,7 @@ TEST_CASE("Test Series::nth_element() function")
     }
 }
 
-TEST_CASE("Test Series::cov() and Series::corr() functions")
+TEST_CASE("Test Series::cov() and Series::corr() functions", "[.cov_corr]")
 {
     std::vector<double> vec1 = { 1.0, 2.0, 3.0, 4.0, 5.0 };
     std::vector<double> vec2 = { 2.0, 3.0, 4.0, 5.0, 6.0 };
@@ -2037,7 +2037,7 @@ TEST_CASE("Test reindex function", "[reindex]")
     REQUIRE(outputSeries.array()->Equals(expectedValues));
 }
 
-TEST_CASE("Test resample on series", "[Resample]")
+TEST_CASE("Test resample on series", "[ResampleSeries]")
 {
     auto index = pd::date_range(ptime(date(2000, 1, 1)), 9);
     auto series = pd::Series(pd::range(0L, 9L), index);
@@ -2098,7 +2098,7 @@ TEST_CASE("Test resample on series", "[Resample]")
 }
 
 
-TEST_CASE("Test resample on series with custom function", "[Resample]")
+TEST_CASE("Test resample on series with custom function", "[ResampleSeries]")
 {
     auto index = pd::date_range(ptime(date(2000, 1, 1)), 9);
     auto series = pd::Series(pd::range(0L, 9L), index);
