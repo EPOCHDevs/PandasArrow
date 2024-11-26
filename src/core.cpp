@@ -205,7 +205,7 @@ std::shared_ptr<arrow::TimestampArray> date_range(
     date const& start,
     int period,
     FreqTime freq,
-    std::string const& tz)
+    std::string const& /*unused*/)
 {
     if (period <= 0)
     {

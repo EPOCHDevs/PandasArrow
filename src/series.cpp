@@ -772,7 +772,7 @@ Series Series::strptime(const std::string& format, arrow::TimeUnit::type unit, b
 }
 
 
-Series Series::shift(int32_t shift_value, std::shared_ptr<arrow::Scalar> const& fill_value) const
+Series Series::shift(int32_t /*shift_value*/, std::shared_ptr<arrow::Scalar> const& /*ununsed*/) const
 {
     throw std::runtime_error("currently lacking implementation");
 //    return ReturnSeriesOrThrowOnError(
@@ -784,7 +784,7 @@ bool Series::is_valid(int row) const
     return pd::ReturnOrThrowOnFailure(m_array->GetScalar(row))->is_valid;
 }
 
-Series Series::pct_change(int64_t periods) const
+Series Series::pct_change(int64_t /*ununsed*/) const
 {
     throw std::runtime_error("currently lacking implementation");
 //    return ReturnSeriesOrThrowOnError(arrow::compute::PctChange(m_array, periods));
@@ -942,7 +942,7 @@ Series Series::argsort(bool ascending) const
     return ReturnSeriesOrThrowOnError(arrow::compute::CallFunction("array_sort_indices", { m_array }, &opt));
 }
 
-double Series::cov(const Series& s2) const
+double Series::cov(const Series& /*s2*/) const
 {
     throw std::runtime_error("currently lacking implementation");
 
@@ -950,7 +950,7 @@ double Series::cov(const Series& s2) const
 //        arrow::compute::Covariance(m_array, s2.m_array, arrow::compute::VarianceOptions(1)));
 }
 
-double Series::corr(const Series& s2, CorrelationType method) const
+double Series::corr(const Series& /*ununsed*/, CorrelationType /*ununsed*/) const
 {
     throw std::runtime_error("currently lacking implementation");
 
@@ -966,7 +966,7 @@ double Series::corr(const Series& s2, CorrelationType method) const
     return 0;
 }
 
-double Series::corr(const Series& s2, double (*method)(double)) const
+double Series::corr(const Series& /*unused*/, double (*/*unused*/)(double)) const
 {
     throw std::runtime_error("Series currently only supports Pearson CorrelationType");
 }
@@ -1192,7 +1192,6 @@ vector<double> Series::ewm(
         const auto sub_vals = arrow::checked_pointer_cast<arrow::DoubleArray>(vals->Slice(s, win_size));
 
         std::span<double> sub_output(output.begin() + s, output.begin() + e);
-        double mean_x{ std::nan("") }, mean_y{ std::nan("") };
 
         auto weighted = (*vals)[0];
         bool is_observation = weighted.has_value();
@@ -1200,7 +1199,7 @@ vector<double> Series::ewm(
         sub_output[0] = (nobs >= minp) ? *weighted : NAN;
         double old_wt = 1.;
 
-        for (int i = 1; i < N; i++)
+        for (size_t i = 1; i < N; i++)
         {
             auto cur = (*vals)[i];
             is_observation = cur.has_value();

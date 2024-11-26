@@ -10,7 +10,7 @@
 
 namespace pd {
 Concatenator::Concatenator(const std::vector<pd::DataFrame>& objs, JoinType join, bool ignore_index, bool sort)
-    : sort(sort), ignore_index(ignore_index)
+    : ignore_index(ignore_index), sort(sort)
 {
     if (objs.empty())
     {
@@ -113,7 +113,7 @@ std::unordered_map<std::string, std::pair<std::vector<int>, std::shared_ptr<arro
     return result;
 }
 
-pd::DataFrame Concatenator::concatenateRows(bool intersect, bool ignore_index, bool sort)
+pd::DataFrame Concatenator::concatenateRows(bool intersect, bool ignore_index, bool /*sort*/)
 {
 
     auto newDataTypes = resolveDuplicateFieldName(objs);
@@ -244,7 +244,7 @@ pd::DataFrame Concatenator::concatenateColumns(bool intersect, bool ignore_index
 
     if (ignore_index)
     {
-        for (int i = 0; i < fieldVector.size(); i++)
+        for (size_t i = 0; i < fieldVector.size(); i++)
         {
             fieldVector.at(i) = arrow::field(std::to_string(i), fieldVector.at(i)->type());
         }
@@ -258,7 +258,7 @@ pd::DataFrame concatColumnsUnsafe(std::vector<pd::DataFrame> const& objs)
     auto df = objs.at(0).array();
     auto N = df->num_columns();
 
-    for (int i = 1; i < objs.size(); i++)
+    for (size_t i = 1; i < objs.size(); i++)
     {
         for (auto const& field : objs[i].array()->schema()->fields())
         {

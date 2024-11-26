@@ -12,11 +12,11 @@ std::vector<int64_t> generate_bins_dt64(std::shared_ptr<arrow::TimestampArray> v
                                         std::shared_ptr<arrow::Int64Array> const& binner,
                                         bool right_closed)
 {
-    int64_t nat_count = 0;
+//    int64_t nat_count = 0;
     if (values->null_count() > 0) {
         auto datum = pd::ReturnOrThrowOnFailure(arrow::compute::DropNull(values));
         values = datum.array_as<arrow::TimestampArray>();
-        nat_count = values->null_count();
+//        nat_count = values->null_count();
     }
 
     std::vector<int64_t> bins;
@@ -299,7 +299,7 @@ GroupInfo makeGroupInfo(
                 .MoveValueUnsafe());
     }
 
-    if (bins.size() < labels->length())
+    if (bins.size() < static_cast<size_t>(labels->length()))
     {
         labels = dynamic_pointer_cast<arrow::TimestampArray>(labels->Slice(0, bins.size()));
     }

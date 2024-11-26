@@ -17,4 +17,3 @@ target_include_directories(hash_practise PRIVATE ../..)
 target_link_libraries(hash_practise PRIVATE pandas_arrow )
 
 add_subdirectory(cudf_examples)
-

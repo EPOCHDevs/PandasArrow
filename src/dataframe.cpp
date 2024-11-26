@@ -159,7 +159,7 @@ namespace pd {
     DataFrame DataFrame::setColumns(std::vector<std::string> const &column_names) {
         auto current_column_names = columnNames();
         std::unordered_map<std::string, std::string> replace;
-        for (int i = 0; i < column_names.size(); ++i) {
+        for (size_t i = 0; i < column_names.size(); ++i) {
             replace[current_column_names[i]] = column_names[i];
         }
         return rename(replace);
@@ -772,7 +772,7 @@ namespace pd {
         arrow::ScalarVector max(N);
 
         auto indexesArray = arrow::ArrayT<std::string>::Make(indexes);
-        for (int i = 0; i < indexes.size(); i++) {
+        for (size_t i = 0; i < indexes.size(); i++) {
             auto index = indexes[i];
             auto series = operator[](index);
 
@@ -782,7 +782,7 @@ namespace pd {
             min[i] = series.min().value();
             nunique[i] = series.nunique();
 
-            for (int j = 0; j < percentiles_list.size(); j++) {
+            for (size_t j = 0; j < percentiles_list.size(); j++) {
                 quantiles[j][i] = series.quantile(percentiles_list[j]).value();
             }
 
@@ -999,7 +999,7 @@ namespace pd {
         return {m_array->schema(), newIndex->length(), reindexedSeries, newIndex};
     }
 
-    DataFrame DataFrame::sort_values(const std::vector<std::string> &by, bool ascending, bool ignore_index) {
+    DataFrame DataFrame::sort_values(const std::vector<std::string> &by, bool ascending, bool /*ignore_index*/) {
 
         auto array = m_array;
         auto fields = m_array->schema()->field_names();
@@ -1134,7 +1134,7 @@ namespace pd {
                     auto field = ReturnOrThrowOnFailure(m_index->GetScalar(i));
                     arrow::ScalarVector scalars(newRowSize);
 
-                    for (size_t j = 0; j < newRowSize; j++) {
+                    for (int64_t j = 0; j < newRowSize; j++) {
                         scalars[j] =
                                 ReturnOrThrowOnFailure(m_array->column(j)->GetScalar(i).MoveValueUnsafe()->CastTo(commonType));
                     }
@@ -1178,7 +1178,6 @@ namespace pd {
                                 ScalarPtr key = GetKeyByIndex(groupIdx);
 
                                 ArrayPtr index = indexGroups[key];
-                                int64_t numRows = index->length();
 
                                 arrow::ArrayVector group = groups[key];
                                 ArrayPtr columnInGroup = group[columnIdx];
@@ -1255,7 +1254,6 @@ namespace pd {
                                 ScalarPtr key = GetKeyByIndex(groupIdx);
 
                                 ArrayPtr index = indexGroups[key];
-                                int64_t numRows = index->length();
 
                                 arrow::ArrayVector group = groups[key];
                                 ArrayPtr columnInGroup = group[columnIdx];
@@ -1449,7 +1447,6 @@ namespace pd {
 
     arrow::Result<pd::DataFrame> GroupBy::min_max(std::string const &arg) {
         auto schema = df.m_array->schema();
-        auto N = groups.size();
 
         auto fv = schema->GetFieldByName(arg);
 
@@ -1526,7 +1523,6 @@ namespace pd {
 
     arrow::Result<pd::Series> GroupBy::first(std::string const &arg) {
         auto schema = df.m_array->schema();
-        auto N = groups.size();
 
         auto fv = schema->GetFieldByName(arg);
 
@@ -1581,7 +1577,6 @@ namespace pd {
 
     arrow::Result<pd::Series> GroupBy::last(std::string const &arg) {
         auto schema = df.m_array->schema();
-        auto N = groups.size();
 
         auto fv = schema->GetFieldByName(arg);
 
@@ -1640,7 +1635,6 @@ namespace pd {
 
     arrow::Result<pd::Series> GroupBy::mode(std::string const &arg) {
         auto schema = df.m_array->schema();
-        auto N = groups.size();
 
         auto fv = schema->GetFieldByName(arg);
 
@@ -1701,7 +1695,6 @@ namespace pd {
 
     arrow::Result<pd::Series> GroupBy::quantile(std::string const &arg, double q) {
         auto schema = df.m_array->schema();
-        auto N = groups.size();
 
         auto fv = schema->GetFieldByName(arg);
 

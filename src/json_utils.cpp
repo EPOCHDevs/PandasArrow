@@ -9,10 +9,10 @@
 /// of the corresponding fields in each column.
 class ColumnBatchBuilder {
 public:
-    explicit ColumnBatchBuilder(int64_t num_rows, rapidjson::Document::AllocatorType& alloc) :
-                                                                                               field_(nullptr),
-                                                                                               allocator(alloc),
-                                                                                               columns_(rapidjson::kObjectType) {}
+    explicit ColumnBatchBuilder(rapidjson::Document::AllocatorType& alloc) :
+                                                                   field_(nullptr),
+                                                                   allocator(alloc),
+                                                                   columns_(rapidjson::kObjectType) {}
 
     /// \brief Set which field to convert.
     void SetField(const arrow::Field* field) { field_ = field; }
@@ -67,7 +67,7 @@ public:
     arrow::Status Visit(const arrow::StructArray& array) {
         const arrow::StructType* type = array.struct_type();
 
-        ColumnBatchBuilder child_builder(array.length(), allocator);
+        ColumnBatchBuilder child_builder(allocator);
         for (int i = 0; i < type->num_fields(); ++i) {
             const arrow::Field* child_field = type->field(i).get();
             child_builder.SetField(child_field);
@@ -86,7 +86,7 @@ public:
     arrow::Status Visit(const arrow::ListArray& array) {
         rapidjson::Value column_data(rapidjson::kArrayType);
         std::shared_ptr<arrow::Array> values = array.values();
-        ColumnBatchBuilder child_builder(values->length(), allocator);
+        ColumnBatchBuilder child_builder(allocator);
         const arrow::Field* value_field = array.list_type()->value_field().get();
         child_builder.SetField(value_field);
         ARROW_RETURN_NOT_OK(arrow::VisitArrayInline(*values.get(), &child_builder));
@@ -119,8 +119,8 @@ public:
 
 private:
     const arrow::Field* field_;
-    rapidjson::Value columns_;
     rapidjson::Document::AllocatorType& allocator;
+    rapidjson::Value columns_;
 };  // ColumnBatchBuilder
 
 
@@ -251,21 +251,28 @@ public:
 
 private:
     const arrow::Field* field_;
-    rapidjson::Value rows_;
     rapidjson::Document::AllocatorType allocator;
+    rapidjson::Value rows_;
 };  // RowBatchBuilder
 
 template<class BuilderType>
-arrow::Result<rapidjson::Value> ConvertToVectorT(auto& batch, auto& allocator)
+arrow::Result<rapidjson::Value> ConvertToVectorTImpl(auto& batch, BuilderType && builder)
 {
-    BuilderType builder{batch->num_rows(), allocator};
     for (int i = 0; i < batch->num_columns(); ++i) {
         auto f = batch->schema()->field(i).get();
         builder.SetField(f);
         ARROW_RETURN_NOT_OK(arrow::VisitArrayInline(*batch->column(i).get(), &builder));
     }
-
     return std::move(builder).Result();
+}
+
+template<class BuilderType>
+arrow::Result<rapidjson::Value> ConvertToVectorT(auto& batch, auto& allocator) {
+    if constexpr (std::same_as<BuilderType, ColumnBatchBuilder>) {
+        return ConvertToVectorTImpl(batch, ColumnBatchBuilder{allocator});
+    } else {
+        return ConvertToVectorTImpl(batch, RowBatchBuilder{batch->num_rows(), allocator});
+    }
 }
 
 /// Convert a single batch of Arrow data into Documents
@@ -344,7 +351,7 @@ arrow::Result<const rapidjson::Value*> DocValuesIterator::Next() {
     return value;
 }
 
-arrow::Status JsonValueConverter::Visit(const arrow::Int64Type& type) {
+arrow::Status JsonValueConverter::Visit(const arrow::Int64Type& /*ununsed*/) {
     arrow::Int64Builder* builder = static_cast<arrow::Int64Builder*>(builder_);
     for (const auto& maybe_value : FieldValues()) {
         ARROW_ASSIGN_OR_RAISE(auto value, maybe_value);
@@ -385,7 +392,7 @@ arrow::Status JsonValueConverter::Visit(const arrow::TimestampType& ) {
     return arrow::Status::OK();
 }
 
-arrow::Status JsonValueConverter::Visit(const arrow::DoubleType& type) {
+arrow::Status JsonValueConverter::Visit(const arrow::DoubleType&) {
     arrow::DoubleBuilder* builder = static_cast<arrow::DoubleBuilder*>(builder_);
     for (const auto& maybe_value : FieldValues()) {
         ARROW_ASSIGN_OR_RAISE(auto value, maybe_value);
@@ -398,7 +405,7 @@ arrow::Status JsonValueConverter::Visit(const arrow::DoubleType& type) {
     return arrow::Status::OK();
 }
 
-arrow::Status JsonValueConverter::Visit(const arrow::StringType& type) {
+arrow::Status JsonValueConverter::Visit(const arrow::StringType& /*ununsed*/) {
     arrow::StringBuilder* builder = static_cast<arrow::StringBuilder*>(builder_);
     for (const auto& maybe_value : FieldValues()) {
         ARROW_ASSIGN_OR_RAISE(auto value, maybe_value);
@@ -411,7 +418,7 @@ arrow::Status JsonValueConverter::Visit(const arrow::StringType& type) {
     return arrow::Status::OK();
 }
 
-arrow::Status JsonValueConverter::Visit(const arrow::BooleanType& type) {
+arrow::Status JsonValueConverter::Visit(const arrow::BooleanType& /*ununsed*/) {
     arrow::BooleanBuilder* builder = static_cast<arrow::BooleanBuilder*>(builder_);
     for (const auto& maybe_value : FieldValues()) {
         ARROW_ASSIGN_OR_RAISE(auto value, maybe_value);
@@ -496,7 +503,7 @@ arrow::Iterator<const rapidjson::Value*> JsonValueConverter::FieldValues() {
     return arrow::MakeFunctionIterator(fn);
 }
 
-arrow::Status JsonColumnConverter::Visit(const arrow::Int64Type& type) {
+arrow::Status JsonColumnConverter::Visit(const arrow::Int64Type& /*ununsed*/) {
     arrow::Int64Builder* builder = static_cast<arrow::Int64Builder*>(builder_);
     const auto& column = columns_[field_name_.c_str()];
     for (rapidjson::SizeType i = 0; i < column.Size(); ++i) {
@@ -509,7 +516,7 @@ arrow::Status JsonColumnConverter::Visit(const arrow::Int64Type& type) {
     return arrow::Status::OK();
 }
 
-arrow::Status JsonColumnConverter::Visit(const arrow::TimestampType& type) {
+arrow::Status JsonColumnConverter::Visit(const arrow::TimestampType& /*ununsed*/) {
     auto builder = static_cast<arrow::TimestampBuilder*>(builder_);
     const auto& column = columns_[field_name_.c_str()];
     for (rapidjson::SizeType i = 0; i < column.Size(); ++i) {
@@ -522,7 +529,7 @@ arrow::Status JsonColumnConverter::Visit(const arrow::TimestampType& type) {
     return arrow::Status::OK();
 }
 
-arrow::Status JsonColumnConverter::Visit(const arrow::DoubleType& type) {
+arrow::Status JsonColumnConverter::Visit(const arrow::DoubleType& /*ununsed*/) {
     arrow::DoubleBuilder* builder = static_cast<arrow::DoubleBuilder*>(builder_);
     const auto& column = columns_[field_name_.c_str()];
     for (rapidjson::SizeType i = 0; i < column.Size(); ++i) {
@@ -535,7 +542,7 @@ arrow::Status JsonColumnConverter::Visit(const arrow::DoubleType& type) {
     return arrow::Status::OK();
 }
 
-arrow::Status JsonColumnConverter::Visit(const arrow::StringType& type) {
+arrow::Status JsonColumnConverter::Visit(const arrow::StringType& /*ununsed*/) {
     arrow::StringBuilder* builder = static_cast<arrow::StringBuilder*>(builder_);
     const auto& column = columns_[field_name_.c_str()];
     for (rapidjson::SizeType i = 0; i < column.Size(); ++i) {
@@ -548,7 +555,7 @@ arrow::Status JsonColumnConverter::Visit(const arrow::StringType& type) {
     return arrow::Status::OK();
 }
 
-arrow::Status JsonColumnConverter::Visit(const arrow::BooleanType& type) {
+arrow::Status JsonColumnConverter::Visit(const arrow::BooleanType& /*ununsed*/) {
     arrow::BooleanBuilder* builder = static_cast<arrow::BooleanBuilder*>(builder_);
     const auto& column = columns_[field_name_.c_str()];
     for (rapidjson::SizeType i = 0; i < column.Size(); ++i) {

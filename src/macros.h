@@ -14,7 +14,7 @@ struct BinaryOperatorFunctor
         std::vector<std::shared_ptr<arrow::Array>> const& rhs,
         std::vector<std::shared_ptr<arrow::ArrayData>>& result,
         const char* function)
-        : lhs(lhs), rhs(rhs), func(function), result(result)
+        : lhs(lhs), rhs(rhs), result(result), func(function)
     {
     }
 
@@ -90,13 +90,13 @@ struct BinaryOperatorFunctor
         for (size_t i = 0; i < args.size(); ++i) \
         { \
             const auto& arg = args[i]; \
-            long L = uniqueKeys->length(); \
+            const auto L = static_cast<size_t>(uniqueKeys->length()); \
             int index = schema->GetFieldIndex(arg); \
 \
             std::vector<T> result(L); \
             tbb::parallel_for( \
                 tbb::blocked_range<size_t>(0, uniqueKeys->length()), \
-                [&](const tbb::blocked_range<size_t>& r) \
+                [&](const tbb::blocked_range<size_t>& /*unused*/) \
                 { \
                     for (size_t j = 0; j < L; j++) \
                     { \
@@ -123,8 +123,6 @@ struct BinaryOperatorFunctor
     arrow::Result<pd::Series> GroupBy::func(std::string const& arg) \
     { \
         auto schema = df.m_array->schema(); \
-        auto N = groups.size(); \
-\
         auto fv = schema->GetFieldByName(arg); \
 \
         long L = uniqueKeys->length(); \
@@ -192,10 +190,7 @@ struct BinaryOperatorFunctor
     arrow::Result<pd::Series> GroupBy::func(std::string const& arg) \
     { \
         auto schema = df.m_array->schema(); \
-        auto N = groups.size(); \
-\
         auto fv = schema->GetFieldByName(arg); \
-\
         long L = uniqueKeys->length(); \
         int index = schema->GetFieldIndex(arg); \
 \

@@ -18,8 +18,7 @@ struct GroupInfo
 
     inline std::vector<int64_t> downsample()
     {
-
-        if (bins.size() != labels->length())
+        if (bins.size() != static_cast<size_t>(labels->length()))
         {
             throw std::runtime_error("Processing Group Info requires bins.size() == labels->length()");
         }
