@@ -546,12 +546,9 @@ DataFrame::DataFrame(
     Row<ColumnTypes>&&... columnData)
     : NDFrame<DataFrame>(std::get<0>(std::forward_as_tuple(columnData...)).second.size(), _index)
 {
+    static_assert(sizeof...(columnData) > 0, "Cannot Create DataFrame with empty columns");
 
     int64_t nRows = m_index->length();
-    if (nRows == 0)
-    {
-        throw std::runtime_error("Cannot Create DataFrame with empty columns");
-    }
 
     arrow::ArrayVector arrays(N);
     arrow::FieldVector fields(N);
@@ -569,7 +566,7 @@ DataFrame::DataFrame(
     : NDFrame<DataFrame>(table.back().size(), _index)
 {
 
-    if (m_index->length() == 0)
+    if (columns.empty())
     {
         throw std::runtime_error("Cannot Create DataFrame with empty columns");
     }
@@ -590,8 +587,7 @@ template<template<typename...> class MapType, typename V>
 DataFrame::DataFrame(MapType<std::string, V> const& table, std::shared_ptr<arrow::Array> const& index)
     : NDFrame<DataFrame>(GetTableRowSize(table), index)
 {
-
-    if (m_index->length() == 0)
+    if (table.empty())
     {
         throw std::runtime_error("Cannot Create DataFrame with empty columns");
     }

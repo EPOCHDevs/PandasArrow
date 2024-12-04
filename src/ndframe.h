@@ -70,6 +70,7 @@ struct NDFrame
 {
 
 public:
+    virtual ~NDFrame() = default;
     using ArrayType =
         std::shared_ptr<std::conditional_t<std::same_as<BaseT, class DataFrame>, arrow::RecordBatch, arrow::Array>>;
 
