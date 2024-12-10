@@ -316,29 +316,25 @@ TEST_CASE("Test describe with empty DataFrame", "[describe]")
 TEST_CASE("Test describe with all NA values", "[describe]")
 {
     double NA = std::numeric_limits<double>::quiet_NaN();
-    pd::DataFrame df(std::vector<std::vector<double>>{ std::vector{ NA, NA, NA },
-                                                       std::vector{ NA, NA, NA },
-                                                       std::vector{ NA, NA, NA } });
-    df.setColumns({ "a", "b", "c" });
-    df.setIndex(arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
-
+    pd::DataFrame df(std::vector<std::vector<double>>{std::vector{NA, NA, NA},
+                                                      std::vector{NA, NA, NA},
+                                                      std::vector{NA, NA, NA}},
+                     {"a", "b", "c"},
+                     arrow::ArrayT<std::string>::Make({"x"s, "y"s, "z"s}));
     auto desc = df.describe();
-    REQUIRE(desc.shape() == pd::DataFrame::Shape{ 3, 6 });
-    REQUIRE(desc.columns() == std::vector<std::string>{ "count", "mean", "std", "min", "nunique", "max" });
-    REQUIRE(desc.index().equals(std::vector<std::string>{ "a", "b", "c" }));
+    REQUIRE(desc.shape() == pd::DataFrame::Shape{3, 6});
+    REQUIRE(desc.columns() == std::vector<std::string>{"count", "mean", "std", "min", "nunique", "max"});
+    REQUIRE(desc.index().equals(std::vector<std::string>{"a", "b", "c"}));
 
-    for (int i = 0; i < 3; i++)
-    {
+    for (int i = 0; i < 3; i++) {
         REQUIRE(std::isnan(desc.at(i, 1).as<double>()));
         REQUIRE(std::isnan(desc.at(i, 2).as<double>()));
 
-        for (int j : { 0, 4 })
-        {
+        for (int j: {0, 4}) {
             REQUIRE(desc.at(i, j).as<::int64_t>() == 0);
         }
 
-        for (int j : { 3, 5 })
-        {
+        for (int j: {3, 5}) {
             REQUIRE_FALSE(desc.at(i, j).isValid());
         }
     }
@@ -347,8 +343,8 @@ TEST_CASE("Test describe with all NA values", "[describe]")
 TEST_CASE("Test describe with numeric columns", "[describe]")
 {
     pd::DataFrame df(
-        std::vector<std::vector<int>>{ std::vector{ 1, 2, 3 }, std::vector{ 4, 5, 6 }, std::vector{ 7, 8, 9 } });
-    df.setColumns({ "a", "b", "c" });
+        std::vector<std::vector<int>>{ std::vector{ 1, 2, 3 }, std::vector{ 4, 5, 6 }, std::vector{ 7, 8, 9 } },
+    { "a", "b", "c" });
     df.setIndex(arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
 
     // Test default describe
@@ -374,8 +370,8 @@ TEST_CASE("Test describe with non-numeric columns", "[describe]")
 {
     pd::DataFrame df(std::vector<std::vector<std::string>>{ std::vector<std::string>{ "a", "b", "c" },
                                                             std::vector<std::string>{ "d", "e", "f" },
-                                                            std::vector<std::string>{ "g", "h", "i" } });
-    df.setColumns({ "x", "y", "z" });
+                                                            std::vector<std::string>{ "g", "h", "i" } },
+                     { "x", "y", "z" });
     df.setIndex(arrow::ArrayT<std::string>::Make({ "a"s, "b"s, "c"s }));
 
     REQUIRE_THROWS(df.describe());
@@ -390,15 +386,18 @@ TEST_CASE("Test describe with non-numeric columns", "[describe]")
 
 TEST_CASE("Test all math operators for DataFrame", "[math_operators]")
 {
+    auto index = pd::range(0UL, 3UL);
+
     pd::DataFrame df1(
-        std::vector<std::vector<int>>{ std::vector{ 1, 2, 3 }, std::vector{ 4, 5, 6 }, std::vector{ 7, 8, 9 } });
-    df1.setColumns({ "a", "b", "c" });
-    df1.setIndex(arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
+        std::vector<std::vector<int>>{ std::vector{ 1, 2, 3 }, std::vector{ 4, 5, 6 }, std::vector{ 7, 8, 9 } },
+        { "a", "b", "c" },
+        arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
+
 
     pd::DataFrame df2(
-        std::vector<std::vector<int>>{ std::vector{ 2, 4, 6 }, std::vector{ 8, 10, 12 }, std::vector{ 14, 16, 18 } });
-    df2.setColumns({ "a", "b", "c" });
-    df2.setIndex(arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
+        std::vector<std::vector<int>>{ std::vector{ 2, 4, 6 }, std::vector{ 8, 10, 12 }, std::vector{ 14, 16, 18 } },
+        { "a", "b", "c" },
+        arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
 
     // Test addition operator
     auto df3 = df1 + df2;
@@ -492,8 +491,7 @@ TEST_CASE("Test sort_index with ascending=true and ignore_index=false", "[sort_i
 
 TEST_CASE("Test sort_index with ascending=false and ignore_index=true", "[sort_index]")
 {
-    pd::DataFrame df(std::vector<std::vector<int>>{ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
-    df = df.setColumns({ "a", "b", "c" });
+    pd::DataFrame df(std::vector<std::vector<int>>{ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } }, { "a", "b", "c" });
     df = df.setIndex(arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
 
     INFO(df);
@@ -512,8 +510,7 @@ TEST_CASE("Test sort_index with ascending=false and ignore_index=true", "[sort_i
 
 TEST_CASE("Test sort_index with ascending=false and ignore_index=false", "[sort_index]")
 {
-    pd::DataFrame df(std::vector<std::vector<int>>{ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
-    df = df.setColumns({ "a", "b", "c" });
+    pd::DataFrame df(std::vector<std::vector<int>>{ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } }, { "a", "b", "c" });
     df = df.setIndex(arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
 
     INFO(df);
@@ -532,8 +529,8 @@ TEST_CASE("Test sort_index with ascending=false and ignore_index=false", "[sort_
 
 TEST_CASE("Test sort_values with by and ascending=false and ignore_index=true", "[sort_values]")
 {
-    pd::DataFrame df(std::vector<std::vector<int>>{ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } });
-    df = df.setColumns({ "a", "b", "c" });
+    pd::DataFrame df(std::vector<std::vector<int>>{ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } },
+                     { "a", "b", "c" });
     df = df.setIndex(arrow::ArrayT<std::string>::Make({ "x", "y", "z" }));
 
     auto sorted = df.sort_values({ "a", "b" }, false, true);
