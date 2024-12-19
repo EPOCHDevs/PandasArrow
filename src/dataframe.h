@@ -3,7 +3,7 @@
 //
 #pragma once
 #include "filesystem"
-#include "ndframe.h"
+#include "series.h"
 #include "set"
 
 
@@ -87,7 +87,7 @@ public:
             int64_t num_rows,
             std::vector<std::shared_ptr<arrow::ArrayData>> const &table,
             std::shared_ptr<arrow::Array> const &_index = nullptr)
-        : NDFrame<DataFrame>(arrow::RecordBatch::Make(schemas, num_rows, table), _index) {
+            : NDFrame<DataFrame>(arrow::RecordBatch::Make(schemas, num_rows, table), _index) {
     }
 
     DataFrame(
@@ -95,7 +95,7 @@ public:
             int64_t num_rows,
             std::vector<std::shared_ptr<arrow::Array>> const &table,
             std::shared_ptr<arrow::Array> const &_index = nullptr)
-        : NDFrame<DataFrame>(arrow::RecordBatch::Make(schemas, num_rows, table), _index) {
+            : NDFrame<DataFrame>(arrow::RecordBatch::Make(schemas, num_rows, table), _index) {
     }
 
     template<class... ColumnTypes, size_t N = std::tuple_size_v<std::tuple<ColumnTypes...>>>
@@ -193,20 +193,32 @@ public:
     DataFrame describe(bool include_all = true, bool percentiles = false);
 
     static DataFrame readParquet(std::filesystem::path const &path);
+
     static DataFrame readCSV(std::filesystem::path const &path);
-    static DataFrame readBinary(const std::basic_string_view<uint8_t> &blob, std::optional<std::string> const &index = std::nullopt);
-    static DataFrame readJSON(const rapidjson::Document &doc, std::shared_ptr<arrow::Schema> const &schema, std::optional<std::string> const &index = std::nullopt);
-    static DataFrame readJSON(const std::string &doc, std::shared_ptr<arrow::Schema> const &schema, std::optional<std::string> const &index = std::nullopt);
+
+    static DataFrame
+    readBinary(const std::basic_string_view<uint8_t> &blob, std::optional<std::string> const &index = std::nullopt);
+
+    static DataFrame readJSON(const rapidjson::Document &doc, std::shared_ptr<arrow::Schema> const &schema,
+                              std::optional<std::string> const &index = std::nullopt);
+
+    static DataFrame readJSON(const std::string &doc, std::shared_ptr<arrow::Schema> const &schema,
+                              std::optional<std::string> const &index = std::nullopt);
 
     arrow::Status toParquet(std::filesystem::path const &filepath, const std::string &indexField = "index") const;
+
     arrow::Status toCSV(std::filesystem::path const &filepath, const std::string &indexField = "index") const;
+
     arrow::Result<rapidjson::Value> toJSON(rapidjson::Document::AllocatorType &allocator,
                                            std::vector<std::string> columns = {},
                                            std::optional<std::string> const &index = {}, bool toRecords = true) const;
-    arrow::Result<std::shared_ptr<arrow::Buffer>> toBinary(std::vector<std::string> columns = {}, std::optional<std::string> const &index = {}, std::unordered_map<std::string, std::string> const &metadata = {}) const;
+
+    arrow::Result<std::shared_ptr<arrow::Buffer>>
+    toBinary(std::vector<std::string> columns = {}, std::optional<std::string> const &index = {},
+             std::unordered_map<std::string, std::string> const &metadata = {}) const;
 
     // indexer
-    class Series operator[](std::string const &column) const;
+    Series operator[](std::string const &column) const;
 
     pd::DataFrame add_column(std::string const &newColumn, pd::ArrayPtr const &ptr) const;
 
@@ -215,6 +227,7 @@ public:
     void add_column(std::string const &newColumn, pd::Series const &ptr);
 
     DataFrame operator[](std::vector<std::string> const &columns) const;
+
     DataFrame operator[](int64_t row) const;
 
     DataFrame operator[](pd::Series const &filter) const;
@@ -239,23 +252,28 @@ public:
 
     Scalar at(std::shared_ptr<arrow::Scalar> const &row, std::string const &col) const {
         return at(
-                arrow::compute::Index(m_index, arrow::compute::IndexOptions(row))->scalar_as<arrow::Int64Scalar>().value,
+                arrow::compute::Index(m_index,
+                                      arrow::compute::IndexOptions(row))->scalar_as<arrow::Int64Scalar>().value,
                 col);
     }
 
     template<typename T>
-        requires(not std::integral<T>)
+    requires(not std::integral<T>)
     Scalar at(T const &row, std::string const &col)
-            const {
+    const {
         return at(arrow::MakeScalar(row), col);
     }
 
     DataFrame ffill() const;
+
     DataFrame bfill() const;
 
     [[nodiscard]] DataFrame is_null() const;
+
     [[nodiscard]] DataFrame is_valid() const;
+
     [[nodiscard]] DataFrame is_finite() const;
+
     [[nodiscard]] DataFrame is_infinite() const;
 
     void drop(std::vector<std::string> const &);
@@ -267,17 +285,23 @@ public:
     DataFrame drop_na() const;
 
     DataFrame slice(int offset) const;
+
     DataFrame slice(int offset, std::vector<std::string> const &columns) const;
 
     DataFrame slice(Slice, std::vector<std::string> const &columns) const;
+
     DataFrame slice(DateTimeSlice, std::vector<std::string> const &columns) const;
+
     DataFrame slice(Slice) const;
+
     DataFrame timestamp_slice(Slice const &slice) const;
+
     DataFrame slice(DateTimeSlice) const;
 
     [[nodiscard]] Series index() const;
 
     [[nodiscard]] DataFrame head(int length = 5) const;
+
     [[nodiscard]] DataFrame tail(int length = 5) const;
 
     DataFrame setIndex(std::string const &column_name);
@@ -301,8 +325,11 @@ public:
     [[nodiscard]] Series count(pd::AxisType axis) const;
 
     Series std(pd::AxisType axis) const;
+
     Series var(pd::AxisType axis) const;
+
     Series max(pd::AxisType axis) const;
+
     Series min(pd::AxisType axis) const;
 
     bool equals_(DataFrame const &other) const override {
@@ -310,62 +337,79 @@ public:
     }
 
     template<typename T>
-        requires(not std::same_as<DataFrame, T>)
+    requires(not std::same_as<DataFrame, T>)
     bool equals(std::vector<T> const &a) const;
 
     template<typename T>
-        requires(not std::same_as<DataFrame, T>)
+    requires(not std::same_as<DataFrame, T>)
     bool approx_equals(std::vector<T> const &a) const;
 
     DataFrame operator*(DataFrame const &s) const;
+
     friend DataFrame operator*(Series const &s, DataFrame const &df);
 
     DataFrame operator/(DataFrame const &s) const;
+
     friend DataFrame operator/(Series const &s, DataFrame const &df);
 
     DataFrame operator+(DataFrame const &s) const;
+
     friend DataFrame operator+(Series const &s, DataFrame const &df);
 
     DataFrame operator-(DataFrame const &s) const;
+
     friend DataFrame operator-(Series const &s, DataFrame const &df);
 
     DataFrame operator|(DataFrame const &s) const;
+
     friend DataFrame operator|(Series const &s, DataFrame const &df);
 
     DataFrame operator&(DataFrame const &s) const;
+
     friend DataFrame operator&(Series const &s, DataFrame const &df);
 
     DataFrame operator^(DataFrame const &s) const;
+
     friend DataFrame operator^(Series const &s, DataFrame const &df);
 
     DataFrame operator<<(DataFrame const &s) const;
+
     friend DataFrame operator<<(Series const &s, DataFrame const &df);
 
     DataFrame operator>>(DataFrame const &s) const;
+
     friend DataFrame operator>>(Series const &s, DataFrame const &df);
 
     DataFrame operator>(DataFrame const &s) const;
+
     friend DataFrame operator>(Series const &s, DataFrame const &df);
 
     DataFrame operator>=(DataFrame const &s) const;
+
     friend DataFrame operator>=(Series const &s, DataFrame const &df);
 
     DataFrame operator<(DataFrame const &s) const;
+
     friend DataFrame operator<(Series const &s, DataFrame const &df);
 
     DataFrame operator<=(DataFrame const &s) const;
+
     friend DataFrame operator<=(Series const &s, DataFrame const &df);
 
     DataFrame operator==(DataFrame const &s) const;
+
     friend DataFrame operator==(Series const &s, DataFrame const &df);
 
     DataFrame operator!=(DataFrame const &s) const;
+
     friend DataFrame operator!=(Series const &s, DataFrame const &df);
 
     DataFrame operator&&(DataFrame const &s) const;
+
     friend DataFrame operator&&(Series const &s, DataFrame const &df);
 
     DataFrame operator||(DataFrame const &s) const;
+
     friend DataFrame operator||(Series const &s, DataFrame const &df);
 
     virtual DataFrame operator+(Series const &s) const;
@@ -490,6 +534,7 @@ public:
             bool ignore_index = false);
 
     [[nodiscard]] class GroupBy group_by(std::string const &) const;
+
     [[nodiscard]] class Resampler resample(
             std::string const &rule,
             bool closed_right = false,
@@ -499,16 +544,49 @@ public:
             std::string const &tz = "") const;
 
     class Resampler downsample(std::string const &rule,
-                         bool closed_label_right = true,
-                         bool weekStartsMonday=true,
-                         bool startEpoch=true) const;
+                               bool closed_label_right = true,
+                               bool weekStartsMonday = true,
+                               bool startEpoch = true) const;
 
     [[nodiscard]] Series coalesce();
+
     [[nodiscard]] Series coalesce(std::vector<std::string> const &columns);
 
     std::vector<std::string> columnNames() const;
+
     Series mean(AxisType axis) const;
+
     DataFrame slice(int offset, int64_t length) const;
+
+    template<typename V,
+            bool in_reverse = false,
+            typename IndexType=int64_t,
+            typename ColumnType=double,
+            typename ...NameType>
+    V hmVisit(V &visitor, NameType &&... names) const {
+        auto indices = getIndexSpan<IndexType>();
+        auto spans = std::make_tuple(((*this)[names].template getSpan<ColumnType>())...);
+
+        visitor.pre();
+        if constexpr (!in_reverse) {
+            std::apply(
+                    [&](auto &... s) {
+                        visitor(indices.begin(), indices.end(), s.begin()..., s.end()...);
+                    },
+                    spans
+            );
+        } else {
+            std::apply(
+                    [&](auto &... s) {
+                        visitor(indices.rbegin(), indices.rend(), s.rbegin()..., s.rend()...);
+                    },
+                    spans
+            );
+        }
+        visitor.post();
+
+        return (visitor);
+    }
 };
 
 template<class... ColumnTypes, size_t N>

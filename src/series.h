@@ -389,6 +389,21 @@ public:
         return m_array->Diff(*a.m_array);
     }
 
+    template<typename V, bool in_reverse=false, typename IndexType=int64_t , typename ColumnType=double >
+    V hmVisit(V &visitor ) const {
+        auto indices = getIndexSpan<IndexType>();
+        auto vec = getSpan<ColumnType>();
+
+        visitor.pre();
+        if constexpr (!in_reverse)
+            visitor(indices.begin(), indices.end(), vec.begin(), vec.end());
+        else
+            visitor(indices.rbegin(), indices.rend(), vec.rbegin(), vec.rend());
+        visitor.post();
+
+        return (visitor);
+    }
+
 private:
     std::string m_name;
 

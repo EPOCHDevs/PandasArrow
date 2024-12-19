@@ -12,6 +12,7 @@
 #include "scalar.h"
 #include "sstream"
 #include "span"
+#include <DataFrame/DataFrame.h>
 
 
 namespace pd {
@@ -66,69 +67,61 @@ struct RawArrayCastException : std::exception
 
 
 template<class BaseT>
-struct NDFrame
-{
+struct NDFrame {
 
 public:
     virtual ~NDFrame() = default;
+
     using ArrayType =
-        std::shared_ptr<std::conditional_t<std::same_as<BaseT, class DataFrame>, arrow::RecordBatch, arrow::Array>>;
+            std::shared_ptr<std::conditional_t<std::same_as<BaseT, class DataFrame>, arrow::RecordBatch, arrow::Array>>;
 
     ArrayType m_array;
 
-    inline auto array() const
-    {
+    inline auto array() const {
         return m_array;
     }
 
-    NDFrame(ArrayType const& array, std::shared_ptr<arrow::Array> const& _index, bool skipIndex = false);
+    NDFrame(ArrayType const &array, std::shared_ptr<arrow::Array> const &_index, bool skipIndex = false);
 
-    NDFrame(ArrayType const& array, int64_t num_rows) : m_array(array), m_index(uint_range(num_rows))
-    {
+    NDFrame(ArrayType const &array, int64_t num_rows) : m_array(array), m_index(uint_range(num_rows)) {
     }
 
-    NDFrame(std::shared_ptr<arrow::Array> const& _index = nullptr) : m_array(nullptr), m_index(_index)
-    {
+    NDFrame(std::shared_ptr<arrow::Array> const &_index = nullptr) : m_array(nullptr), m_index(_index) {
     }
 
-    NDFrame(int64_t num_rows) : m_array(nullptr), m_index(uint_range(num_rows))
-    {
+    NDFrame(int64_t num_rows) : m_array(nullptr), m_index(uint_range(num_rows)) {
     }
 
-    NDFrame(int64_t num_rows, std::shared_ptr<arrow::Array> const& _index);
+    NDFrame(int64_t num_rows, std::shared_ptr<arrow::Array> const &_index);
 
     template<typename T>
-    static std::vector<bool> makeValidFlags(std::vector<T> const& arr);
+    static std::vector<bool> makeValidFlags(std::vector<T> const &arr);
 
-    static std::vector<uint8_t> makeValidFlags(std::vector<std::string> const& arr);
+    static std::vector<uint8_t> makeValidFlags(std::vector<std::string> const &arr);
 
-    virtual bool equals_(BaseT const& a) const
-    {
+    virtual bool equals_(BaseT const &a) const {
         return m_array->Equals(*a.m_array);
     }
 
-    virtual bool approx_equals_(BaseT const& a) const
-    {
+    virtual bool approx_equals_(BaseT const &a) const {
         return m_array->ApproxEquals(*a.m_array);
     }
 
-    std::shared_ptr<arrow::Array> indexArray() const noexcept
-    {
+    std::shared_ptr<arrow::Array> indexArray() const noexcept {
         return m_index;
     }
 
     template<typename T>
-    std::span<const T> getIndexSpan() const noexcept
-    {
-        return { reinterpret_cast<const T*>(m_index->data()->buffers[1]->data()) + m_index->offset(),
-                 size_t(m_index->length()) };
+    std::span<const T> getIndexSpan() const noexcept {
+        return {reinterpret_cast<const T *>(m_index->data()->buffers[1]->data()) + m_index->offset(),
+                size_t(m_index->length())};
     }
 
 protected:
     std::vector<uint8_t> byteValidStr;
     std::shared_ptr<arrow::Array> m_index;
     Indexer indexer;
-    bool isIndex{ false };
+    bool isIndex{false};
 
     std::shared_ptr<arrow::Array> uint_range(int64_t n_rows);
 

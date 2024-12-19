@@ -30,6 +30,7 @@ if (ENABLE_GPU)
     include(${EPOCH_CMAKE}/get_cudf.cmake)
 endif ()
 
+include(${EPOCH_CMAKE}/get_cpp_dataframe.cmake)
 find_package(Boost REQUIRED COMPONENTS filesystem system date_time )
 find_package(tabulate CONFIG REQUIRED)
 find_package(TBB CONFIG REQUIRED)
@@ -58,12 +59,13 @@ if (ENABLE_GPU)
             PRIVATE nvcomp::nvcomp cudf::cudf)
 endif()
 
+
 find_package(spdlog CONFIG REQUIRED)
 find_package(fmt CONFIG REQUIRED)
 
 target_link_libraries(pandas_arrow
         PRIVATE TBB::tbb parquet_static spdlog::spdlog_header_only fmt::fmt-header-only
-        PUBLIC arrow_static curl ssl crypto )
+        PUBLIC arrow_static curl ssl crypto DataFrame)
 target_compile_options(pandas_arrow PRIVATE -Wall -Wextra -Werror)
 target_compile_definitions(pandas_arrow PUBLIC -DRAPIDJSON_HAS_STDSTRING=1)
 target_include_directories(pandas_arrow
@@ -81,6 +83,9 @@ IF (BUILD_MAIN)
 
     add_executable(scan_s3 scan_s3.cpp)
     target_link_libraries(scan_s3 PRIVATE pandas_arrow spdlog::spdlog )
+
+    add_executable(dataframe_playground dataframe_playground.cpp)
+    target_link_libraries(dataframe_playground PRIVATE pandas_arrow spdlog::spdlog DataFrame)
 ENDIF()
 
 IF( BUILD_TEST )
