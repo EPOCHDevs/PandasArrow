@@ -390,7 +390,7 @@ public:
     }
 
     template<typename V, bool in_reverse=false, typename IndexType=int64_t , typename ColumnType=double >
-    V hmVisit(V &visitor ) const {
+    V hmVisit(V &&visitor ) const {
         auto indices = getIndexSpan<IndexType>();
         auto vec = getSpan<ColumnType>();
 
@@ -401,7 +401,7 @@ public:
             visitor(indices.rbegin(), indices.rend(), vec.rbegin(), vec.rend());
         visitor.post();
 
-        return (visitor);
+        return std::forward<V>(visitor);
     }
 
 private:
