@@ -563,7 +563,9 @@ public:
             typename IndexType=int64_t,
             typename ColumnType=double,
             typename ...NameType>
-    V hmVisit(V &visitor, NameType &&... names) const {
+    V hmVisit(V && v, NameType &&... names) const {
+        auto visitor = std::forward<V>(v);
+
         auto indices = getIndexSpan<IndexType>();
         auto spans = std::make_tuple(((*this)[names].template getSpan<ColumnType>())...);
 
@@ -585,7 +587,7 @@ public:
         }
         visitor.post();
 
-        return (visitor);
+        return visitor;
     }
 
     template<typename ReturnT, typename FunctionSignature>

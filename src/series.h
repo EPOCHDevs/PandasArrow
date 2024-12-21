@@ -469,7 +469,8 @@ namespace pd {
         }
 
         template<typename V, bool in_reverse = false, typename IndexType=int64_t, typename ColumnType=double>
-        V hmVisit(V &&visitor) const {
+        V hmVisit(V && v) const {
+            auto visitor = std::forward<V>(v);
             auto indices = getIndexSpan<IndexType>();
             auto vec = getSpan<ColumnType>();
 
@@ -484,7 +485,7 @@ namespace pd {
                 visitor(indices.rbegin(), indices.rend(), vec.rbegin(), vec.rend());
             visitor.post();
 
-            return std::forward<V>(visitor);
+            return visitor;
         }
 
         template<typename ReturnT, typename FunctionSignature>
