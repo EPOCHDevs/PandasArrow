@@ -563,7 +563,7 @@ public:
             typename IndexType=int64_t,
             typename ColumnType=double,
             typename ...NameType>
-    V hmVisit(V && v, NameType &&... names) const {
+    V hmVisit(V &&v, NameType &&... names) const {
         auto visitor = std::forward<V>(v);
 
         auto indices = getIndexSpan<IndexType>();
@@ -592,7 +592,12 @@ public:
 
     template<typename ReturnT, typename FunctionSignature>
     Series rolling(FunctionSignature &&fn, int64_t window) {
-        return rollingT<ReturnT, Series>(std::forward<FunctionSignature>(fn), window, m_array->num_rows());
+        return rollingT<false, ReturnT, Series>(std::forward<FunctionSignature>(fn), window, m_array->num_rows());
+    }
+
+    template<typename ReturnT, typename FunctionSignature>
+    Series expandRolling(FunctionSignature &&fn, int64_t minWindow) {
+        return rollingT<true, ReturnT, pd::Series>(std::forward<FunctionSignature>(fn), minWindow, m_array->num_rows());
     }
 };
 

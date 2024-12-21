@@ -490,7 +490,12 @@ namespace pd {
 
         template<typename ReturnT, typename FunctionSignature>
         Series rolling(FunctionSignature && fn, int64_t window){
-            return rollingT<ReturnT, pd::Series>(std::forward<FunctionSignature>(fn), window, m_array->length());
+            return rollingT<false, ReturnT, pd::Series>(std::forward<FunctionSignature>(fn), window, m_array->length());
+        }
+
+        template<typename ReturnT, typename FunctionSignature>
+        Series expandRolling(FunctionSignature && fn, int64_t minWindow){
+            return rollingT<true, ReturnT, pd::Series>(std::forward<FunctionSignature>(fn), minWindow, m_array->length());
         }
 
     private:

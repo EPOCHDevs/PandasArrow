@@ -120,8 +120,9 @@ namespace pd {
 
         void setIndexer();
 
-        template<typename ReturnT, typename T>
+        template<bool expand, typename ReturnT, typename T>
         T rollingT(auto const &fn, int64_t window, int64_t size);
+
     };
 
     template<class BaseT>
@@ -201,7 +202,7 @@ namespace pd {
     }
 
     template<class BaseT>
-    template<typename ReturnT, typename T>
+    template<bool expand, typename ReturnT, typename T>
     T NDFrame<BaseT>::rollingT(auto const &fn, int64_t window, int64_t size) {
         typename arrow::CTypeTraits<ReturnT>::BuilderType builder;
         ThrowOnFailure(builder.Reserve(size));
@@ -214,8 +215,16 @@ namespace pd {
         }
 
         for (int64_t i: std::views::iota(0, size-window+1)) {
-            auto subArr = m_array->Slice(i, window);
-            auto subIndex = m_index->Slice(i, window);
+            typename BaseT::ArrayType subArr;
+            pd::ArrayPtr subIndex;
+
+            if constexpr (expand) {
+                subArr = m_array->Slice(0, i + window);
+                subIndex = m_index->Slice(0, i + window);
+            } else {
+                subArr = m_array->Slice(i, window);
+                subIndex = m_index->Slice(i, window);
+            }
             builder.UnsafeAppend(fn(BaseT(subArr, subIndex)));
         }
 

@@ -878,14 +878,22 @@ TEST_CASE("Rolling Series")
 {
     pd::Series data(std::vector<double>{1, 1, 2, 2, 3, 3});
 
-    auto result = data.rolling<double>([](pd::Series const& x){
+    auto sum = [](pd::Series const &x) {
         return x.sum().as<double>();
-    }, 3);
+    };
+
+    auto result = data.rolling<double>(sum, 3);
 
     INFO(result);
     REQUIRE(result.equals_(pd::Series(
             std::vector<double>{NAN, NAN, 4, 5, 7, 8}
-            )));
+    )));
+
+    result = data.expandRolling<double>(sum, 3);
+
+    REQUIRE(result.equals_(pd::Series(
+            std::vector<double>{NAN, NAN, 4, 6, 9, 12}
+    )));
 }
 
 TEST_CASE("Rolling Dataframe")
