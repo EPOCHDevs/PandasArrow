@@ -110,9 +110,6 @@ namespace pd {
                     size_t(m_index->length())};
         }
 
-        template<typename ReturnT>
-        BaseT::SeriesT rolling(std::function<ReturnT(BaseT const &)> const &fn, int64_t window);
-
     protected:
         std::vector<uint8_t> byteValidStr;
         std::shared_ptr<arrow::Array> m_index;
@@ -122,6 +119,9 @@ namespace pd {
         std::shared_ptr<arrow::Array> uint_range(int64_t n_rows);
 
         void setIndexer();
+
+        template<typename ReturnT, typename T>
+        T rollingT(std::function<ReturnT(BaseT const &)> const &fn, int64_t window);
     };
 
     template<class BaseT>
@@ -201,8 +201,8 @@ namespace pd {
     }
 
     template<class BaseT>
-    template<typename ReturnT>
-    BaseT::SeriesT NDFrame<BaseT>::rolling(std::function<ReturnT(BaseT const&)> const &fn, int64_t window) {
+    template<typename ReturnT, typename T>
+    T NDFrame<BaseT>::rollingT(std::function<ReturnT(BaseT const &)> const &fn, int64_t window) {
         typename arrow::CTypeTraits<ReturnT>::BuilderType builder;
         ThrowOnFailure(builder.Reserve(m_array->length()));
         ThrowOnFailure(builder.AppendNulls(window - 1));

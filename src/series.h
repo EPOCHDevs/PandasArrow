@@ -19,7 +19,6 @@ namespace pd {
     class Series : public NDFrame<Series> {
 
     public:
-        using SeriesT = Series;
         using ArrayType = std::shared_ptr<arrow::Array>;
 
         Series(std::shared_ptr<arrow::Array> const &arr, bool isIndex, std::string name = "");
