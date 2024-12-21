@@ -587,7 +587,7 @@ public:
         }
         visitor.post();
 
-        return visitor;
+        return v;
     }
 
     template<typename ReturnT, typename FunctionSignature>

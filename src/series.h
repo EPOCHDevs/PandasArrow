@@ -485,7 +485,7 @@ namespace pd {
                 visitor(indices.rbegin(), indices.rend(), vec.rbegin(), vec.rend());
             visitor.post();
 
-            return visitor;
+            return v;
         }
 
         template<typename ReturnT, typename FunctionSignature>
