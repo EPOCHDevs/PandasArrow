@@ -19,6 +19,7 @@ namespace pd {
     class Series : public NDFrame<Series> {
 
     public:
+        using SeriesT = Series;
         using ArrayType = std::shared_ptr<arrow::Array>;
 
         Series(std::shared_ptr<arrow::Array> const &arr, bool isIndex, std::string name = "");
@@ -618,31 +619,9 @@ namespace pd {
                 OutputT res = func(*element, std::forward<Args>(args)...);
                 builder.UnsafeAppend(res);
             }
-            auto complete = ReturnOrThrowOnFailure(builder.Finish());
-            return {complete.MoveValueUnsafe(), m_index, m_name};
+            return {ReturnOrThrowOnFailure(builder.Finish()), m_index, m_name};
         }
         throw RawArrayCastException{arrow::CTypeTraits<DataT>::type_singleton(), m_array->type()};
-    }
-
-    template<typename ReturnT>
-    pd::Series Series::rolling(std::function<ReturnT(pd::Series)> const &fn, int64_t window) {
-        typename arrow::CTypeTraits<ReturnT>::BuilderType builder;
-        ThrowOnFailure(builder.Reserve(m_array->length()));
-        ThrowOnFailure(builder.AppendNulls(window - 1));
-
-        if (window > m_array->length()) {
-            return {arrow::MakeArrayOfNull(std::make_shared<arrow::CTypeTraits<ReturnT>::ArrowType>, m_array->length()),
-                    m_index, m_name};
-        }
-
-        std::ranges::for_each_n(std::views::iota(window - 1), m_array->length() - window + 1, [&](int64_t i) {
-            auto subArr = m_array->Slice(i, window);
-            auto subIndex = m_index->Slice(i, window);
-            builder.UnsafeAppend(fn(Series(subArr, subIndex, m_name)));
-        });
-
-        auto result = ReturnOrThrowOnFailure(builder.Finish());
-        return {result.MoveValueUnsafe(), m_index, m_name};
     }
 
 } // namespace pd
