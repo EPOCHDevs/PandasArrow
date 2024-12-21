@@ -487,9 +487,9 @@ namespace pd {
             return std::forward<V>(visitor);
         }
 
-        template<typename ReturnT>
-        Series rolling(std::function<ReturnT(DataFrame const &)> const &fn, int64_t window){
-            return rollingT<ReturnT, pd::Series>(fn, window);
+        template<typename ReturnT, typename FunctionSignature>
+        Series rolling(FunctionSignature && fn, int64_t window){
+            return rollingT<ReturnT, pd::Series>(std::forward<FunctionSignature>(fn), window, m_array->length());
         }
 
     private:

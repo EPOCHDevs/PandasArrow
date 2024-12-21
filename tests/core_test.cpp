@@ -859,6 +859,50 @@ TEST_CASE("ConcatenateColumns", "[concatenateColumns]")
     }
 }
 
+TEST_CASE("Rolling Invalid")
+{
+    pd::Series data(std::vector<double>{1, 1, 2, 2, 3, 3});
+
+    std::function fn{[](pd::Series const &x) {
+        return x.sum().as<double>();
+    }};
+
+    auto result = data.rolling<double>(fn, 10);
+
+    INFO(result);
+    REQUIRE(result.equals_(pd::Series(std::vector<double>{NAN, NAN, NAN, NAN, NAN, NAN})));
+}
+
+
+TEST_CASE("Rolling Series")
+{
+    pd::Series data(std::vector<double>{1, 1, 2, 2, 3, 3});
+
+    auto result = data.rolling<double>([](pd::Series const& x){
+        return x.sum().as<double>();
+    }, 3);
+
+    INFO(result);
+    REQUIRE(result.equals_(pd::Series(
+            std::vector<double>{NAN, NAN, 4, 5, 7, 8}
+            )));
+}
+
+TEST_CASE("Rolling Dataframe")
+{
+    pd::DataFrame data(std::vector<std::vector<double>>{{1, 1, 2, 2, 3, 3},
+                                                        {1, 1, 2, 2, 3, 3}},
+                       std::vector<std::string>{"x", "y"});
+    auto result = data.rolling<double>([](pd::DataFrame const &x) {
+        return x.sum().as<double>();
+    }, 3);
+
+    INFO(result);
+    REQUIRE(result.equals_(pd::Series(
+            std::vector<double>{NAN, NAN, 8, 10, 14, 16}
+    )));
+}
+
 // TEST_CASE("Concatenate with Series", "[concat]")
 //{
 //    SECTION(

@@ -587,6 +587,11 @@ public:
 
         return (visitor);
     }
+
+    template<typename ReturnT, typename FunctionSignature>
+    Series rolling(FunctionSignature &&fn, int64_t window) {
+        return rollingT<ReturnT, Series>(std::forward<FunctionSignature>(fn), window, m_array->num_rows());
+    }
 };
 
 template<class... ColumnTypes, size_t N>

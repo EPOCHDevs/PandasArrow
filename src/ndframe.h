@@ -121,7 +121,7 @@ namespace pd {
         void setIndexer();
 
         template<typename ReturnT, typename T>
-        T rollingT(std::function<ReturnT(BaseT const &)> const &fn, int64_t window);
+        T rollingT(auto const &fn, int64_t window, int64_t size);
     };
 
     template<class BaseT>
@@ -202,21 +202,22 @@ namespace pd {
 
     template<class BaseT>
     template<typename ReturnT, typename T>
-    T NDFrame<BaseT>::rollingT(std::function<ReturnT(BaseT const &)> const &fn, int64_t window) {
+    T NDFrame<BaseT>::rollingT(auto const &fn, int64_t window, int64_t size) {
         typename arrow::CTypeTraits<ReturnT>::BuilderType builder;
-        ThrowOnFailure(builder.Reserve(m_array->length()));
+        ThrowOnFailure(builder.Reserve(size));
         ThrowOnFailure(builder.AppendNulls(window - 1));
 
-        if (window > m_array->length()) {
-            return {arrow::MakeArrayOfNull(std::make_shared<arrow::CTypeTraits<ReturnT>::ArrowType>, m_array->length()),
+        if (window > size) {
+            return {pd::ReturnOrThrowOnFailure(
+                    arrow::MakeArrayOfNull(arrow::CTypeTraits<ReturnT>::type_singleton(), size)),
                     m_index};
         }
 
-        std::ranges::for_each_n(std::views::iota(window - 1), m_array->length() - window + 1, [&](int64_t i) {
+        for (int64_t i: std::views::iota(0, size-window+1)) {
             auto subArr = m_array->Slice(i, window);
             auto subIndex = m_index->Slice(i, window);
             builder.UnsafeAppend(fn(BaseT(subArr, subIndex)));
-        });
+        }
 
         return {ReturnOrThrowOnFailure(builder.Finish()), m_index};
     }
