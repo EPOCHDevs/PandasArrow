@@ -489,7 +489,9 @@ namespace pd {
         }
 
         template<typename ReturnT>
-        pd::Series rolling(std::function<ReturnT(pd::Series)> const &fn, int64_t window);
+        Series rolling(std::function<ReturnT(DataFrame const &)> const &fn, int64_t window){
+            return rollingT<ReturnT, pd::Series>(fn, window);
+        }
 
     private:
         std::string m_name;
