@@ -206,12 +206,11 @@ namespace pd {
     T NDFrame<BaseT>::rollingT(auto const &fn, int64_t window, int64_t size) const {
         typename arrow::CTypeTraits<ReturnT>::BuilderType builder;
         ThrowOnFailure(builder.Reserve(size));
-        ThrowOnFailure(builder.AppendNulls(window - 1));
 
         if (window > size) {
             return {pd::ReturnOrThrowOnFailure(
-                    arrow::MakeArrayOfNull(arrow::CTypeTraits<ReturnT>::type_singleton(), size)),
-                    m_index};
+                    arrow::MakeEmptyArray(arrow::CTypeTraits<ReturnT>::type_singleton())),
+                    nullptr};
         }
 
         for (int64_t i: std::views::iota(0, size-window+1)) {
@@ -228,7 +227,7 @@ namespace pd {
             builder.UnsafeAppend(fn(BaseT(subArr, subIndex)));
         }
 
-        return {ReturnOrThrowOnFailure(builder.Finish()), m_index};
+        return {ReturnOrThrowOnFailure(builder.Finish()), m_index->Slice(window-1)};
     }
 
 } // namespace pd
