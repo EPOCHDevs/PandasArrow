@@ -13,6 +13,7 @@
 #include "ranges"
 #include "resample.h"
 #include "stringlike.h"
+#include <DataFrame/DataFrameFinancialVisitors.h>
 
 
 #define BINARY_OPERATOR(sign, name) \
@@ -772,11 +773,39 @@ Series Series::strptime(const std::string& format, arrow::TimeUnit::type unit, b
 }
 
 
-Series Series::shift(int32_t /*shift_value*/, std::shared_ptr<arrow::Scalar> const& /*ununsed*/) const
-{
-    throw std::runtime_error("currently lacking implementation");
-//    return ReturnSeriesOrThrowOnError(
-//        arrow::compute::Shift(m_array, arrow::compute::ShiftOptions(shift_value, fill_value)));
+Series Series::shift(int32_t periods, std::optional<pd::Scalar> const& fillValue) const {
+    if (periods == 0) {
+        return *this;
+    }
+
+    auto scalarArrayBuilder = pd::ReturnOrThrowOnFailure(arrow::MakeBuilder(m_array->type()));
+    pd::ThrowOnFailure(scalarArrayBuilder->Reserve(m_array->length()));
+
+    bool shiftRight = periods > 0;
+    periods = std::abs(periods);
+    auto newLength = m_array->length() - periods;
+    auto shift = [&]() {
+        if (fillValue) {
+            ThrowOnFailure(
+                    scalarArrayBuilder->AppendScalars(std::vector<ScalarPtr>(periods, fillValue->scalar)));
+        } else {
+            ThrowOnFailure(scalarArrayBuilder->AppendNulls(periods));
+        }
+    };
+
+    if (shiftRight) {
+        shift();
+        ThrowOnFailure(scalarArrayBuilder->AppendArraySlice(arrow::ArraySpan(*m_array->data()), 0, newLength));
+    } else {
+        ThrowOnFailure(scalarArrayBuilder->AppendArraySlice(arrow::ArraySpan(*m_array->data()), periods, newLength));
+        shift();
+    }
+
+    return {
+            pd::ReturnOrThrowOnFailure(scalarArrayBuilder->Finish()),
+            m_index,
+            m_name
+    };
 }
 
 bool Series::is_valid(int row) const
@@ -784,10 +813,10 @@ bool Series::is_valid(int row) const
     return pd::ReturnOrThrowOnFailure(m_array->GetScalar(row))->is_valid;
 }
 
-Series Series::pct_change(int64_t /*ununsed*/) const
+Series Series::pct_change(int64_t period) const
 {
-    throw std::runtime_error("currently lacking implementation");
-//    return ReturnSeriesOrThrowOnError(arrow::compute::PctChange(m_array, periods));
+    hmdf::RateOfChangeVisitor<double> visitor{static_cast<size_t>(period)};
+    return {hmVisit(visitor).get_result(), m_name, m_index};
 }
 
 GenericFunctionSeriesReturnRename(ffill, fill_null_forward, Series)

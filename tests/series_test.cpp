@@ -1091,7 +1091,7 @@ TEST_CASE("Test Series::cast() function")
     }
 }
 
-TEST_CASE("Test Series::shift() and Series::pct_change() functions", "[.shift_pct]")
+TEST_CASE("Test Series::shift() and Series::pct_change() functions", "[shift_pct]")
 {
     std::vector<double> vec1 = { 1.0, 2.0, 3.0, 4.0, 5.0 };
     auto array1 = arrow::ArrayT<double>::Make(vec1);

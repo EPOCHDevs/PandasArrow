@@ -410,7 +410,7 @@ namespace pd {
 
         [[nodiscard]] Series to_datetime(std::string const &format) const;
 
-        [[nodiscard]] Series shift(int32_t shift_value = 1, std::shared_ptr<arrow::Scalar> const &fill_value = nullptr)
+        [[nodiscard]] Series shift(int32_t periods=1, std::optional<pd::Scalar> const& fillValue=std::nullopt)
         const;
 
         [[nodiscard]] Series pct_change(int64_t periods = 1) const;
