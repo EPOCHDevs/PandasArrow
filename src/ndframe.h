@@ -121,7 +121,7 @@ namespace pd {
         void setIndexer();
 
         template<bool expand, typename ReturnT, typename T>
-        T rollingT(auto const &fn, int64_t window, int64_t size);
+        T rollingT(auto const &fn, int64_t window, int64_t size) const;
 
     };
 
@@ -203,7 +203,7 @@ namespace pd {
 
     template<class BaseT>
     template<bool expand, typename ReturnT, typename T>
-    T NDFrame<BaseT>::rollingT(auto const &fn, int64_t window, int64_t size) {
+    T NDFrame<BaseT>::rollingT(auto const &fn, int64_t window, int64_t size) const {
         typename arrow::CTypeTraits<ReturnT>::BuilderType builder;
         ThrowOnFailure(builder.Reserve(size));
         ThrowOnFailure(builder.AppendNulls(window - 1));
