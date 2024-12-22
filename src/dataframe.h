@@ -593,12 +593,12 @@ public:
     }
 
     template<typename ReturnT, typename FunctionSignature>
-    Series rolling(FunctionSignature &&fn, int64_t window) {
+    Series rolling(FunctionSignature &&fn, int64_t window) {const
         return rollingT<false, ReturnT, Series>(std::forward<FunctionSignature>(fn), window, m_array->num_rows());
     }
 
     template<typename ReturnT, typename FunctionSignature>
-    Series expandRolling(FunctionSignature &&fn, int64_t minWindow) {
+    Series expandRolling(FunctionSignature &&fn, int64_t minWindow) const{
         return rollingT<true, ReturnT, pd::Series>(std::forward<FunctionSignature>(fn), minWindow, m_array->num_rows());
     }
 };
