@@ -468,10 +468,14 @@ namespace pd {
             return m_array->Diff(*a.m_array);
         }
 
-        template<typename V, bool in_reverse = false, typename IndexType=int64_t, typename ColumnType=double>
-        V hmVisit(V && v) const {
-            auto visitor = std::forward<V>(v);
-            auto indices = getIndexSpan<IndexType>();
+        template<typename V, bool in_reverse = false, typename ColumnType=double>
+        V& hmVisit(V&& visitor) const {
+            if ((m_index->type()->id() != arrow::Type::INT64))
+            {
+                throw std::runtime_error("invalid index for hwdf Visitor only int64 are allowed.");
+            }
+
+            auto indices = getIndexSpan<int64_t>();
             auto vec = getSpan<ColumnType>();
 
             if (m_array->null_count() != 0) {
@@ -485,7 +489,7 @@ namespace pd {
                 visitor(indices.rbegin(), indices.rend(), vec.rbegin(), vec.rend());
             visitor.post();
 
-            return v;
+            return visitor;
         }
 
         template<typename ReturnT, typename FunctionSignature>

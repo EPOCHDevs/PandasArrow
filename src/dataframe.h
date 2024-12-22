@@ -560,13 +560,15 @@ public:
 
     template<typename V,
             bool in_reverse = false,
-            typename IndexType=int64_t,
             typename ColumnType=double,
             typename ...NameType>
-    V hmVisit(V &&v, NameType &&... names) const {
-        auto visitor = std::forward<V>(v);
+    V hmVisit(V&& visitor, NameType &&... names) const {
+        if ((m_index->type()->id() != arrow::Type::INT64))
+        {
+            throw std::runtime_error("invalid index for hwdf Visitor only int64 are allowed.");
+        }
 
-        auto indices = getIndexSpan<IndexType>();
+        auto indices = getIndexSpan<int64_t>();
         auto spans = std::make_tuple(((*this)[names].template getSpan<ColumnType>())...);
 
         visitor.pre();
@@ -587,7 +589,7 @@ public:
         }
         visitor.post();
 
-        return v;
+        return std::forward<V>(visitor);
     }
 
     template<typename ReturnT, typename FunctionSignature>

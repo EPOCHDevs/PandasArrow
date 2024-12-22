@@ -815,8 +815,9 @@ bool Series::is_valid(int row) const
 
 Series Series::pct_change(int64_t period) const
 {
-    hmdf::RateOfChangeVisitor<double> visitor{static_cast<size_t>(period)};
-    return {hmVisit(visitor).get_result(), m_name, m_index};
+    hmdf::roc_v<double> visitor{static_cast<size_t>(period)};
+    auto result = hmVisit(visitor).get_result();
+    return {result, m_name, m_index};
 }
 
 GenericFunctionSeriesReturnRename(ffill, fill_null_forward, Series)

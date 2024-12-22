@@ -1095,7 +1095,7 @@ TEST_CASE("Test Series::shift() and Series::pct_change() functions", "[shift_pct
 {
     std::vector<double> vec1 = { 1.0, 2.0, 3.0, 4.0, 5.0 };
     auto array1 = arrow::ArrayT<double>::Make(vec1);
-    Series s1(array1, true);
+    Series s1(array1, range(0L, 5));
 
     SECTION("Test shift() with default options")
     {
