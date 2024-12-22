@@ -593,7 +593,7 @@ public:
     }
 
     template<typename ReturnT, typename FunctionSignature>
-    Series rolling(FunctionSignature &&fn, int64_t window) {const
+    Series rolling(FunctionSignature &&fn, int64_t window) const {
         return rollingT<false, ReturnT, Series>(std::forward<FunctionSignature>(fn), window, m_array->num_rows());
     }
 
