@@ -470,7 +470,7 @@ namespace pd {
 
         template<typename V, bool in_reverse = false, typename ColumnType=double>
         V& hmVisit(V&& visitor) const {
-            if ((m_index->type()->id() != arrow::Type::INT64))
+            if ((m_index->type()->id() != arrow::Type::INT64 && m_index->type()->id() != arrow::Type::TIMESTAMP))
             {
                 throw std::runtime_error("invalid index for hwdf Visitor only int64 are allowed.");
             }
