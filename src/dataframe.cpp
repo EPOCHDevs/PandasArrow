@@ -38,13 +38,7 @@
 namespace pd {
 
     DataFrame::DataFrame(const std::shared_ptr<arrow::RecordBatch> &table, const std::shared_ptr<arrow::Array> &_index)
-        : NDFrame(table, _index) {
-        if (not _index) {
-            if (table) {
-                m_index = uint_range(table->num_rows());
-            }
-        }
-    }
+        : NDFrame(table, _index) {}
 
     DataFrame::DataFrame(const ArrayTable &table, const shared_ptr<arrow::Array> &index)
         : NDFrame(GetTableRowSize(table), index) {
@@ -640,7 +634,7 @@ namespace pd {
     Scalar DataFrame::sum() const {
         auto status = arrow::compute::CallFunction("sum", {std::make_shared<arrow::ChunkedArray>(m_array->columns())});
         if (status.ok()) {
-            return std::move(status->scalar()->shared_from_this());
+            return status->scalar()->shared_from_this();
         } else {
             throw std::runtime_error(status.status().ToString());
         }

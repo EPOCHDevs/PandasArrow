@@ -87,11 +87,6 @@ namespace pd {
 
         NDFrame(int64_t num_rows, std::shared_ptr<arrow::Array> const &_index);
 
-        template<typename T>
-        static std::vector<bool> makeValidFlags(std::vector<T> const &arr);
-
-        static std::vector<uint8_t> makeValidFlags(std::vector<std::string> const &arr);
-
         virtual bool equals_(BaseT const &a) const {
             return m_array->Equals(*a.m_array);
         }
@@ -155,19 +150,6 @@ namespace pd {
     }
 
     template<class BaseT>
-    std::vector<uint8_t> NDFrame<BaseT>::makeValidFlags(std::vector<std::string> const &arr) {
-
-        std::vector<uint8_t> valid;
-        valid.reserve(arr.size());
-
-        for (auto const &x: arr) {
-            valid.push_back(isValid(x));
-        }
-
-        return valid;
-    }
-
-    template<class BaseT>
     std::shared_ptr<arrow::Array> NDFrame<BaseT>::uint_range(int64_t n_rows) {
         std::vector<uint64_t> index(n_rows);
         std::iota(index.begin(), index.end(), 0);
@@ -187,19 +169,6 @@ namespace pd {
         }
     }
 
-    template<class BaseT>
-    template<typename T>
-    std::vector<bool> NDFrame<BaseT>::makeValidFlags(std::vector<T> const &arr) {
-
-        std::vector<bool> valid;
-        valid.reserve(arr.size());
-
-        for (auto const &x: arr) {
-            valid.push_back(isValid(x));
-        }
-
-        return valid;
-    }
 
     template<class BaseT>
     template<bool expand, typename ReturnT, typename T>

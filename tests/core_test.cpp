@@ -333,6 +333,7 @@ TEST_CASE("Test fromDateTime function", "[fromDateTime]")
 TEST_CASE("Dataframe Concat")
 {
     using namespace std::string_literals;
+    auto na = std::nan("");
     pd::DataFrame df1{ ArrayPtr{ nullptr },
                        pair{ "letter"s, std::vector<std::string>{ "a", "b" } },
                        pair{ "number"s, std::vector{ 1L, 2L } } };
@@ -344,10 +345,10 @@ TEST_CASE("Dataframe Concat")
     pd::DataFrame df3{ ArrayPtr{ nullptr },
                        pair{ "letter"s, std::vector<std::string>{ "c", "d" } },
                        pair{ "number"s, std::vector{ 3L, 4L } },
-                       pair{ "animal"s, std::vector{ "cat"s, "dog"s } } };
+                       pair{ "animal_weight"s, std::vector{ 100.1, 100.2 } } };
 
     pd::DataFrame df4{ ArrayPtr{ nullptr },
-                       pair{ "animal"s, std::vector{ "bird"s, "polly"s } },
+                       pair{ "animal_weight"s, std::vector{ 200.1, 200.2  } },
                        pair{ "name"s, std::vector{ "monkey"s, "george"s } } };
 
     DataFrame expected_result{ nullptr }, result{ nullptr };
@@ -362,7 +363,7 @@ TEST_CASE("Dataframe Concat")
         expected_result = { arrow::ArrayFromJSON<::uint64_t>("[0,1,0,1]"),
                             pair{ "letter"s, std::vector<std::string>{ "a", "b", "c", "d" } },
                             pair{ "number"s, std::vector<long>{ 1L, 2L, 3L, 4L } },
-                            pair{ "animal"s, std::vector{ ""s, ""s, "cat"s, "dog"s } } };
+                            pair{ "animal_weight"s, std::vector{ na, na, 100.1, 100.2 } } };
 
         result = pd::concat(std::vector{ df1, df3 }, AxisType::Index);
         // Assert that the resulting DataFrame is equal to the expected result
@@ -375,7 +376,7 @@ TEST_CASE("Dataframe Concat")
         expected_result = pd::DataFrame{ arrow::ArrayFromJSON<::uint64_t>("[0,1]"),
                                          pair{ "letter"s, std::vector<std::string>{ "a", "b" } },
                                          pair{ "number"s, std::vector<long>{ 1L, 2L } },
-                                         pair{ "animal"s, std::vector{ "bird"s, "polly"s } },
+                                         pair{ "animal_weight"s, std::vector{ 200.1, 200.2  } },
                                          pair{ "name"s, std::vector{ "monkey"s, "george"s } } };
 
         result = pd::concat(std::vector{ df1, df4 }, AxisType::Columns);

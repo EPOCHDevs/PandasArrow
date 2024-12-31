@@ -721,16 +721,13 @@ std::pair<arrow::FieldVector, arrow::ArrayVector> DataFrame::makeFieldArrayPair(
         {
             typename arrow::CTypeTraits<T>::BuilderType builder;
             arrow::Status status;
-            std::vector<uint8_t> cacheForStringArrayNullBitMap;
-
-            if constexpr (std::is_same_v<T, std::string>)
+            if constexpr (std::is_floating_point_v<T>)
             {
-                cacheForStringArrayNullBitMap = makeValidFlags(column);
-                status = builder.AppendValues(column, cacheForStringArrayNullBitMap.data());
+                status = builder.AppendValues(column, makeValidFlags(column));
             }
             else
             {
-                status = builder.AppendValues(column, makeValidFlags(column));
+                status = builder.AppendValues(column);
             }
 
             if (status.ok())
@@ -770,22 +767,19 @@ std::pair<arrow::FieldVector, arrow::ArrayVector> DataFrame::makeFieldArrayPair(
             auto [name, column] = columnItem;
 
             arrow::Status status;
-            std::vector<uint8_t> cacheForStringArrayNullBitMap;
-
             if constexpr (isScalar)
             {
                 status = isValid(column) ? builder.Append(column) : builder.AppendNull();
             }
             else
             {
-                if constexpr (std::is_same_v<T, std::string>)
+                if constexpr (std::is_floating_point_v<T>)
                 {
-                    cacheForStringArrayNullBitMap = makeValidFlags(column);
-                    status = builder.AppendValues(column, cacheForStringArrayNullBitMap.data());
+                    status = builder.AppendValues(column,  makeValidFlags(column));
                 }
                 else
                 {
-                    status = builder.AppendValues(column, makeValidFlags(column));
+                    status = builder.AppendValues(column);
                 }
             }
 
@@ -820,15 +814,13 @@ void DataFrame::makeFieldArrayPairT(
         typename Type::BuilderType builder;
         auto column = std::get<I>(columnData);
 
-        std::vector<uint8_t> cacheForStringArrayNullBitMap;
-        if constexpr (std::is_same_v<T, std::string>)
+        if constexpr (std::is_floating_point_v<T>)
         {
-            cacheForStringArrayNullBitMap = makeValidFlags(column);
-            ThrowOnFailure(builder.AppendValues(column, cacheForStringArrayNullBitMap.data()));
+            ThrowOnFailure(builder.AppendValues(column, makeValidFlags(column)));
         }
         else
         {
-            ThrowOnFailure(builder.AppendValues(column, makeValidFlags(column)));
+            ThrowOnFailure(builder.AppendValues(column));
         }
 
         arrays[I] = ReturnOrThrowOnFailure(builder.Finish());
@@ -879,15 +871,13 @@ void DataFrame::makeFieldArrayPairT(TupleVectorT&& columnData, arrow::ArrayVecto
         auto [name, column] = std::get<I>(columnData);
 
         arrow::Status status;
-        std::vector<uint8_t> cacheForStringArrayNullBitMap;
-        if constexpr (std::is_same_v<T, std::string>)
+        if constexpr (std::is_floating_point_v<T>)
         {
-            cacheForStringArrayNullBitMap = makeValidFlags(column);
-            ThrowOnFailure(builder.AppendValues(column, cacheForStringArrayNullBitMap.data()));
+            ThrowOnFailure(builder.AppendValues(column, makeValidFlags(column)));
         }
         else
         {
-            ThrowOnFailure(builder.AppendValues(column, makeValidFlags(column)));
+            ThrowOnFailure(builder.AppendValues(column));
         }
 
         arrays[I] = ReturnOrThrowOnFailure(builder.Finish());

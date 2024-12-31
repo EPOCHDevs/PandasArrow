@@ -326,9 +326,10 @@ TEST_CASE("Test describe with all NA values", "[describe]")
     REQUIRE(desc.columns() == std::vector<std::string>{"count", "mean", "std", "min", "nunique", "max"});
     REQUIRE(desc.index().equals(std::vector<std::string>{"a", "b", "c"}));
 
+    INFO(desc);
     for (int i = 0; i < 3; i++) {
-        REQUIRE(std::isnan(desc.at(i, 1).as<double>()));
-        REQUIRE(std::isnan(desc.at(i, 2).as<double>()));
+        REQUIRE_FALSE(desc.at(i, 1).isValid());
+        REQUIRE_FALSE(desc.at(i, 2).isValid());
 
         for (int j: {0, 4}) {
             REQUIRE(desc.at(i, j).as<::int64_t>() == 0);
@@ -1099,8 +1100,8 @@ TEST_CASE("Test drop_na function for DataFrame", "[drop_na]")
     auto df = pd::DataFrame{
         arrow::ArrayT<::int64_t>::Make({ 1, 4, 5 }),
         std::pair{ "name"s, std::vector{ "Alfred"s, "Batman"s, "Catwoman"s } },
-        std::pair{ "toy"s, std::vector{ ""s, "Batman"s, "Bullwhip"s } },
-        std::pair{ "born"s, std::vector{ ""s, "1940-04-25"s, ""s } },
+        std::pair{ "toy_size"s, std::vector{ std::numeric_limits<double>::quiet_NaN(), 100.2, std::numeric_limits<double>::quiet_NaN() } },
+        std::pair{ "born"s, std::vector{ "1940-04-24"s, "1940-04-25"s, "1940-04-26"s } },
     };
 
     df["born"] = df["born"].to_datetime();
@@ -1112,7 +1113,7 @@ TEST_CASE("Test drop_na function for DataFrame", "[drop_na]")
     REQUIRE(df.shape() == pd::DataFrame::Shape{ 1, 3 });
 
     REQUIRE(df.at(0, 0).scalar->ToString() == "Batman");
-    REQUIRE(df.at(0, 1).scalar->ToString() == "Batman");
+    REQUIRE(df.at(0, 1).scalar->ToString() == "100.2");
     REQUIRE(df.at(0, 2).scalar->ToString() == "1940-04-25");
     REQUIRE(df.index()[0] == 4L);
 }

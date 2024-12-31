@@ -550,15 +550,14 @@ namespace pd {
             std::shared_ptr<arrow::Array> const &index,
             bool skipIndex) {
         BuilderT builder;
-        std::vector<uint8_t> cacheForStringArrayNullBitMap;
 
         auto status = builder.Reserve(arr.size());
         if (status.ok()) {
-            if constexpr (std::is_same_v<T, std::string>) {
-                cacheForStringArrayNullBitMap = makeValidFlags(arr);
-                status = builder.AppendValues(arr, cacheForStringArrayNullBitMap.data());
-            } else {
+            if constexpr (std::is_floating_point_v<T> )
+            {
                 status = builder.AppendValues(arr, makeValidFlags(arr));
+            } else {
+                status = builder.AppendValues(arr);
             }
         }
 

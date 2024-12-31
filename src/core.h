@@ -13,6 +13,7 @@
 #include <arrow/compute/api_scalar.h>
 #include <cmath>
 #include <rapidjson/document.h>
+#include <range/v3/to_container.hpp>
 
 
 namespace arrow {
@@ -207,18 +208,11 @@ inline auto ReturnScalarOrThrowOnError(auto&& result)
     throw std::runtime_error(result.status().ToString());
 }
 
-template<class T>
-inline bool isValid(T const& x)
-{
-    if constexpr (std::is_floating_point_v<T>)
-    {
-        return not std::isnan(x);
-    }
-    else if constexpr (std::is_same_v<T, std::string>)
-    {
-        return not x.empty();
-    }
-    return true;
+template<typename T> requires std::is_floating_point_v<T>
+std::vector<bool> makeValidFlags(std::vector<T> const &arr) {
+    return ranges::to<std::vector>(arr | std::views::transform([](T x){
+        return ! std::isnan(x);
+    }));
 }
 
 struct DateRangeSpec
@@ -420,8 +414,19 @@ class Scalar;
 namespace arrow {
     template<typename T>
     struct ArrayT {
+        static auto Make(std::vector<T> const &x, std::vector<bool> const &map) {
+            auto builder = std::make_shared<typename arrow::CTypeTraits<T>::BuilderType>();
+            pd::ThrowOnFailure(builder->AppendValues(x, map));
+            return std::dynamic_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(
+                    builder->Finish().MoveValueUnsafe());
+        }
+
         static auto Make(std::vector<T> const &x) {
             auto builder = std::make_shared<typename arrow::CTypeTraits<T>::BuilderType>();
+            if constexpr (std::is_floating_point_v<T>)
+            {
+                return Make(x, pd::makeValidFlags(x));
+            }
             pd::ThrowOnFailure(builder->AppendValues(x));
             return std::dynamic_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(
                     builder->Finish().MoveValueUnsafe());
@@ -429,14 +434,16 @@ namespace arrow {
 
         static auto Make(std::valarray<T> const &x) {
             auto builder = std::make_shared<typename arrow::CTypeTraits<T>::BuilderType>();
-            pd::ThrowOnFailure(builder->AppendValues(std::begin(x), std::end(x)));
-            return std::dynamic_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(
-                    builder->Finish().MoveValueUnsafe());
-        }
-
-        static auto Make(std::vector<T> const &x, std::vector<bool> const &map) {
-            auto builder = std::make_shared<typename arrow::CTypeTraits<T>::BuilderType>();
-            pd::ThrowOnFailure(builder->AppendValues(x, map));
+            if constexpr (std::is_floating_point_v<T>)
+            {
+                std::vector<bool> flags{x.size(), true};
+                std::transform(std::begin(x), std::end(x), flags.begin(), [](T v){
+                   return !std::isnan(v);
+                });
+                pd::ThrowOnFailure(builder->AppendValues(std::begin(x), std::end(x), flags));
+            }else {
+                pd::ThrowOnFailure(builder->AppendValues(std::begin(x), std::end(x)));
+            }
             return std::dynamic_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(
                     builder->Finish().MoveValueUnsafe());
         }
