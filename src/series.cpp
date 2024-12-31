@@ -92,14 +92,9 @@ namespace pd {
 Series::Series(std::shared_ptr<arrow::Array> const& arr, bool isIndex, std::string name)
     : NDFrame<Series>(arr, nullptr, true), m_name(std::move(name))
 {
-
     if (isIndex)
     {
         setIndexer();
-    }
-    else
-    {
-        m_index = uint_range(arr->length());
     }
 }
 
