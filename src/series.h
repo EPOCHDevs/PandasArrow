@@ -13,9 +13,6 @@
 
 
 namespace pd {
-
-    using namespace std;
-
     class Series : public NDFrame<Series> {
 
     public:
@@ -509,7 +506,7 @@ namespace pd {
 
         std::vector<std::shared_ptr<arrow::Scalar>> get_indexed_values() const;
 
-        static vector<double> ewm(
+        static std::vector<double> ewm(
                 const std::shared_ptr<arrow::DoubleArray> &vals,
                 const std::vector<int64_t> &start,
                 const std::vector<int64_t> &end,
@@ -517,10 +514,10 @@ namespace pd {
                 double com = 1,
                 bool adjust = true,
                 bool ignore_na = false,
-                const vector<double> &deltas = {},
+                const std::vector<double> &deltas = {},
                 bool normalize = true);
 
-        static vector<double> ewmcov(
+        static std::vector<double> ewmcov(
                 const std::shared_ptr<arrow::DoubleArray> &input_x,
                 const std::vector<int64_t> &start,
                 const std::vector<int64_t> &end,

@@ -8,7 +8,6 @@
 #include <arrow/io/api.h>
 #include "arrow/csv/api.h"
 #include <iostream>
-#include <oneapi/tbb/parallel_for_each.h>
 #include <parquet/arrow/reader.h>
 #include <parquet/arrow/writer.h>
 #include "arrow/array.h"
@@ -35,12 +34,13 @@
 #include "json_utils.h"
 #include "rapidjson/error/error.h"
 
+
 namespace pd {
 
     DataFrame::DataFrame(const std::shared_ptr<arrow::RecordBatch> &table, const std::shared_ptr<arrow::Array> &_index)
         : NDFrame(table, _index) {}
 
-    DataFrame::DataFrame(const ArrayTable &table, const shared_ptr<arrow::Array> &index)
+    DataFrame::DataFrame(const ArrayTable &table, const std::shared_ptr<arrow::Array> &index)
         : NDFrame(GetTableRowSize(table), index) {
         int nRows = m_index->length();
 
@@ -662,13 +662,19 @@ namespace pd {
                     });
             newIndex = indexArray();
         } else {
-            result.reserve(num_columns());
-            for (const auto &column: m_array->columns()) {
-                result.emplace_back(arrow::compute::CallFunction(functionName, {column})->scalar());
-            }
+            result.resize(num_columns());
+            tbb::parallel_for(0L, num_columns(), [&](int64_t i) {
+                result[i] = arrow::compute::CallFunction(functionName, {m_array->column(i)})->scalar();
+            });
 
             newIndex = arrow::ArrayT<std::string>::Make(columnNames());
         }
+
+        if (result.empty())
+        {
+            return pd::Series(nullptr, false);
+        }
+
         return pd::Series{arrow::ScalarArray::Make(result), newIndex};
     }
 

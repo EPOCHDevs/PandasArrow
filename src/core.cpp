@@ -59,7 +59,7 @@ date DateOffset::add(date currentDate, const DateOffset& dateOffset)
     return currentDate;
 }
 
-std::optional<DateOffset> DateOffset::FromString(const string& code)
+std::optional<DateOffset> DateOffset::FromString(const std::string& code)
 {
     const auto [freq_unit, mul] = splitTimeSpan(code);
     DateOffset::Type type{ DateOffset::Day };

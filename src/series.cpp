@@ -1188,7 +1188,7 @@ Series Series::operator[](const DateTimeSlice& slicer) const
     }
 }
 
-vector<double> Series::ewm(
+    std::vector<double> Series::ewm(
     const std::shared_ptr<arrow::DoubleArray>& vals,
     const std::vector<int64_t>& start,
     const std::vector<int64_t>& end,
@@ -1196,13 +1196,13 @@ vector<double> Series::ewm(
     double com,
     bool adjust,
     bool ignore_na,
-    const vector<double>& deltas,
+    const std::vector<double>& deltas,
     bool normalize)
 {
     const size_t N = vals->length();
     const int64_t M = start.size();
 
-    vector<double> output(N);
+    std::vector<double> output(N);
     if (N == 0)
     {
         return output;
@@ -1289,7 +1289,7 @@ vector<double> Series::ewm(
     return output;
 }
 
-vector<double> Series::ewmcov(
+std::vector<double> Series::ewmcov(
     const std::shared_ptr<arrow::DoubleArray>& input_x,
     const std::vector<int64_t>& start,
     const std::vector<int64_t>& end,
@@ -1310,7 +1310,7 @@ vector<double> Series::ewmcov(
         throw std::runtime_error(ss.str());
     }
 
-    vector<double> output(N);
+    std::vector<double> output(N);
     if (N == 0)
     {
         return output;
@@ -1470,7 +1470,7 @@ Series Series::where(Series const& cond, Scalar const& other) const
     return if_else(cond, other);
 }
 pd::Series Series::reindex(
-    const shared_ptr<arrow::Array>& newIndex,
+    const std::shared_ptr<arrow::Array>& newIndex,
     std::optional<std::unordered_map<int64_t, int64_t>> indexer,
     const std::optional<Scalar>& fillValue) const
 {
