@@ -164,7 +164,7 @@ namespace pd {
         if (m_array != nullptr) {
             isIndex = true;
             for (int i = 0; i < m_array->length(); i++) {
-                indexer[m_array->GetScalar(i).MoveValueUnsafe()] = i;
+                indexer[m_array->GetScalar(i).MoveValueUnsafe()]goit = i;
             }
         }
     }

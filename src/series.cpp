@@ -96,6 +96,10 @@ Series::Series(std::shared_ptr<arrow::Array> const& arr, bool isIndex, std::stri
     {
         setIndexer();
     }
+    else if(m_array)
+    {
+        m_index = uint_range(arr->length());
+    }
 }
 
 Series::Series(
