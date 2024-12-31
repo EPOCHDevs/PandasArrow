@@ -96,8 +96,11 @@ Series::Series(std::shared_ptr<arrow::Array> const& arr, bool isIndex, std::stri
     {
         setIndexer();
     }
-    else if(m_array.get() != nullptr)
+    else if(!m_array)
     {
+        m_index = arrow::MakeArrayOfNull(arrow::uint64(), 0).MoveValueUnsafe();
+        m_array = arrow::MakeArrayOfNull(arrow::float64(), 0).MoveValueUnsafe();
+    }else {
         m_index = uint_range(arr->length());
     }
 }
@@ -109,6 +112,11 @@ Series::Series(
     bool skipIndex)
     : NDFrame<Series>(arr, index, skipIndex), m_name(std::move(name))
 {
+    if(!m_array)
+    {
+        m_index = arrow::MakeArrayOfNull(arrow::uint64(), 0).MoveValueUnsafe();
+        m_array = arrow::MakeArrayOfNull(arrow::float64(), 0).MoveValueUnsafe();
+    }
 }
 
 std::shared_ptr<arrow::DataType> Series::dtype() const

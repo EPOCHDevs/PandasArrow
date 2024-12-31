@@ -29,7 +29,7 @@ TEST_CASE("Test Series constructor with arrow array and boolean input")
     Series s2(arr, false);
     REQUIRE(s2.name() == "");
     REQUIRE(s2.m_array->Equals(arr));
-    REQUIRE_FALSE(s2.indexArray() == (nullptr));
+    REQUIRE_FALSE(s2.indexArray() == nullptr);
 }
 
 TEST_CASE("Test Series Initialization", "[series]")
