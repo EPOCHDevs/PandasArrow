@@ -1945,8 +1945,7 @@ TEST_CASE("Testing series::ewm2_stddev with span", "[series]")
 }
 
 TEST_CASE("Test reindex vs reindex_async benchmark small data", "[.reindex]")
-{push
-
+{
     // Create a test input Series
     auto inputData = pd::random::RandomState(100).randn(100, 0, 2);
     auto inputIndex = pd::date_range(ptime(), 100, "T");
