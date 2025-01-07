@@ -55,7 +55,7 @@ if (ENABLE_GPU)
             src/cudf/scalar.cpp
             src/cudf/series.cpp)
 
-    target_link_libraries(pandas_arrow
+    target_link_libraries(pandas_arrowallow
             PRIVATE nvcomp::nvcomp cudf::cudf)
 endif()
 

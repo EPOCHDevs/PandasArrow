@@ -1944,7 +1944,7 @@ TEST_CASE("Testing series::ewm2_stddev with span", "[series]")
     REQUIRE_THAT(result, Catch::Matchers::Approx(expected_result).epsilon(0.001));
 }
 
-TEST_CASE("Test reindex vs reindex_async benchmark small data", "[reindex]")
+TEST_CASE("Test reindex vs reindex_async benchmark small data", "[.reindex]")
 {
     // Create a test input Series
     auto inputData = pd::random::RandomState(100).randn(100, 0, 2);
@@ -1970,7 +1970,7 @@ TEST_CASE("Test reindex vs reindex_async benchmark small data", "[reindex]")
     REQUIRE(sortedOut.indexArray()->Equals(out.indexArray()));
 }
 
-TEST_CASE("Test reindex vs reindex_async benchmark avg case", "[reindex]")
+TEST_CASE("Test reindex vs reindex_async benchmark avg case", "[.reindex]")
 {
     // Create a test input Series
     auto inputData = pd::random::RandomState(100).randn(1e6, 0, 2);

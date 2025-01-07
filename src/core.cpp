@@ -207,7 +207,7 @@ std::shared_ptr<arrow::TimestampArray> date_range(
     FreqTime freq,
     std::string const& /*unused*/)
 {
-    if (period <= 0)
+    if (period < 0)
     {
         throw std::runtime_error("period has to be positive");
     }

@@ -226,24 +226,24 @@ struct DateRangeSpec
 /**
  * Converts unix timestamp (nanoseconds) to ptime.
  */
-static inline auto toTimeNanoSecPtime(uint64_t nanoseconds_since_epoch)
+inline auto toTimeNanoSecPtime(uint64_t nanoseconds_since_epoch)
 {
     long long seconds_since_epoch = nanoseconds_since_epoch / 1000000000LL;
     long nanoseconds_remainder = nanoseconds_since_epoch % 1000000000LL;
     return from_time_t(seconds_since_epoch) + nanoseconds(nanoseconds_remainder);
 }
 
-static inline auto toTimeNanoSecPtime(ScalarPtr const& timeStampNanoSec)
+ inline auto toTimeNanoSecPtime(ScalarPtr const& timeStampNanoSec)
 {
     return toTimeNanoSecPtime(std::dynamic_pointer_cast<arrow::TimestampScalar>(timeStampNanoSec)->value);
 }
 
-static inline auto toTimeNanoSecPtimeFromInt64(ScalarPtr const& timeStampNanoSec)
+ inline auto toTimeNanoSecPtimeFromInt64(ScalarPtr const& timeStampNanoSec)
 {
     return toTimeNanoSecPtime(std::dynamic_pointer_cast<arrow::Int64Scalar>(timeStampNanoSec)->value);
 }
 
-static inline auto toDate(int64_t timeStampNanoSec)
+ inline auto toDate(int64_t timeStampNanoSec)
 {
     return toTimeNanoSecPtime(timeStampNanoSec).date();
 }
@@ -264,7 +264,7 @@ inline time_duration duration_from_string(std::string const& freq,
  * Converts ptime to nanosecond since Unix epoch.
  */
 template<class T = int64_t>
-static inline T fromPTime(ptime const& date_time) {
+T fromPTime(ptime const& date_time) {
     boost::posix_time::time_duration duration = date_time - EPOCH;
     return duration.total_nanoseconds();
 }
@@ -305,7 +305,7 @@ inline std::shared_ptr<arrow::RecordBatch> concatenateArraysToRecordBatch(
  * Converts date to nanoseconds since Unix epoch.
  */
 template<class T = int64_t>
-static inline T fromDate(date const& day)
+inline T fromDate(date const& day)
 {
     return fromPTime<T>(ptime(day));
 }

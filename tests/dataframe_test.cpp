@@ -1002,7 +1002,7 @@ TEST_CASE("Test groupinfo upsampling", "[Resample]")
     REQUIRE(info.upsampling());
 }
 
-TEST_CASE("Test reindex vs reindex_async benchmark", "[reindex]")
+TEST_CASE("Test reindex vs reindex_async benchmark", "[.reindex]")
 {
     // Create a test input Series
     auto rand = pd::random::RandomState(100);

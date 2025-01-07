@@ -144,8 +144,15 @@ TEST_CASE("Test date_range with invalid date range", "[date_range]")
 TEST_CASE("Test date_range with invalid period", "[date_range]")
 {
     date start(2022, 1, 1);
-    int period = 0;
+    int period = -1;
     REQUIRE_THROWS(date_range(start, period, "D"));
+}
+
+TEST_CASE("Test date_range with 0 period", "[date_range]")
+{
+    date start(2022, 1, 1);
+    int period = 0;
+    REQUIRE(date_range(start, period, "D")->length() == 0);
 }
 
 TEST_CASE("Test date_range with negative period", "[date_range]")
