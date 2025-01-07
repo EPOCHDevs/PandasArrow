@@ -1945,7 +1945,8 @@ TEST_CASE("Testing series::ewm2_stddev with span", "[series]")
 }
 
 TEST_CASE("Test reindex vs reindex_async benchmark small data", "[.reindex]")
-{
+{push
+
     // Create a test input Series
     auto inputData = pd::random::RandomState(100).randn(100, 0, 2);
     auto inputIndex = pd::date_range(ptime(), 100, "T");
@@ -1993,7 +1994,7 @@ TEST_CASE("Test reindex vs reindex_async benchmark avg case", "[.reindex]")
     std::cout << std::chrono::duration<double>(end - start).count() << " s.\n";
 }
 
-TEST_CASE("Test reindex vs reindex_async benchamark big data", "[reindex]")
+TEST_CASE("Test reindex vs reindex_async benchamark big data", "[.reindex]")
 {
     // Create a test input Series
     auto inputData = pd::random::RandomState(100).randn(5e6, 0, 2);
