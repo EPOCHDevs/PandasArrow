@@ -48,17 +48,17 @@
 
 #define GenericFunctionScalarReturn(name) GenericFunction(name, result->scalar()->shared_from_this(), Scalar, Series)
 #define GenericFunctionSeriesReturn(name) \
-    GenericFunction(name, (Series{ result->make_array(), false, m_name }), Series, Series)
+    GenericFunction(name, (ReturnSeriesOrThrowOnError(std::move(result))), Series, Series)
 
 #define GenericFunctionSeriesReturnString(name) \
-    GenericFunction(name, (Series{ result->make_array(), false, "" }), Series, StringLike)
+    GenericFunction(name, (ReturnSeriesOrThrowOnError(std::move(result))), Series, StringLike)
 #define GenericFunctionScalarReturnString(name) \
     GenericFunction(name, result->scalar()->shared_from_this(), Scalar, StringLike)
 
 #define GenericFunctionScalarReturnDateTimeLike(name) \
     GenericFunction(name, result->scalar()->shared_from_this(), Scalar, DateTimeLike)
 #define GenericFunctionSeriesReturnDateTimeLike(name) \
-    GenericFunction(name, (Series{ result->make_array(), false, "" }), Series, DateTimeLike)
+    GenericFunction(name, (ReturnSeriesOrThrowOnError(std::move(result))), Series, DateTimeLike)
 
 #define GenericFunctionSeriesReturnRename(name, f_name, ClassT) \
     Series ClassT ::name() const \
