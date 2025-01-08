@@ -558,6 +558,77 @@ public:
 
     DataFrame slice(int offset, int64_t length) const;
 
+    template <bool inReverse, typename Visitor, typename Indices, typename... Spans>
+    static void hmVisitInternal(Visitor&& visitor, Indices&& indices, Spans&&... spans) {
+        static_assert(sizeof...(spans) <= 5, "Maximum of 5 spans are supported.");
+
+        if constexpr (!inReverse) {
+            // Forward iteration
+            if constexpr (sizeof...(spans) == 1) {
+                auto [span1] = std::make_tuple(spans...);
+                visitor(indices.begin(), indices.end(), span1.begin(), span1.end());
+            } else if constexpr (sizeof...(spans) == 2) {
+                auto [span1, span2] = std::make_tuple(spans...);
+                visitor(indices.begin(), indices.end(),
+                        span1.begin(), span1.end(),
+                        span2.begin(), span2.end());
+            } else if constexpr (sizeof...(spans) == 3) {
+                auto [span1, span2, span3] = std::make_tuple(spans...);
+                visitor(indices.begin(), indices.end(),
+                        span1.begin(), span1.end(),
+                        span2.begin(), span2.end(),
+                        span3.begin(), span3.end());
+            } else if constexpr (sizeof...(spans) == 4) {
+                auto [span1, span2, span3, span4] = std::make_tuple(spans...);
+                visitor(indices.begin(), indices.end(),
+                        span1.begin(), span1.end(),
+                        span2.begin(), span2.end(),
+                        span3.begin(), span3.end(),
+                        span4.begin(), span4.end());
+            } else if constexpr (sizeof...(spans) == 5) {
+                auto [span1, span2, span3, span4, span5] = std::make_tuple(spans...);
+                visitor(indices.begin(), indices.end(),
+                        span1.begin(), span1.end(),
+                        span2.begin(), span2.end(),
+                        span3.begin(), span3.end(),
+                        span4.begin(), span4.end(),
+                        span5.begin(), span5.end());
+            }
+        } else {
+            // Reverse iteration
+            if constexpr (sizeof...(spans) == 1) {
+                auto [span1] = std::make_tuple(spans...);
+                visitor(indices.rbegin(), indices.rend(), span1.rbegin(), span1.rend());
+            } else if constexpr (sizeof...(spans) == 2) {
+                auto [span1, span2] = std::make_tuple(spans...);
+                visitor(indices.rbegin(), indices.rend(),
+                        span1.rbegin(), span1.rend(),
+                        span2.rbegin(), span2.rend());
+            } else if constexpr (sizeof...(spans) == 3) {
+                auto [span1, span2, span3] = std::make_tuple(spans...);
+                visitor(indices.rbegin(), indices.rend(),
+                        span1.rbegin(), span1.rend(),
+                        span2.rbegin(), span2.rend(),
+                        span3.rbegin(), span3.rend());
+            } else if constexpr (sizeof...(spans) == 4) {
+                auto [span1, span2, span3, span4] = std::make_tuple(spans...);
+                visitor(indices.rbegin(), indices.rend(),
+                        span1.rbegin(), span1.rend(),
+                        span2.rbegin(), span2.rend(),
+                        span3.rbegin(), span3.rend(),
+                        span4.rbegin(), span4.rend());
+            } else if constexpr (sizeof...(spans) == 5) {
+                auto [span1, span2, span3, span4, span5] = std::make_tuple(spans...);
+                visitor(indices.rbegin(), indices.rend(),
+                        span1.rbegin(), span1.rend(),
+                        span2.rbegin(), span2.rend(),
+                        span3.rbegin(), span3.rend(),
+                        span4.rbegin(), span4.rend(),
+                        span5.rbegin(), span5.rend());
+            }
+        }
+    }
+
     template<typename V,
             bool in_reverse = false,
             typename ColumnType=double,
@@ -588,24 +659,9 @@ public:
 
 
         auto indices = getIndexSpan<int64_t>();
-        auto spans = std::make_tuple(((*this)[names].template getSpan<ColumnType>())...);
 
         visitor.pre();
-        if constexpr (!in_reverse) {
-            std::apply(
-                    [&](auto &... s) {
-                        visitor(indices.begin(), indices.end(), s.begin()..., s.end()...);
-                    },
-                    spans
-            );
-        } else {
-            std::apply(
-                    [&](auto &... s) {
-                        visitor(indices.rbegin(), indices.rend(), s.rbegin()..., s.rend()...);
-                    },
-                    spans
-            );
-        }
+        hmVisitInternal<!in_reverse>(visitor, indices, ((*this)[names].template getSpan<ColumnType>())...);
         visitor.post();
 
         return std::forward<V>(visitor);
