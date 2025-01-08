@@ -568,6 +568,25 @@ public:
             throw std::runtime_error("invalid index for hwdf Visitor only int64 are allowed.");
         }
 
+        // Retrieve the expected Arrow type for the ColumnType
+        auto expected_type = arrow::CTypeTraits<ColumnType>::type_singleton();
+        for (const auto& name : {std::forward<NameType>(names)...}) {
+            // Retrieve column by name
+            auto column = m_array->GetColumnByName(name);
+            if (!column) {
+                throw std::runtime_error(
+                        fmt::format("Column '{}' does not exist.", name));
+            }
+
+            // Check if the column type matches the expected type
+            if (column->type_id() != expected_type->id()) {
+                throw std::runtime_error(
+                        fmt::format("Column '{}' has incompatible type: expected {}, but got {}",
+                                    name, expected_type->ToString(), column->type()->ToString()));
+            }
+        }
+
+
         auto indices = getIndexSpan<int64_t>();
         auto spans = std::make_tuple(((*this)[names].template getSpan<ColumnType>())...);
 
