@@ -441,6 +441,8 @@ namespace pd {
 
         [[nodiscard]] double cov(Series const &S2) const;
 
+        [[nodiscard]] Series clip(Series const &S2, pd::Scalar const& min, pd::Scalar const& max, bool skipNull=false) const;
+
         [[nodiscard]] Series ewm(
                 EWMAgg agg,
                 double value,

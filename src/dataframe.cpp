@@ -50,12 +50,30 @@ namespace pd {
         arrow::ArrayDataVector arrayVector;
         arrayVector.reserve(table.size());
 
+        std::unordered_set<int64_t> columnLength;
         for (auto const &[key, value]: table) {
             fieldVectors.emplace_back(arrow::field(key, value->type()));
             arrayVector.emplace_back(value->data());
+            columnLength.insert(value->length());
         }
 
-        m_array = arrow::RecordBatch::Make(arrow::schema(fieldVectors), nRows, std::move(arrayVector));
+        if (columnLength.size() == 1) {
+            if (*columnLength.begin() == nRows) {
+                m_array = arrow::RecordBatch::Make(arrow::schema(fieldVectors), nRows, std::move(arrayVector));
+            } else {
+                throw std::runtime_error(fmt::format("Column length does not match index length. {} != {}",
+                                                     *columnLength.begin(), nRows));
+            }
+        } else if (columnLength.size() > 1) {
+            std::stringstream builder;
+            builder << "Columns with unequal lengths were found\n";
+            for (auto const &[key, value]: table) {
+                builder << "[" << key << "]: " << value->length() << "\n";
+            }
+            builder << "[index]: " << m_index->length() << "\n";
+
+            throw std::runtime_error(builder.str());
+        }
     }
 
 

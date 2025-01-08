@@ -987,6 +987,14 @@ double Series::cov(const Series& /*s2*/) const
 //        arrow::compute::Covariance(m_array, s2.m_array, arrow::compute::VarianceOptions(1)));
 }
 
+Series Series::clip(Series const &x, pd::Scalar const& min, pd::Scalar const& max, bool skipNull) const
+{
+    arrow::compute::ElementWiseAggregateOptions option{skipNull};
+    return {pd::ReturnOrThrowOnFailure(arrow::compute::MaxElementWise(
+            {pd::ReturnOrThrowOnFailure(arrow::compute::MinElementWise({x.m_array, arrow::Datum(max.scalar)}, option)),
+             arrow::Datum(min.scalar)}, option)).make_array(), x.indexArray()};
+}
+
 double Series::corr(const Series& /*ununsed*/, CorrelationType /*ununsed*/) const
 {
     throw std::runtime_error("currently lacking implementation");
