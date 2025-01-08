@@ -24,7 +24,7 @@
 #include "arrow/util/vector.h"
 #include "datetimelike.h"
 #include "filesystem"
-#include "macros.h"
+#include "pd_core_macros.h"
 #include "resample.h"
 #include "concat.h"
 #include <arrow/ipc/reader.h>
