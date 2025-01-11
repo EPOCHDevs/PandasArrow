@@ -202,6 +202,8 @@ namespace pd {
         virtual ChildType where(Series const &) const = 0;
 
         virtual ChildType take(Series const &) const = 0;
+
+        ChildType setIndex(std::shared_ptr<arrow::Array> const &index) const;
         //</editor-fold>
 
         ArrayType m_array;

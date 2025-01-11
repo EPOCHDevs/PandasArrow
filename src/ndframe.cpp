@@ -312,6 +312,13 @@ namespace pd {
     NDFrame<ArrayTypeImpl>::ChildType NDFrame<ArrayTypeImpl>::operator[](Series const &index) const {
         return index.dtype()->id() == arrow::Type::BOOL ? where(index) : take(index);
     }
+
+    template<class ArrayTypeImpl>
+    NDFrame<ArrayTypeImpl>::ChildType NDFrame<ArrayTypeImpl>::setIndex(std::shared_ptr<arrow::Array> const &index) const {
+        return ChildType{
+            m_array, index
+        };
+    }
     //</editor-fold>
 
     template

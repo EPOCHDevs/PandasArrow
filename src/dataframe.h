@@ -421,13 +421,8 @@ namespace pd {
 
         [[nodiscard]] DataFrame tail(int length = 5) const;
 
+        using NDFrame<arrow::RecordBatch>::setIndex;
         DataFrame setIndex(std::string const &column_name);
-
-        DataFrame setIndex(std::shared_ptr<arrow::Array> const &index) const {
-            auto newClone = *this;
-            newClone.m_index = index;
-            return newClone;
-        }
 
         DataFrame indexAsDateTime() const;
 

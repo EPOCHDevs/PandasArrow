@@ -121,6 +121,9 @@ namespace pd {
         Series filter(std::function<bool(InType const&)> const& fn) const{
             return where(map<bool, InType>(fn));
         }
+
+        using NDFrame<arrow::Array>::setIndex;
+
         //</editor-fold>
 
         // Check if the Series object is an index array.
