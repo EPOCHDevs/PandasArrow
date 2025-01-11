@@ -113,24 +113,20 @@ std::unordered_map<std::string, std::pair<std::vector<int>, std::shared_ptr<arro
     return result;
 }
 
-pd::DataFrame Concatenator::concatenateRows(bool intersect, bool ignore_index, bool /*sort*/)
-{
+pd::DataFrame Concatenator::concatenateRows() {
 
     auto newDataTypes = resolveDuplicateFieldName(objs);
-    for (auto const& [field, value] : newDataTypes)
-    {
-        if (value.first.size() > 1)
-        {
-            auto const& new_type = value.second;
-            for (auto const& idx : value.first)
-            {
+    for (auto const &[field, value]: newDataTypes) {
+        if (value.first.size() > 1) {
+            auto const &new_type = value.second;
+            for (auto const &idx: value.first) {
                 auto recordBatch = objs.at(idx).array();
                 auto field_index = recordBatch->schema()->GetFieldIndex(field);
                 auto casted = arrow::compute::Cast(recordBatch->column(field_index), new_type)->make_array();
                 objs.at(idx) =
-                    DataFrame{ pd::ReturnOrThrowOnFailure(
-                                   recordBatch->SetColumn(field_index, arrow::field(field, new_type), casted)),
-                               objs.at(idx).indexArray() };
+                        DataFrame{pd::ReturnOrThrowOnFailure(
+                                recordBatch->SetColumn(field_index, arrow::field(field, new_type), casted)),
+                                  objs.at(idx).indexArray()};
             }
         }
     }
@@ -140,9 +136,9 @@ pd::DataFrame Concatenator::concatenateRows(bool intersect, bool ignore_index, b
     std::vector<TablePtr> tables(objs.size());
 
     std::ranges::transform(
-        objs,
-        tables.begin(),
-        [&unique_index](auto const& obj) { return obj.toTable(unique_index); });
+            objs,
+            tables.begin(),
+            [&unique_index](auto const &obj) { return obj.toTable(unique_index); });
 
     // Define merge options for columns in case of name conflicts
     arrow::Field::MergeOptions merge_options;
@@ -176,30 +172,24 @@ pd::DataFrame Concatenator::concatenateRows(bool intersect, bool ignore_index, b
     //                            ->array_as<arrow::StringArray>();
     //    }
 
-    if (intersect)
-    {
+    if (intersect) {
         auto column_names = merged_rb->schema()->field_names();
-        for (auto const& name : column_names)
-        {
+        for (auto const &name: column_names) {
             auto i = merged_rb->schema()->GetFieldIndex(name);
-            if (merged_rb->column(i)->null_count() > 0)
-            {
+            if (merged_rb->column(i)->null_count() > 0) {
                 merged_rb = merged_rb->RemoveColumn(i).MoveValueUnsafe();
             }
         }
     }
 
-    if (ignore_index)
-    {
-        return merged_rb;
-    }
-    else
-    {
-        return { merged_rb, index };
+    if (ignore_index) {
+        return pd::DataFrame{merged_rb};
+    } else {
+        return pd::DataFrame{merged_rb, index};
     }
 }
 
-pd::DataFrame Concatenator::concatenateColumns(bool intersect, bool ignore_index, bool sort)
+pd::DataFrame Concatenator::concatenateColumns()
 {
     auto newIndexes = mergeIndexes(makeJoinIndexes(objs, AxisType::Columns), intersect);
     const size_t numRows = newIndexes->length();
@@ -276,7 +266,7 @@ pd::DataFrame concatColumnsUnsafe(std::vector<pd::DataFrame> const& objs)
             }
         }
     }
-    return { df, objs.at(0).indexArray() };
+    return pd::DataFrame{ df, objs.at(0).indexArray() };
 }
 
 } // namespace pd

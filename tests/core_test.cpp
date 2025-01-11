@@ -367,7 +367,7 @@ TEST_CASE("Dataframe Concat")
         "[resample]")
     {
 
-        expected_result = { arrow::ArrayFromJSON<::uint64_t>("[0,1,0,1]"),
+        expected_result = pd::DataFrame{ arrow::ArrayFromJSON<::uint64_t>("[0,1,0,1]"),
                             pair{ "letter"s, std::vector<std::string>{ "a", "b", "c", "d" } },
                             pair{ "number"s, std::vector<long>{ 1L, 2L, 3L, 4L } },
                             pair{ "animal_weight"s, std::vector{ na, na, 100.1, 100.2 } } };
@@ -913,7 +913,7 @@ TEST_CASE("Rolling Dataframe")
     pd::DataFrame data(std::vector<std::vector<double>>{{1, 1, 2, 2, 3, 3},
                                                         {1, 1, 2, 2, 3, 3}},
                        std::vector<std::string>{"x", "y"});
-    auto result = data.rolling<double>([](pd::DataFrame const &x) {
+    auto result = data.rolling<double>([](pd::DataFrame const &x) -> double {
         return x.sum().as<double>();
     }, 3);
 

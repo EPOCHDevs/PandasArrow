@@ -25,19 +25,19 @@ struct Concatenator
     {
         if (axis_type == AxisType::Index)
         {
-            return concatenateRows(intersect, ignore_index, sort);
+            return concatenateRows();
         }
         else
         {
-            return concatenateColumns(intersect, ignore_index, sort);
+            return concatenateColumns();
         }
     }
 
     static arrow::ArrayVector makeJoinIndexes(std::vector<pd::DataFrame> const& objs, AxisType axis);
 
-    pd::DataFrame concatenateRows(bool intersect, bool ignore_index, bool sort);
+    pd::DataFrame concatenateRows();
 
-    pd::DataFrame concatenateColumns(bool intersect, bool ignore_index, bool sort);
+    pd::DataFrame concatenateColumns();
 
     static ArrayPtr mergeIndexes(arrow::ArrayVector const& indexes, bool intersect);
 

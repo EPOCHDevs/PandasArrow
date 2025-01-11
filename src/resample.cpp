@@ -41,7 +41,6 @@ std::vector<int64_t> generate_bins_dt64(std::shared_ptr<arrow::TimestampArray> v
     }
 
     int64_t j = 0;
-    int64_t bc = 0;
 
     if (right_closed)
     {
@@ -54,7 +53,6 @@ std::vector<int64_t> generate_bins_dt64(std::shared_ptr<arrow::TimestampArray> v
                 j++;
             }
             bins.push_back(j);
-            bc++;
         }
     }
     else
@@ -68,7 +66,6 @@ std::vector<int64_t> generate_bins_dt64(std::shared_ptr<arrow::TimestampArray> v
                 j++;
             }
             bins.push_back(j);
-            bc++;
         }
     }
 
@@ -158,22 +155,12 @@ std::pair<ptime, ptime> adjustDatesAnchored(
             // roll forward
             last += (freq - loffset);
         }
-        else
-        {
-            // already the end of the road
-            last = last;
-        }
     }
     else
     { // closed == 'left'
         if (foffset > time_duration())
         {
             first -= foffset;
-        }
-        else
-        {
-            // start of the road
-            first = first;
         }
 
         if (loffset > time_duration())
@@ -235,7 +222,7 @@ GroupInfo makeGroupInfo(
 
     const auto datum = pd::ReturnOrThrowOnFailure(arrow::compute::MinMax(timestamps_ax));
     auto datum_struct = datum.scalar_as<arrow::StructScalar>();
-    auto [min, max] = MinMax{ datum_struct.value[0], datum_struct.value[1] };
+    auto [min, max] = MinMax{ Scalar{datum_struct.value[0]}, Scalar{datum_struct.value[1]} };
 
     ptime minValue = toTimeNanoSecPtime(min.scalar);
     ptime maxValue = toTimeNanoSecPtime(max.scalar);

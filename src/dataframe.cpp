@@ -35,13 +35,19 @@
 #include "rapidjson/error/error.h"
 
 
+#define Aggregation(name) \
+pd::Series DataFrame::name(AxisType axis, bool skip_null) const { \
+    return forAxis(#name, axis, arrow::compute::ScalarAggregateOptions{skip_null}); \
+}
+
+
 namespace pd {
 
     DataFrame::DataFrame(const std::shared_ptr<arrow::RecordBatch> &table, const std::shared_ptr<arrow::Array> &_index)
-        : NDFrame(table, _index) {}
+            : NDFrame(table, _index) {}
 
     DataFrame::DataFrame(const ArrayTable &table, const std::shared_ptr<arrow::Array> &index)
-        : NDFrame(GetTableRowSize(table), index) {
+            : NDFrame(GetTableRowSize(table), index) {
         int nRows = m_index->length();
 
         arrow::FieldVector fieldVectors;
@@ -76,13 +82,34 @@ namespace pd {
         }
     }
 
+    DataFrame DataFrame::Make(arrow::ArrayVector const &table) const {
+        auto merged = table.size() == 1 ? table.at(0) : pd::ReturnOrThrowOnFailure(arrow::Concatenate(table));
+
+        arrow::ArrayVector batches(num_columns());
+        if (merged->length() != num_columns()*num_rows()) {
+            throw std::runtime_error("Failed to Create DataFrame from array list. array length != rows*columns, " +
+                                     fmt::format("{} != {}", merged->length(), num_columns() * num_rows()));
+        }
+
+        for (auto i = 0; i < num_columns(); i++) {
+            auto start = i * num_rows();
+            batches[i] = merged->Slice(start, num_rows());
+        }
+
+        return DataFrame{
+                this->array()->schema(),
+                this->num_rows(),
+                batches,
+                this->indexArray()
+        };
+    }
 
     bool DataFrame::contains(std::string const &column) const {
         return m_array->schema()->GetFieldIndex(column) != -1;
     }
 
     DataFrame::DataFrame(std::shared_ptr<arrow::StructArray> const &arr, std::vector<std::string> const &columns = {})
-        : NDFrame<DataFrame>(nullptr) {
+            : NDFrame<arrow::RecordBatch>(nullptr) {
 
         arrow::FieldVector fields;
         arrow::ArrayVector arrayVector;
@@ -105,6 +132,381 @@ namespace pd {
         m_index = uint_range(num_rows);
         m_array = arrow::RecordBatch::Make(arrow::schema(fields), num_rows, arrayVector);
     }
+
+    //<editor-fold desc="Aggregation Functions">
+
+    Series DataFrame::forAxis(std::string const &functionName,
+                              pd::AxisType axis,
+                              const arrow::compute::FunctionOptions& option) const {
+        std::vector<pd::ScalarPtr> result;
+        pd::ArrayPtr newIndex;
+        if (axis == AxisType::Columns) {
+            auto columns = m_array->columns();
+            result.resize(num_rows());
+            tbb::parallel_for(
+                    0L,
+                    num_rows(),
+                    [&](int64_t i) {
+                        arrow::ScalarVector row;
+                        row.reserve(num_columns());
+
+                        for (const auto &column: columns) {
+                            row.emplace_back(ReturnOrThrowOnFailure(column->GetScalar(i)));
+                        }
+                        result[i] = arrow::compute::CallFunction(functionName,
+                                                                 {arrow::ScalarArray::Make(row)},
+                                                                 &option)->scalar();
+                    });
+            newIndex = indexArray();
+        } else {
+            result.resize(num_columns());
+            tbb::parallel_for(0L, num_columns(), [&](int64_t i) {
+                result[i] = arrow::compute::CallFunction(functionName, {m_array->column(i)}, &option)->scalar();
+            });
+
+            newIndex = arrow::ArrayT<std::string>::Make(columnNames());
+        }
+
+        if (result.empty()) {
+            return pd::Series(nullptr, false);
+        }
+
+        return pd::Series{arrow::ScalarArray::Make(result), newIndex};
+    }
+
+    Aggregation(all)
+    Aggregation(any)
+
+    Series DataFrame::median(pd::AxisType axis, bool skip_null) const {
+        return forAxis("approximate_median", axis, arrow::compute::ScalarAggregateOptions{skip_null});
+    }
+
+    pd::Series DataFrame::count(AxisType axis) const {
+        return forAxis("count", axis, arrow::compute::CountOptions());
+    }
+
+    Series DataFrame::count_na(pd::AxisType axis) const {
+        return forAxis("count", axis, arrow::compute::CountOptions(arrow::compute::CountOptions::CountMode::ONLY_NULL));
+    }
+
+    Series DataFrame::nunique(pd::AxisType axis) const {
+        return forAxis("count_distinct", axis, arrow::compute::CountOptions());
+    }
+
+    Aggregation(first)
+
+    // TODO: Ignore first_last at nd_frame level
+
+    Aggregation(last)
+    Aggregation(max)
+    Aggregation(mean)
+    Aggregation(min)
+
+    // TODO: Ignore min_max at nd_frame level
+    // TODO: Ignore mode at nd_frame level
+
+    Aggregation(product)
+    Series DataFrame::quantile(AxisType axis, double q,
+                               arrow::compute::QuantileOptions::Interpolation interpolation,
+                               bool skip_nulls, uint32_t min_count) const {
+        return forAxis("stddev", axis, arrow::compute::QuantileOptions{q, interpolation, skip_nulls, min_count});
+    }
+
+    Series DataFrame::std(AxisType axis, int ddof, bool skip_na) const {
+        return forAxis("stddev", axis, arrow::compute::VarianceOptions{ddof, skip_na});
+    }
+
+    Aggregation(sum)
+
+    Series DataFrame::tdigest(AxisType axis, double q, uint32_t delta,
+                                           uint32_t buffer_size, bool skip_nulls,
+                                           uint32_t min_count) const {
+        return forAxis("tdigest", axis, arrow::compute::TDigestOptions{q, delta, buffer_size, skip_nulls, min_count});
+    }
+
+    Series DataFrame::var(AxisType axis, int ddof, bool skip_na) const {
+        return forAxis("stddev", axis, arrow::compute::VarianceOptions{ddof, skip_na});
+    }
+//</editor-fold>
+
+    //<editor-fold desc="Arithmetric Operation">
+    template <class T>
+    DataFrame BinaryFunction(std::string const& func, DataFrame const& self, T const& other) {
+        arrow::Datum input;
+        if constexpr (std::same_as<T, pd::Scalar>) {
+            input = other.value();
+        } else if constexpr (std::same_as<T, pd::Series>) {
+            input = other.array();
+
+        } else if constexpr (std::same_as<T, pd::DataFrame>) {
+            input = other.GetChunkedArray();
+        }
+
+        auto result = pd::ReturnOrThrowOnFailure(arrow::compute::CallFunction(func,
+                                                                              {self.GetChunkedArray(),
+                                                                               input})).chunks();
+
+        return self.Make(result);
+    }
+
+#define BINARY_OPERATOR_DF(op, name) \
+    DataFrame DataFrame::operator op(DataFrame const &s) const { return BinaryFunction(#name, *this, s); }\
+    DataFrame DataFrame::operator op(Series const &s) const { return BinaryFunction(#name, *this, s); }\
+    DataFrame DataFrame::operator op(Scalar const &s) const { return BinaryFunction(#name, *this, s); }
+
+#define UNARY_FUNCTION(op)     \
+DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow::compute::CallFunction(#op, {this->GetChunkedArray()})).chunks()); }
+
+    UNARY_FUNCTION(abs)
+    BINARY_OPERATOR_DF(+, add)
+    BINARY_OPERATOR_DF(/, divide)
+
+    UNARY_FUNCTION(exp)
+
+    BINARY_OPERATOR_DF(*, multiply)
+
+    DataFrame DataFrame::pow(double v) const {
+        return Make(pd::ReturnOrThrowOnFailure(
+                arrow::compute::CallFunction("pow", {this->GetChunkedArray(), arrow::Datum{v}})).chunks());
+    }
+
+    UNARY_FUNCTION(sign)
+    UNARY_FUNCTION(sqrt)
+
+    BINARY_OPERATOR_DF(-, subtract)
+    //</editor-fold>
+
+    //<editor-fold desc="Indexing Functions">
+    DataFrame DataFrame::operator[](Slice slice) const{
+        slice.normalize(m_array->num_rows());
+        int64_t length = slice.end - slice.start;
+        return DataFrame{m_array->Slice(slice.start, length), m_index->Slice(slice.start, length)};
+    }
+
+    Series DataFrame::operator[](const std::string &column) const {
+        auto ptr = m_array->GetColumnByName(column);
+        if (ptr) {
+            return {ptr, m_index, column};
+        }
+        auto columns = columnNames();
+        std::stringstream ss;
+        ss << column + " is not a valid column, Valid Columns: ";
+        for (auto const &c: columns) {
+            ss << c << " ";
+        }
+        throw std::runtime_error(ss.str());
+    }
+    DataFrame DataFrame::operator[](std::vector<std::string> const &columns) const {
+        std::vector<std::shared_ptr<arrow::ArrayData>> arrays;
+        arrays.reserve(columns.size());
+
+        arrow::FieldVector fieldVector;
+        fieldVector.reserve(columns.size());
+
+        auto schema = m_array->schema();
+
+        for (auto const &column: columns) {
+            auto idx = schema->GetFieldIndex(column);
+            if (idx == -1) {
+                std::stringstream ss;
+                ss << "ValidColumns: \n";
+                for (auto const &col: schema->field_names()) {
+                    ss << col << " ";
+                }
+                ss << "Invalid column: " << column;
+                throw std::runtime_error(ss.str());
+            }
+            arrays.emplace_back(m_array->column(idx)->data());
+            fieldVector.emplace_back(schema->field(idx));
+        }
+        return DataFrame{arrow::RecordBatch::Make(arrow::schema(fieldVector), m_array->num_rows(), arrays), m_index};
+    }
+    DataFrame DataFrame::operator[](int64_t row) const {
+        std::map<std::string, pd::ArrayPtr> result;
+        auto columns = columnNames();
+        std::transform(
+                columns.begin(),
+                columns.end(),
+                std::inserter(result, std::end(result)),
+                [this, row](std::string const &column) {
+                    auto series = this->m_array->GetColumnByName(column);
+                    if (series) {
+                        auto scalar = pd::ReturnOrThrowOnFailure(series->GetScalar(row));
+                        return std::pair{column, pd::ReturnOrThrowOnFailure(arrow::MakeArrayFromScalar(*scalar, 1))};
+                    }
+                    std::stringstream ss;
+                    ss << "[" << column << "] returned null.";
+                    throw std::runtime_error(ss.str());
+                });
+        auto index = pd::ReturnOrThrowOnFailure(m_index->GetScalar(row));
+        return DataFrame{result, pd::ReturnOrThrowOnFailure(arrow::MakeArrayFromScalar(*index, 1))};
+    }
+    Scalar DataFrame::at(int64_t row, int64_t col) const {
+        if (row < 0) {
+            throw std::runtime_error("@DataFrame::at() row must be >= 0");
+        }
+
+        if (col < 0) {
+            throw std::runtime_error("@DataFrame::at() col must be >= 0");
+        }
+
+        if (col < num_columns()) {
+            auto ptr = m_array->column(col);
+            auto result = ptr->GetScalar(row);
+            if (result.ok()) {
+                return Scalar{result.MoveValueUnsafe()};
+            }
+            throw std::runtime_error(
+                    std::to_string(row) + " is an invalid row index for column " + columnNames().at(col));
+        }
+
+        throw std::runtime_error(std::to_string(col) + " is not a valid column index");
+    }
+    Scalar DataFrame::at(int64_t row, std::string const &col) const {
+        auto idx = m_array->schema()->GetFieldIndex(col);
+        if (idx == -1) {
+            throw std::runtime_error(col + " is not a valid column");
+        }
+        return at(row, idx);
+    }
+
+
+    DataFrame DataFrame::slice(DateTimeSlice slicer, const std::vector<std::string> &columns) const {
+        if (m_index->type_id() == arrow::Type::TIMESTAMP) {
+            int64_t start = 0, end = m_index->length() - 1;
+
+            if (slicer.start) {
+                start = ReturnScalarOrThrowOnError(
+                        arrow::compute::Index(m_index,
+                                              arrow::compute::IndexOptions{
+                                                      fromDateTime(slicer.start.value())})).as<int64_t>();
+            }
+            if (slicer.end) {
+                end = ReturnScalarOrThrowOnError(
+                        arrow::compute::Index(m_index, arrow::compute::IndexOptions{
+                                fromDateTime(slicer.end.value())})).as<int64_t>();
+            }
+
+            return slice(Slice{start, end}, columns);
+        } else {
+            std::stringstream ss;
+            ss << "Type Error: DateTime slicing is only allowed on TimeStamp DataType, but found index of type "
+               << m_index->type()->ToString() << "\n";
+            throw std::runtime_error(ss.str());
+        }
+    }
+    DataFrame DataFrame::slice(Slice slice, std::vector<std::string> const &columns) const {
+        slice.normalize(m_array->num_rows());
+
+        int64_t length = slice.end - slice.start;
+
+        std::vector<std::shared_ptr<arrow::ArrayData>> arrays;
+        arrays.reserve(columns.size());
+
+        arrow::FieldVector fieldVector;
+        fieldVector.reserve(columns.size());
+
+        auto schema = m_array->schema();
+
+        for (auto const &column: columns) {
+            auto idx = schema->GetFieldIndex(column);
+            if (idx == -1) {
+                throw std::runtime_error("Invalid column: " + column);
+            }
+            arrays.emplace_back(m_array->column(idx)->data()->Slice(slice.start, length));
+            fieldVector.emplace_back(schema->field(idx));
+        }
+        return DataFrame{arrow::RecordBatch::Make(arrow::schema(fieldVector), length, arrays),
+                         m_index->Slice(slice.start, length)};
+    }
+    DataFrame DataFrame::slice(int offset, std::vector<std::string> const &columns) const {
+        int64_t length = m_array->num_rows() - offset;
+        std::vector<std::shared_ptr<arrow::ArrayData>> arrays;
+        arrays.reserve(columns.size());
+
+        arrow::FieldVector fieldVector;
+        fieldVector.reserve(columns.size());
+
+        auto schema = m_array->schema();
+
+        for (auto const &column: columns) {
+            auto idx = schema->GetFieldIndex(column);
+            if (idx == -1) {
+                throw std::runtime_error("Invalid column: " + column);
+            }
+            arrays.emplace_back(m_array->column(idx)->data()->Slice(offset, length));
+            fieldVector.emplace_back(schema->field(idx));
+        }
+        return DataFrame{arrow::RecordBatch::Make(arrow::schema(fieldVector), length, arrays), m_index->Slice(offset, length)};
+    }
+
+    DataFrame DataFrame::slice(int offset) const {
+        return DataFrame{m_array->Slice(offset), m_index->Slice(offset)};
+    }
+
+    DataFrame DataFrame::slice(int offset, int64_t length) const {
+        return DataFrame{m_array->Slice(offset, length), m_index->Slice(offset, length)};
+    }
+
+    DataFrame DataFrame::where(Series const & filter) const {
+        if (isIndex) {
+            throw std::runtime_error("where is not allowed on index Series");
+        }
+        if (filter.dtype()->id() != arrow::Type::BOOL) {
+            throw std::runtime_error(
+                    "operator[] can only be used for a series of type bool, got type " + filter.dtype()->ToString());
+        }
+        arrow::compute::FilterOptions opt{arrow::compute::FilterOptions::NullSelectionBehavior::EMIT_NULL};
+        auto rb = ReturnOrThrowOnFailure(
+                arrow::compute::CallFunction("filter", {m_array, filter.m_array}, &opt)).record_batch();
+        auto idx = ReturnOrThrowOnFailure(
+                arrow::compute::CallFunction("array_filter", {m_index, filter.m_array}, &opt)).make_array();
+        return DataFrame{rb, idx};
+    }
+
+    DataFrame DataFrame::take(Series const & x) const {
+        if (isIndex) {
+            throw std::runtime_error("take is not allowed on index Series");
+        }
+        if (x.dtype()->id() == arrow::Type::BOOL) {
+            throw std::runtime_error(
+                    "operator[] is invalid for a series of type bool, use where().");
+        }
+
+        auto rb = ReturnOrThrowOnFailure(
+                arrow::compute::CallFunction("take", {m_array, x.m_array})).record_batch();
+        auto idx = ReturnOrThrowOnFailure(
+                arrow::compute::CallFunction("array_take", {m_index, x.m_array})).make_array();
+
+        return DataFrame{rb, idx};
+    };
+    //</editor-fold>
+
+    BINARY_OPERATOR_DF(|, bit_wise_or)
+
+    BINARY_OPERATOR_DF(&, bit_wise_and)
+
+    BINARY_OPERATOR_DF(^, bit_wise_xor)
+
+    BINARY_OPERATOR_DF(<<, shift_left)
+
+    BINARY_OPERATOR_DF(>>, shift_right)
+
+    BINARY_OPERATOR_DF(>, greater)
+
+    BINARY_OPERATOR_DF(>=, greater_equal)
+
+    BINARY_OPERATOR_DF(<, less)
+
+    BINARY_OPERATOR_DF(<=, less_equal)
+
+    BINARY_OPERATOR_DF(==, equal)
+
+    BINARY_OPERATOR_DF(!=, not_equal)
+
+    BINARY_OPERATOR_DF(&&, and)
+
+    BINARY_OPERATOR_DF(||, or)
 
     DataFrame &DataFrame::rename(std::unordered_map<std::string, std::string> const &columns) {
         auto schemas = m_array->schema();
@@ -161,7 +563,7 @@ namespace pd {
         }
 
         auto new_index = m_array->GetColumnByName(column_name);
-        return {pd::ReturnOrThrowOnFailure(m_array->RemoveColumn(column_idx)), new_index};
+        return DataFrame{pd::ReturnOrThrowOnFailure(m_array->RemoveColumn(column_idx)), new_index};
     }
 
     DataFrame DataFrame::indexAsDateTime() const {
@@ -181,7 +583,8 @@ namespace pd {
         const auto pathStr = path.string();
         const auto isS3 = pathStr.starts_with("s3://");
         auto &&infileStatus =
-                isS3 ? arrow::AWSS3Reader::Instance().CreateReadableFile(pathStr.substr(5)) : arrow::io::ReadableFile::Open(path);
+                isS3 ? arrow::AWSS3Reader::Instance().CreateReadableFile(pathStr.substr(5))
+                     : arrow::io::ReadableFile::Open(path);
         if (infileStatus.ok()) {
             auto infile = std::move(infileStatus).ValueUnsafe();
 
@@ -198,7 +601,7 @@ namespace pd {
             if (recordBatchesResult.ok()) {
                 auto rb = recordBatchesResult.MoveValueUnsafe();
                 if (rb.size() == 1) {
-                    return rb.at(0);
+                    return DataFrame{rb.at(0)};
                 } else if (rb.empty()) {
                     throw std::runtime_error("Cannot Initialize DataFrame with empty parquet table");
                 } else {
@@ -219,7 +622,8 @@ namespace pd {
     arrow::Status DataFrame::toParquet(std::filesystem::path const &filepath, const std::string &indexField) const {
         ARROW_ASSIGN_OR_RAISE(
                 std::shared_ptr<arrow::Table> table,
-                arrow::Table::FromRecordBatches(std::vector{concatenateArraysToRecordBatch(m_array, m_index, indexField)}));
+                arrow::Table::FromRecordBatches(
+                        std::vector{concatenateArraysToRecordBatch(m_array, m_index, indexField)}));
 
         // Choose compression
         std::shared_ptr<parquet::WriterProperties> props =
@@ -250,7 +654,7 @@ namespace pd {
             auto indexPtr = pd::ReturnOrThrowOnFailure(arrow::compute::Cast(m_index, arrow::int64())).make_array();
             array = array->AddColumn(array->num_columns(), arrow::field(*index, indexPtr->type()),
                                      indexPtr)
-                            .MoveValueUnsafe();
+                    .MoveValueUnsafe();
         }
 
         return ConvertToVector(array, toRecords, allocator);
@@ -258,13 +662,14 @@ namespace pd {
 
     arrow::Result<std::shared_ptr<arrow::Buffer>> DataFrame::toBinary(std::vector<std::string> columns,
                                                                       std::optional<std::string> const &index,
-                                                                      std::unordered_map<std::string, std::string> const& metadata) const {
+                                                                      std::unordered_map<std::string, std::string> const &metadata) const {
         columns = columns.empty() ? this->columnNames() : columns;
 
         auto array = m_array;
         if (index) {
             auto indexPtr = pd::ReturnOrThrowOnFailure(arrow::compute::Cast(m_index, arrow::int64())).make_array();
-            array = array->AddColumn(array->num_columns(), arrow::field(*index, indexPtr->type()), indexPtr).MoveValueUnsafe();
+            array = array->AddColumn(array->num_columns(), arrow::field(*index, indexPtr->type()),
+                                     indexPtr).MoveValueUnsafe();
         }
 
         std::shared_ptr<arrow::io::BufferOutputStream> output_stream;
@@ -286,17 +691,20 @@ namespace pd {
         return buffer;
     }
 
-    DataFrame DataFrame::readBinary(const std::basic_string_view<uint8_t> &blob, std::optional<std::string> const &index) {
+    DataFrame
+    DataFrame::readBinary(const std::basic_string_view<uint8_t> &blob, std::optional<std::string> const &index) {
         auto buffer = std::make_shared<arrow::Buffer>(blob.data(), blob.size());
         auto buffer_reader = std::make_shared<arrow::io::BufferReader>(buffer);
 
         std::shared_ptr<arrow::ipc::RecordBatchStreamReader> reader = pd::ReturnOrThrowOnFailure(
                 arrow::ipc::RecordBatchStreamReader::Open(buffer_reader));
 
-        std::vector<std::shared_ptr<arrow::RecordBatch>> batches = pd::ReturnOrThrowOnFailure(reader->ToRecordBatches());
+        std::vector<std::shared_ptr<arrow::RecordBatch>> batches = pd::ReturnOrThrowOnFailure(
+                reader->ToRecordBatches());
 
         if (batches.size() != 1) {
-            throw std::invalid_argument("PandasArrow Cannot ReadBinary from a Table or Array of RecordBatches yet. Always Assume Single RecordBatch.");
+            throw std::invalid_argument(
+                    "PandasArrow Cannot ReadBinary from a Table or Array of RecordBatches yet. Always Assume Single RecordBatch.");
         }
 
         pd::ArrayPtr indexPtr{nullptr};
@@ -305,7 +713,8 @@ namespace pd {
             if (indexPosition != -1) {
                 indexPtr = batches[0]->column(indexPosition);
                 if (indexPtr->type_id() == arrow::Type::INT64) {
-                    indexPtr = pd::ReturnOrThrowOnFailure(arrow::compute::Cast(indexPtr, arrow::timestamp(arrow::TimeUnit::NANO))).make_array();
+                    indexPtr = pd::ReturnOrThrowOnFailure(
+                            arrow::compute::Cast(indexPtr, arrow::timestamp(arrow::TimeUnit::NANO))).make_array();
                 }
                 batches[0] = pd::ReturnOrThrowOnFailure(batches[0]->RemoveColumn(indexPosition));
             } else {
@@ -313,12 +722,13 @@ namespace pd {
             }
         }
 
-        return {
+        return DataFrame{
                 batches[0],
                 indexPtr};
     }
 
-    DataFrame DataFrame::readJSON(const rapidjson::Document &doc, std::shared_ptr<arrow::Schema> const &schema, std::optional<std::string> const &index) {
+    DataFrame DataFrame::readJSON(const rapidjson::Document &doc, std::shared_ptr<arrow::Schema> const &schema,
+                                  std::optional<std::string> const &index) {
 
         std::shared_ptr<arrow::RecordBatch> batch =
                 pd::ReturnOrThrowOnFailure(ConvertToRecordBatch(doc, schema));
@@ -329,7 +739,8 @@ namespace pd {
             if (indexPosition != -1) {
                 indexPtr = batch->column(indexPosition);
                 if (indexPtr->type_id() == arrow::Type::INT64) {
-                    indexPtr = pd::ReturnOrThrowOnFailure(arrow::compute::Cast(indexPtr, arrow::timestamp(arrow::TimeUnit::NANO))).make_array();
+                    indexPtr = pd::ReturnOrThrowOnFailure(
+                            arrow::compute::Cast(indexPtr, arrow::timestamp(arrow::TimeUnit::NANO))).make_array();
                 }
                 batch = pd::ReturnOrThrowOnFailure(batch->RemoveColumn(indexPosition));
             } else {
@@ -337,24 +748,27 @@ namespace pd {
             }
         }
 
-        return {
+        return DataFrame{
                 batch,
                 indexPtr};
     }
 
-     DataFrame DataFrame::readJSON(const std::string &jsonString, std::shared_ptr<arrow::Schema> const& schema, std::optional<std::string> const& index) {
-         rapidjson::Document doc;
+    DataFrame DataFrame::readJSON(const std::string &jsonString, std::shared_ptr<arrow::Schema> const &schema,
+                                  std::optional<std::string> const &index) {
+        rapidjson::Document doc;
 
-         // Parse the JSON string
-         rapidjson::ParseResult result = doc.Parse(jsonString.c_str());
+        // Parse the JSON string
+        rapidjson::ParseResult result = doc.Parse(jsonString.c_str());
 
-         // Check for parsing errors
-         if (!result) {
-             throw std::invalid_argument(fmt::format("JSON parse error: {}, ({}).", rapidjson::GetParseErrorFunc()(result.Code()), result.Offset()));
-         }
+        // Check for parsing errors
+        if (!result) {
+            throw std::invalid_argument(
+                    fmt::format("JSON parse error: {}, ({}).", rapidjson::GetParseErrorFunc()(result.Code()),
+                                result.Offset()));
+        }
 
-         return readJSON(doc, schema, index);
-     }
+        return readJSON(doc, schema, index);
+    }
 
     DataFrame DataFrame::readCSV(std::filesystem::path const &path) {
         arrow::io::IOContext io_context = arrow::io::default_io_context();
@@ -365,13 +779,14 @@ namespace pd {
         auto parse_options = arrow::csv::ParseOptions::Defaults();
         auto convert_options = arrow::csv::ConvertOptions::Defaults();
 
-        std::shared_ptr<arrow::csv::TableReader> csv_reader = pd::ReturnOrThrowOnFailure(arrow::csv::TableReader::Make(io_context, input, read_options, parse_options, convert_options));
+        std::shared_ptr<arrow::csv::TableReader> csv_reader = pd::ReturnOrThrowOnFailure(
+                arrow::csv::TableReader::Make(io_context, input, read_options, parse_options, convert_options));
         std::shared_ptr<arrow::Table> table = pd::ReturnOrThrowOnFailure(csv_reader->Read());
         arrow::TableBatchReader tableBatchReader(table);
 
         auto batches = pd::ReturnOrThrowOnFailure(tableBatchReader.ToRecordBatches());
         if (batches.size() == 1) {
-            return batches.at(0);
+            return DataFrame{batches.at(0)};
         }
         std::vector<pd::DataFrame> dataFrames{batches.begin(), batches.end()};
         return pd::concat(dataFrames);
@@ -392,7 +807,8 @@ namespace pd {
         tabulate::Table::Row_t cells, dot{halfRow, ""};
         cells.emplace_back("index");
         for (int j = 0; j < nCols; j++) {
-            if (nCols <= PD_MAX_COL_TO_PRINT or (nCols > PD_MAX_COL_TO_PRINT and (j < halfCol or j > nCols - halfCol))) {
+            if (nCols <= PD_MAX_COL_TO_PRINT or
+                (nCols > PD_MAX_COL_TO_PRINT and (j < halfCol or j > nCols - halfCol))) {
                 cells.emplace_back(df.m_array->schema()->field(j)->name());
             }
         }
@@ -400,7 +816,8 @@ namespace pd {
 
         bool added_sep = false;
         for (int64_t i = 0; i < nRows; i++) {
-            if (nRows <= PD_MAX_ROW_TO_PRINT or (nRows > PD_MAX_ROW_TO_PRINT and (i < halfRow or i > (nRows - halfRow)))) {
+            if (nRows <= PD_MAX_ROW_TO_PRINT or
+                (nRows > PD_MAX_ROW_TO_PRINT and (i < halfRow or i > (nRows - halfRow)))) {
                 cells.clear();
                 cells.emplace_back(df.m_index->GetScalar(i).MoveValueUnsafe()->ToString());
                 for (int j = 0; j < nCols; j++) {
@@ -421,50 +838,6 @@ namespace pd {
         return os;
     }
 
-    pd::DataFrame DataFrame::operator[](const pd::Series &filter) const {
-        if (filter.dtype()->id() != arrow::Type::BOOL) {
-            throw std::runtime_error("operator[] can only be used for a series of type bool, got type " + filter.dtype()->ToString());
-        }
-        auto rb = ReturnOrThrowOnFailure(arrow::compute::CallFunction("filter", {m_array, filter.m_array})).record_batch();
-        auto idx = ReturnOrThrowOnFailure(arrow::compute::CallFunction("filter", {m_index, filter.m_array})).make_array();
-        return {rb, idx};
-    }
-
-    Series DataFrame::operator[](const std::string &column) const {
-        auto ptr = m_array->GetColumnByName(column);
-        if (ptr) {
-            return {ptr, m_index, column};
-        }
-        auto columns = columnNames();
-        std::stringstream ss;
-        ss << column + " is not a valid column, Valid Columns: ";
-        for (auto const &c: columns) {
-            ss << c << " ";
-        }
-        throw std::runtime_error(ss.str());
-    }
-
-    DataFrame DataFrame::operator[](int64_t row) const {
-        std::map<std::string, pd::ArrayPtr> result;
-        auto columns = columnNames();
-        std::transform(
-                columns.begin(),
-                columns.end(),
-                std::inserter(result, std::end(result)),
-                [this, row](std::string const &column) {
-                    auto series = this->m_array->GetColumnByName(column);
-                    if (series) {
-                        auto scalar = pd::ReturnOrThrowOnFailure(series->GetScalar(row));
-                        return std::pair{column, pd::ReturnOrThrowOnFailure(arrow::MakeArrayFromScalar(*scalar, 1))};
-                    }
-                    std::stringstream ss;
-                    ss << "[" << column << "] returned null.";
-                    throw std::runtime_error(ss.str());
-                });
-        auto index = pd::ReturnOrThrowOnFailure(m_index->GetScalar(row));
-        return DataFrame{result, pd::ReturnOrThrowOnFailure(arrow::MakeArrayFromScalar(*index, 1))};
-    }
-
     DataFrame DateTimeLike::iso_calendar() const {
         auto result = pd::ReturnOrThrowOnFailure(arrow::compute::ISOCalendar(m_array));
         return {result.array_as<arrow::StructArray>(),
@@ -476,253 +849,8 @@ namespace pd {
         return {result.array_as<arrow::StructArray>(), std::vector<std::string>{"year", "month", "day"}};
     }
 
-    Scalar DataFrame::at(int64_t row, int64_t col) const {
-        if (row < 0) {
-            throw std::runtime_error("@DataFrame::at() row must be >= 0");
-        }
-
-        if (col < 0) {
-            throw std::runtime_error("@DataFrame::at() col must be >= 0");
-        }
-
-        if (col < num_columns()) {
-            auto ptr = m_array->column(col);
-            auto result = ptr->GetScalar(row);
-            if (result.ok()) {
-                return result.MoveValueUnsafe();
-            }
-            throw std::runtime_error(std::to_string(row) + " is an invalid row index for column " + columnNames().at(col));
-        }
-
-        throw std::runtime_error(std::to_string(col) + " is not a valid column index");
-    }
-
     std::vector<std::string> DataFrame::columnNames() const {
         return m_array->schema()->field_names();
-    }
-
-    DataFrame DataFrame::slice(DateTimeSlice slicer, const std::vector<std::string> &columns) const {
-        if (m_index->type_id() == arrow::Type::TIMESTAMP) {
-            int64_t start = 0, end = m_index->length() - 1;
-
-            if (slicer.start) {
-                start = ReturnScalarOrThrowOnError<int64_t>(
-                        arrow::compute::Index(m_index, arrow::compute::IndexOptions{fromDateTime(slicer.start.value())}));
-            }
-            if (slicer.end) {
-                end = ReturnScalarOrThrowOnError<int64_t>(
-                        arrow::compute::Index(m_index, arrow::compute::IndexOptions{fromDateTime(slicer.end.value())}));
-            }
-
-            return slice(Slice{start, end}, columns);
-        } else {
-            std::stringstream ss;
-            ss << "Type Error: DateTime slicing is only allowed on TimeStamp DataType, but found index of type "
-               << m_index->type()->ToString() << "\n";
-            throw std::runtime_error(ss.str());
-        }
-    }
-
-    DataFrame DataFrame::slice(Slice slice, std::vector<std::string> const &columns) const {
-        slice.normalize(m_array->num_rows());
-
-        int64_t length = slice.end - slice.start;
-
-        std::vector<std::shared_ptr<arrow::ArrayData>> arrays;
-        arrays.reserve(columns.size());
-
-        arrow::FieldVector fieldVector;
-        fieldVector.reserve(columns.size());
-
-        auto schema = m_array->schema();
-
-        for (auto const &column: columns) {
-            auto idx = schema->GetFieldIndex(column);
-            if (idx == -1) {
-                throw std::runtime_error("Invalid column: " + column);
-            }
-            arrays.emplace_back(m_array->column(idx)->data()->Slice(slice.start, length));
-            fieldVector.emplace_back(schema->field(idx));
-        }
-        return {arrow::RecordBatch::Make(arrow::schema(fieldVector), length, arrays),
-                m_index->Slice(slice.start, length)};
-    }
-
-    DataFrame DataFrame::timestamp_slice(Slice const &slicer) const {
-        int64_t start = 0, end = m_index->length() - 1;
-        if (slicer.start != 0) {
-            start = ReturnScalarOrThrowOnError<int64_t>(
-                    arrow::compute::Index(m_index, arrow::compute::IndexOptions{pd::Scalar(slicer.start).value()}));
-        }
-
-        if (slicer.end != 0) {
-            end = ReturnScalarOrThrowOnError<int64_t>(
-                    arrow::compute::Index(m_index, arrow::compute::IndexOptions{pd::Scalar(slicer.end).value()}));
-            if (end != -1) {
-                end++;
-            }
-        }
-
-        return slice(Slice{start, end});
-    }
-
-    DataFrame DataFrame::slice(Slice slice) const {
-        slice.normalize(m_array->num_rows());
-        int64_t length = slice.end - slice.start;
-        return {m_array->Slice(slice.start, length), m_index->Slice(slice.start, length)};
-    }
-
-    DataFrame DataFrame::DataFrame::slice(DateTimeSlice slicer) const {
-        if (m_index->type_id() == arrow::Type::TIMESTAMP) {
-            int64_t start = 0, end = m_index->length() - 1;
-
-            if (slicer.start) {
-                start = ReturnScalarOrThrowOnError<int64_t>(
-                        arrow::compute::Index(m_index, arrow::compute::IndexOptions{fromDateTime(slicer.start.value())}));
-            }
-            if (slicer.end) {
-                end = ReturnScalarOrThrowOnError<int64_t>(
-                        arrow::compute::Index(m_index, arrow::compute::IndexOptions{fromDateTime(slicer.end.value())}));
-            }
-
-            return slice(Slice{start, end});
-        } else {
-            std::stringstream ss;
-            ss << "Type Error: DateTime slicing is only allowed on TimeStamp DataType, but found index of type "
-               << m_index->type()->ToString() << "\n";
-            throw std::runtime_error(ss.str());
-        }
-    }
-
-    DataFrame DataFrame::slice(int offset, std::vector<std::string> const &columns) const {
-        int64_t length = m_array->num_rows() - offset;
-        std::vector<std::shared_ptr<arrow::ArrayData>> arrays;
-        arrays.reserve(columns.size());
-
-        arrow::FieldVector fieldVector;
-        fieldVector.reserve(columns.size());
-
-        auto schema = m_array->schema();
-
-        for (auto const &column: columns) {
-            auto idx = schema->GetFieldIndex(column);
-            if (idx == -1) {
-                throw std::runtime_error("Invalid column: " + column);
-            }
-            arrays.emplace_back(m_array->column(idx)->data()->Slice(offset, length));
-            fieldVector.emplace_back(schema->field(idx));
-        }
-        return {arrow::RecordBatch::Make(arrow::schema(fieldVector), length, arrays), m_index->Slice(offset, length)};
-    }
-
-    DataFrame DataFrame::operator[](std::vector<std::string> const &columns) const {
-        std::vector<std::shared_ptr<arrow::ArrayData>> arrays;
-        arrays.reserve(columns.size());
-
-        arrow::FieldVector fieldVector;
-        fieldVector.reserve(columns.size());
-
-        auto schema = m_array->schema();
-
-        for (auto const &column: columns) {
-            auto idx = schema->GetFieldIndex(column);
-            if (idx == -1) {
-                std::stringstream ss;
-                ss << "ValidColumns: \n";
-                for (auto const &col: schema->field_names()) {
-                    ss << col << " ";
-                }
-                ss << "Invalid column: " << column;
-                throw std::runtime_error(ss.str());
-            }
-            arrays.emplace_back(m_array->column(idx)->data());
-            fieldVector.emplace_back(schema->field(idx));
-        }
-        return {arrow::RecordBatch::Make(arrow::schema(fieldVector), m_array->num_rows(), arrays), m_index};
-    }
-
-    DataFrame DataFrame::slice(int offset) const {
-        return {m_array->Slice(offset), m_index->Slice(offset)};
-    }
-
-    DataFrame DataFrame::slice(int offset, int64_t length) const {
-        return {m_array->Slice(offset, length), m_index->Slice(offset, length)};
-    }
-
-    Scalar DataFrame::sum() const {
-        auto status = arrow::compute::CallFunction("sum", {std::make_shared<arrow::ChunkedArray>(m_array->columns())});
-        if (status.ok()) {
-            return status->scalar()->shared_from_this();
-        } else {
-            throw std::runtime_error(status.status().ToString());
-        }
-    }
-
-
-    Series DataFrame::forAxis(std::string const &functionName,
-                              pd::AxisType axis) const {
-        std::vector<pd::ScalarPtr> result;
-        pd::ArrayPtr newIndex;
-        if (axis == AxisType::Columns) {
-            auto columns = m_array->columns();
-            result.resize(num_rows());
-            tbb::parallel_for(
-                    0L,
-                    num_rows(),
-                    [&](int64_t i) {
-                        arrow::ScalarVector row;
-                        row.reserve(num_columns());
-
-                        for (const auto &column: columns) {
-                            row.emplace_back(ReturnOrThrowOnFailure(column->GetScalar(i)));
-                        }
-                        result[i] = arrow::compute::CallFunction(functionName, {arrow::ScalarArray::Make(row)})->scalar();
-                    });
-            newIndex = indexArray();
-        } else {
-            result.resize(num_columns());
-            tbb::parallel_for(0L, num_columns(), [&](int64_t i) {
-                result[i] = arrow::compute::CallFunction(functionName, {m_array->column(i)})->scalar();
-            });
-
-            newIndex = arrow::ArrayT<std::string>::Make(columnNames());
-        }
-
-        if (result.empty())
-        {
-            return pd::Series(nullptr, false);
-        }
-
-        return pd::Series{arrow::ScalarArray::Make(result), newIndex};
-    }
-
-
-    Series DataFrame::sum(pd::AxisType axis) const {
-        return forAxis("sum", axis);
-    }
-
-    Series DataFrame::count(pd::AxisType axis) const {
-        return forAxis("count", axis);
-    }
-
-    Series DataFrame::mean(pd::AxisType axis) const {
-        return forAxis("mean", axis);
-    }
-
-    Series DataFrame::std(pd::AxisType axis) const {
-        return forAxis("stddev", axis);
-    }
-
-    Series DataFrame::var(pd::AxisType axis) const {
-        return forAxis("mean", axis);
-    }
-
-    Series DataFrame::max(pd::AxisType axis) const {
-        return forAxis("max", axis);
-    }
-
-    Series DataFrame::min(pd::AxisType axis) const {
-        return forAxis("min", axis);
     }
 
     DataFrame DataFrame::unary(std::string const &functionName) const {
@@ -745,6 +873,7 @@ namespace pd {
 
 
     using namespace std::string_literals;
+
     DataFrame DataFrame::describe(bool include_all, bool percentiles) {
 
         if (m_array == nullptr) {
@@ -753,8 +882,10 @@ namespace pd {
 
         const auto &valid_types = arrow::NumericTypes();
         if (std::ranges::any_of(
-                    m_array->schema()->fields(),
-                    [&valid_types](std::shared_ptr<arrow::Field> const &field) { return std::find(valid_types.begin(), valid_types.end(), field->type()) == valid_types.end(); })) {
+                m_array->schema()->fields(),
+                [&valid_types](std::shared_ptr<arrow::Field> const &field) {
+                    return std::find(valid_types.begin(), valid_types.end(), field->type()) == valid_types.end();
+                })) {
             throw std::runtime_error("describe(): All Types must be numeric type");
         }
 
@@ -795,8 +926,8 @@ namespace pd {
             auto series = operator[](index);
 
             counts[i] = series.count();
-            mean[i] = series.mean();
-            std[i] = series.std();
+            mean[i] = series.mean().as<double>();
+            std[i] = series.std().as<double>();
             min[i] = series.min().value();
             nunique[i] = series.nunique();
 
@@ -842,39 +973,6 @@ namespace pd {
         return {arrow::schema(fields), static_cast<int64_t>(indexes.size()), data, indexesArray};
     }
 
-    BINARY_OPERATOR_PARALLEL(-, subtract)
-
-    BINARY_OPERATOR_PARALLEL(+, add)
-
-    BINARY_OPERATOR_PARALLEL(/, divide)
-
-    BINARY_OPERATOR_PARALLEL(*, multiply)
-
-    BINARY_OPERATOR_PARALLEL(|, bit_wise_or)
-
-    BINARY_OPERATOR_PARALLEL(&, bit_wise_and)
-
-    BINARY_OPERATOR_PARALLEL(^, bit_wise_xor)
-
-    BINARY_OPERATOR_PARALLEL(<<, shift_left)
-
-    BINARY_OPERATOR_PARALLEL(>>, shift_right)
-
-    BINARY_OPERATOR_PARALLEL(>, greater)
-
-    BINARY_OPERATOR_PARALLEL(>=, greater_equal)
-
-    BINARY_OPERATOR_PARALLEL(<, less)
-
-    BINARY_OPERATOR_PARALLEL(<=, less_equal)
-
-    BINARY_OPERATOR_PARALLEL(==, equal)
-
-    BINARY_OPERATOR_PARALLEL(!=, not_equal)
-
-    BINARY_OPERATOR_PARALLEL(&&, and)
-
-    BINARY_OPERATOR_PARALLEL(||, or)
 
     arrow::FieldVector DataFrame::dtypes() const {
         return m_array->schema()->fields();
@@ -885,14 +983,14 @@ namespace pd {
     }
 
     DataFrame DataFrame::head(int length) const {
-        return {m_array->Slice(0, length), m_index->Slice(0, length)};
+        return DataFrame{m_array->Slice(0, length), m_index->Slice(0, length)};
     }
 
     DataFrame DataFrame::tail(int length) const {
         auto nRows = m_array->num_rows();
         if (nRows > 0) {
             auto startIndex = std::max<int64_t>(0l, nRows - length);
-            return {m_array->Slice(startIndex, length),
+            return DataFrame{m_array->Slice(startIndex, length),
                     m_index->Slice(startIndex, length)};
         }
         return *this;
@@ -904,7 +1002,7 @@ namespace pd {
         auto [sorted_values, sorted_indices] = index.sort(ascending);
         auto result = arrow::compute::CallFunction("take", {m_array, sorted_indices});
         if (result.ok()) {
-            return {result.MoveValueUnsafe().record_batch(), ignore_index ? nullptr : sorted_values};
+            return DataFrame{result.MoveValueUnsafe().record_batch(), ignore_index ? nullptr : sorted_values};
         }
         throw std::runtime_error(result.status().ToString());
     }
@@ -941,10 +1039,10 @@ namespace pd {
     pd::DataFrame DataFrame::add_column(std::string const &fieldName, pd::ArrayPtr const &ptr) const {
         const int64_t index = m_array->schema()->GetFieldIndex(fieldName);
         if (index == -1) {
-            return {pd::ReturnOrThrowOnFailure(m_array->AddColumn(num_columns(), fieldName, ptr)), m_index};
+            return DataFrame{pd::ReturnOrThrowOnFailure(m_array->AddColumn(num_columns(), fieldName, ptr)), m_index};
         } else {
             auto field = m_array->schema()->GetFieldByName(fieldName);
-            return {pd::ReturnOrThrowOnFailure(m_array->SetColumn(index, field, ptr)), m_index};
+            return DataFrame{pd::ReturnOrThrowOnFailure(m_array->SetColumn(index, field, ptr)), m_index};
         }
     }
 
@@ -982,7 +1080,8 @@ namespace pd {
 
         std::unordered_map<int64_t, int64_t> indexer;
         auto idx_int =
-                pd::ReturnOrThrowOnFailure(arrow::compute::Cast(m_index, {arrow::int64()})).array_as<arrow::Int64Array>();
+                pd::ReturnOrThrowOnFailure(
+                        arrow::compute::Cast(m_index, {arrow::int64()})).array_as<arrow::Int64Array>();
 
         for (int i = 0; i < m_index->length(); i++) {
             indexer[idx_int->Value(i)] = i;
@@ -991,7 +1090,9 @@ namespace pd {
         std::ranges::transform(
                 std::views::iota(0L, N),
                 reindexedSeries.begin(),
-                [&](std::int64_t i) { return Series(m_array->column(i), m_index).reindex(newIndex, indexer, fillValue).m_array; });
+                [&](std::int64_t i) {
+                    return Series(m_array->column(i), m_index).reindex(newIndex, indexer, fillValue).m_array;
+                });
         return {m_array->schema(), newIndex->length(), reindexedSeries, newIndex};
     }
 
@@ -1002,7 +1103,8 @@ namespace pd {
         std::vector<pd::ArrayPtr> reindexedSeries(N);
 
         auto idx_int =
-                pd::ReturnOrThrowOnFailure(arrow::compute::Cast(m_index, {arrow::int64()})).array_as<arrow::Int64Array>();
+                pd::ReturnOrThrowOnFailure(
+                        arrow::compute::Cast(m_index, {arrow::int64()})).array_as<arrow::Int64Array>();
 
         std::unordered_map<int64_t, int64_t> indexer;
         for (int i = 0; i < m_index->length(); i++) {
@@ -1012,7 +1114,10 @@ namespace pd {
         tbb::parallel_for(
                 0,
                 N,
-                [&](size_t i) { reindexedSeries[i] = Series(m_array->column(i), m_index).reindex(newIndex, indexer, fillValue).m_array; });
+                [&](size_t i) {
+                    reindexedSeries[i] = Series(m_array->column(i), m_index).reindex(newIndex, indexer,
+                                                                                     fillValue).m_array;
+                });
 
         return {m_array->schema(), newIndex->length(), reindexedSeries, newIndex};
     }
@@ -1032,10 +1137,11 @@ namespace pd {
             }
 
             array = ReturnOrThrowOnFailure(
-                    array->SetColumn(i, arrow::field(field, col->type()), Series(col, nullptr, "", true).sort(ascending)[0]));
+                    array->SetColumn(i, arrow::field(field, col->type()),
+                                     Series(col, nullptr, "", true).sort(ascending)[0]));
         }
 
-        return array;
+        return pd::DataFrame{array};
     }
 
     Series DataFrame::coalesce() {
@@ -1043,14 +1149,6 @@ namespace pd {
         std::copy(m_array->columns().begin(), m_array->columns().end(), args.begin());
 
         return ReturnSeriesOrThrowOnError(arrow::compute::CallFunction("coalesce", args));
-    }
-
-    DataFrame Series::mode(int n, bool skip_nulls) const {
-        auto modeWithCount =
-                pd::ReturnOrThrowOnFailure(arrow::compute::Mode(m_array, arrow::compute::ModeOptions{n, skip_nulls}));
-        auto modeStruct = modeWithCount.array_as<arrow::StructArray>();
-
-        return {modeStruct, {"mode", "count"}};
     }
 
     Series DataFrame::coalesce(std::vector<std::string> const &columns) {
@@ -1081,7 +1179,7 @@ namespace pd {
         auto new_rb = datum.record_batch();
         auto new_index = new_rb->column(N);
         new_rb = ReturnOrThrowOnFailure(new_rb->RemoveColumn(N));
-        return {new_rb, new_index};
+        return DataFrame{new_rb, new_index};
     }
 
     Resampler DataFrame::resample(
@@ -1095,34 +1193,43 @@ namespace pd {
     }
 
 
-
     Resampler DataFrame::downsample(
-            std::string const& rule,
+            std::string const &rule,
             bool closed_label_right,
             bool weekStartsMonday,
             bool startEpoch) const {
         const auto [freq_unit, freq_value] = splitTimeSpan(rule);
 
-        arrow::compute::RoundTemporalOptions temporalOption(freq_value, getCalendarUnit(freq_unit[0]), weekStartsMonday, false, startEpoch);
+        arrow::compute::RoundTemporalOptions temporalOption(freq_value, getCalendarUnit(freq_unit[0]), weekStartsMonday,
+                                                            false, startEpoch);
         auto binned = pd::ReturnOrThrowOnFailure(
-                              closed_label_right ? arrow::compute::CeilTemporal(m_index, temporalOption) : arrow::compute::FloorTemporal(m_index, temporalOption))
-                              .make_array();
+                closed_label_right ? arrow::compute::CeilTemporal(m_index, temporalOption)
+                                   : arrow::compute::FloorTemporal(m_index, temporalOption))
+                .make_array();
 
         if (freq_unit.ends_with("E") || freq_unit == "M" || freq_unit == "W" || freq_unit == "Y" || freq_unit == "Q") {
             auto oneDay = arrow::MakeScalar(arrow::date32(), 1L).MoveValueUnsafe();
             binned =
-                    pd::ReturnOrThrowOnFailure(arrow::compute::Cast(pd::ReturnOrThrowOnFailure(arrow::compute::Subtract(binned, oneDay)), arrow::int64())).make_array();
-            binned = pd::ReturnOrThrowOnFailure(arrow::compute::Cast(binned, arrow::timestamp(arrow::TimeUnit::NANO))).make_array();
+                    pd::ReturnOrThrowOnFailure(
+                            arrow::compute::Cast(pd::ReturnOrThrowOnFailure(arrow::compute::Subtract(binned, oneDay)),
+                                                 arrow::int64())).make_array();
+            binned = pd::ReturnOrThrowOnFailure(
+                    arrow::compute::Cast(binned, arrow::timestamp(arrow::TimeUnit::NANO))).make_array();
         }
         return {
                 DataFrame{m_array, binned}};
     }
 
     FOR_ALL_COLUMN(bfill)
+
     FOR_ALL_COLUMN(ffill)
+
     FOR_ALL_COLUMN(is_null)
+
     FOR_ALL_COLUMN(is_valid)
+
     FOR_ALL_COLUMN(is_finite)
+
     FOR_ALL_COLUMN(is_infinite)
 
     DataFrame DataFrame::transpose() const {
@@ -1154,7 +1261,8 @@ namespace pd {
 
                     for (int64_t j = 0; j < newRowSize; j++) {
                         scalars[j] =
-                                ReturnOrThrowOnFailure(m_array->column(j)->GetScalar(i).MoveValueUnsafe()->CastTo(commonType));
+                                ReturnOrThrowOnFailure(
+                                        m_array->column(j)->GetScalar(i).MoveValueUnsafe()->CastTo(commonType));
                     }
 
                     newFields[i] = arrow::field(field->ToString(), commonType);
@@ -1321,10 +1429,11 @@ namespace pd {
                     if (result->length() == subGroup.num_rows()) {
                         return result;
                     }
-                    throw std::runtime_error(std::string("Failed to Merge Apply::Functor due to inconsistent Row Length\n")
-                                                     .append(std::to_string(result->length()))
-                                                     .append(" != ")
-                                                     .append(std::to_string(subGroup.num_rows())));
+                    throw std::runtime_error(
+                            std::string("Failed to Merge Apply::Functor due to inconsistent Row Length\n")
+                                    .append(std::to_string(result->length()))
+                                    .append(" != ")
+                                    .append(std::to_string(subGroup.num_rows())));
                 });
 
         ARROW_ASSIGN_OR_RAISE(auto finalArray, arrow::Concatenate(result));
@@ -1332,19 +1441,29 @@ namespace pd {
     }
 
     GROUPBY_NUMERIC_AGG(mean, double)
+
     GROUPBY_NUMERIC_AGG(approximate_median, double)
+
     GROUPBY_NUMERIC_AGG(stddev, double)
+
     GROUPBY_NUMERIC_AGG(tdigest, double)
+
     GROUPBY_NUMERIC_AGG(variance, double)
+
     GROUPBY_NUMERIC_AGG(all, bool)
+
     GROUPBY_NUMERIC_AGG(any, bool)
 
     GROUPBY_NUMERIC_AGG(count, int64_t)
+
     GROUPBY_NUMERIC_AGG(count_distinct, int64_t)
 
     GROUPBY_AGG(max)
+
     GROUPBY_AGG(min)
+
     GROUPBY_AGG(sum)
+
     GROUPBY_AGG(product)
 
 
@@ -1438,7 +1557,8 @@ namespace pd {
                         auto &group = groups.at(key);
 
                         auto d =
-                                ReturnOrThrowOnFailure(arrow::compute::MinMax(group[index])).scalar_as<arrow::StructScalar>().value;
+                                ReturnOrThrowOnFailure(
+                                        arrow::compute::MinMax(group[index])).scalar_as<arrow::StructScalar>().value;
                         min[j] = d[0];
                         max[j] = d[1];
                     });
@@ -1475,14 +1595,13 @@ namespace pd {
         tbb::parallel_for(
                 0l,
                 L,
-                [&](size_t j)
-
-                {
+                [&](size_t j) {
                     auto key = uniqueKeys->GetScalar(long(j)).MoveValueUnsafe();
                     auto &group = groups.at(key);
 
                     auto d =
-                            ReturnOrThrowOnFailure(arrow::compute::MinMax(group[index])).scalar_as<arrow::StructScalar>().value;
+                            ReturnOrThrowOnFailure(
+                                    arrow::compute::MinMax(group[index])).scalar_as<arrow::StructScalar>().value;
                     min[j] = d[0];
                     max[j] = d[1];
                 });
@@ -1700,7 +1819,8 @@ namespace pd {
                                         auto key = uniqueKeys->GetScalar(long(j)).MoveValueUnsafe();
                                         auto &group = groups.at(key);
 
-                                        arrow::Datum d = ReturnOrThrowOnFailure(arrow::compute::Quantile(group[index], options[i]));
+                                        arrow::Datum d = ReturnOrThrowOnFailure(
+                                                arrow::compute::Quantile(group[index], options[i]));
                                         result[j] = d.scalar();
                                     }
                                 });

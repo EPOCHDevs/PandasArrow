@@ -10,14 +10,17 @@
 #include <span>
 #include <vector>
 #include "ndframe.h"
+#include "scalar.h"
 
+
+#define PANDAS_SCALAR_OVERRIDES(op, V) \
+template<ScalarComplyable T> V operator op(T const &s) const { return *this op pd::Scalar(s); }
 
 namespace pd {
-    class Series : public NDFrame<Series> {
+    class Series : public NDFrame<arrow::Array> {
 
     public:
-        using ArrayType = std::shared_ptr<arrow::Array>;
-
+        //<editor-fold desc="Constructors">
         Series(std::shared_ptr<arrow::Array> const &arr, bool isIndex, std::string name = "");
 
         Series(
@@ -27,7 +30,7 @@ namespace pd {
                 bool skipIndex = false);
 
         template<typename T>
-        Series(std::vector<T> const &arr, std::string name = "", std::shared_ptr<arrow::Array> const &index = nullptr)
+        explicit Series(std::vector<T> const &arr, std::string name = "", std::shared_ptr<arrow::Array> const &index = nullptr)
                 : Series(std::move(Make<T, typename arrow::CTypeTraits<T>::BuilderType>(arr, name, index))) {
         }
 
@@ -36,11 +39,89 @@ namespace pd {
                 std::shared_ptr<arrow::DataType> const &dataType,
                 std::string const &name = "",
                 std::shared_ptr<arrow::Array> const &index = nullptr)
-                : NDFrame<Series>(index), m_name(name) {
+                : NDFrame<arrow::Array>(index), m_name(name) {
             auto builder = pd::ReturnOrThrowOnFailure(arrow::MakeBuilder(dataType));
             ThrowOnFailure(builder->AppendScalars(arr));
             m_array = pd::ReturnOrThrowOnFailure(builder->Finish());
         }
+
+        template<typename T>
+        requires std::is_scalar_v<T>
+        static Series MakeScalar(
+                T const &v,
+                std::string const &name = "",
+                std::shared_ptr<arrow::Array> const &index = nullptr) {
+            return Series{std::vector<T>{v}, name, index};
+        }
+
+        template<typename T, typename BuilderT = typename arrow::CTypeTraits<T>::BuilderType>
+        [[nodiscard]] static Series Make(
+                std::vector<T> const &arr,
+                std::string _name = "series",
+                std::shared_ptr<arrow::Array> const &index = nullptr,
+                bool skipIndex = false);
+        //</editor-fold>
+
+        //<editor-fold desc="Indexing Functions">
+        Series operator[](Slice ) const final;
+        using NDFrame<arrow::Array>::operator[];
+
+        Scalar operator[](int64_t index) const;
+
+        inline Scalar at(int64_t index) const {
+            return operator[](index);
+        }
+
+        [[nodiscard]] Series where(Series const &) const final;
+
+        [[nodiscard]] Series take(Series const &) const final;
+        //</editor-fold>
+
+        //<editor-fold desc="Arithmetric Operation">
+
+        Series operator+(class Series const &s) const;
+        Series operator+(Scalar const &s) const;
+        PANDAS_SCALAR_OVERRIDES(+, Series)
+
+        Series operator/(Series const &a) const;
+        Series operator/(Scalar const &a) const;
+        PANDAS_SCALAR_OVERRIDES(/, Series)
+
+        [[nodiscard]] Series exp() const;
+
+        virtual Series operator*(Series const &a) const;
+        virtual Series operator*(Scalar const &a) const;
+        PANDAS_SCALAR_OVERRIDES(*, Series)
+
+        Series operator-() const;
+
+        [[nodiscard]] Series pow(double x) const;
+        [[nodiscard]] Series sign() const;
+        [[nodiscard]] Series sqrt() const;
+
+        Series operator-(Series const &s) const;
+        Series operator-(Scalar const &s) const;
+        PANDAS_SCALAR_OVERRIDES(-, Series)
+        //</editor-fold>
+
+        //<editor-fold desc="Iterator Functions">
+        template<class OutType, class InType>
+        Series map(std::function<OutType(InType &&)> const& fn) const
+        {
+            typename arrow::CTypeTraits<OutType>::BuilderType builder;
+            ThrowOnFailure(builder.Reserve(size()));
+            for (auto const& element: getSpan<InType>())
+            {
+                builder.UnsafeAppend(fn(element));
+            }
+            return {ReturnOrThrowOnFailure(builder.Finish()), m_index};
+        }
+
+        template<class InType>
+        Series filter(std::function<bool(InType const&)> const& fn) const{
+            return where(map<bool, InType>(fn));
+        }
+        //</editor-fold>
 
         // Check if the Series object is an index array.
         inline bool IsIndexArray() const noexcept {
@@ -51,22 +132,6 @@ namespace pd {
         inline auto getIndexer() const noexcept {
             return indexer;
         }
-
-        template<typename T>
-        requires std::is_scalar_v<T>
-        static Series MakeScalar(
-                T const &v,
-                std::string const &name = "",
-                std::shared_ptr<arrow::Array> const &index = nullptr) {
-            return {std::vector<T>{v}, name, index};
-        }
-
-        template<typename T, typename BuilderT = typename arrow::CTypeTraits<T>::BuilderType>
-        [[nodiscard]] static Series Make(
-                std::vector<T> const &arr,
-                std::string _name = "series",
-                std::shared_ptr<arrow::Array> const &index = nullptr,
-                bool skipIndex = false);
 
         template<typename T>
         auto const_ptr() const {
@@ -123,141 +188,6 @@ namespace pd {
         template<typename T>
         requires(not std::same_as<Series, T>) bool approx_equals(std::vector<T> const &a) const;
 
-        // Indexing Operation
-        Scalar operator[](int index) const;
-
-        inline Scalar at(int index) const {
-            return operator[](index);
-        }
-
-        Series operator[](Slice) const;
-
-        Series operator[](DateTimeSlice const &) const;
-
-        Series operator[](StringSlice const &) const;
-
-        inline Series operator[](Series const &mask) const {
-            return take(mask);
-        }
-
-        // Math Operations
-        Series operator~() const;
-
-        Series operator!() const;
-
-        Series operator-() const;
-
-        Series operator+(class Series const &s) const;
-
-        Series operator+(class Scalar const &s) const;
-
-        Series operator-(Series const &s) const;
-
-        Series operator-(Scalar const &s) const;
-
-        Series operator/(Series const &a) const;
-
-        Series operator/(Scalar const &a) const;
-
-        Series operator==(Scalar const &a) const;
-
-        Series operator==(Series const &a) const;
-
-        Series operator!=(Scalar const &a) const;
-
-        Series operator!=(Series const &a) const;
-
-        Series operator<=(Scalar const &a) const;
-
-        Series operator<=(Series const &a) const;
-
-        Series operator>=(Scalar const &a) const;
-
-        Series operator>=(Series const &a) const;
-
-        Series operator>(Scalar const &a) const;
-
-        Series operator>(Series const &a) const;
-
-        Series operator<(Scalar const &a) const;
-
-        Series operator<(Series const &a) const;
-
-        Series operator|(Scalar const &a) const;
-
-        Series operator|(Series const &a) const;
-
-        Series operator&(Scalar const &a) const;
-
-        Series operator&(Series const &a) const;
-
-        Series operator||(Scalar const &a) const;
-
-        Series operator||(Series const &a) const;
-
-        Series operator&&(Scalar const &a) const;
-
-        Series operator&&(Series const &a) const;
-
-        Series operator^(Scalar const &a) const;
-
-        Series operator^(Series const &a) const;
-
-        Series operator<<(Scalar const &s) const;
-
-        Series operator<<(Series const &a) const;
-
-        Series operator>>(Scalar const &s) const;
-
-        Series operator>>(Series const &a) const;
-
-        virtual Series operator*(Series const &a) const;
-
-        virtual Series operator*(Scalar const &a) const;
-
-        friend Series operator+(Scalar const &a, Series const &b);
-
-        friend Series operator/(Scalar const &a, Series const &b);
-
-        friend Series operator*(Scalar const &a, Series const &b);
-
-        friend Series operator-(Scalar const &a, Series const &b);
-
-        friend Series operator|(Scalar const &a, Series const &b);
-
-        friend Series operator&(Scalar const &a, Series const &b);
-
-        friend Series operator^(Scalar const &a, Series const &b);
-
-        friend Series operator||(Scalar const &a, Series const &b);
-
-        friend Series operator&&(Scalar const &a, Series const &b);
-
-        friend Series operator<<(Scalar const &a, Series const &b);
-
-        friend Series operator>>(Scalar const &a, Series const &b);
-
-        friend Series operator<(Scalar const &a, Series const &b);
-
-        friend Series operator<=(Scalar const &a, Series const &b);
-
-        friend Series operator>(Scalar const &a, Series const &b);
-
-        friend Series operator>=(Scalar const &a, Series const &b);
-
-        friend Series operator==(Scalar const &a, Series const &b);
-
-        friend Series operator!=(Scalar const &a, Series const &b);
-
-        // Math Functions
-        [[nodiscard]] Series abs() const;
-
-        [[nodiscard]] Series pow(double x) const;
-
-        [[nodiscard]] Series sqrt() const;
-
-        [[nodiscard]] Series sign() const;
-
         [[nodiscard]] Series ln() const;
 
         [[nodiscard]] Series log10() const;
@@ -292,51 +222,52 @@ namespace pd {
 
         [[nodiscard]] Series cummin(double start, bool skip_nulls = true) const;
 
-        // agg functions
-        [[nodiscard]] MinMax min_max(bool skip_nulls) const;
+        Series operator~() const;
 
-        [[nodiscard]] Scalar agg(std::string const &func, bool skip_null = true) const;
+        Series operator!() const;
 
-        [[nodiscard]] Scalar min() const;
+        Series operator==(Scalar const &a) const;
+        Series operator==(Series const &a) const;
 
-        [[nodiscard]] Scalar max() const;
+        Series operator!=(Scalar const &a) const;
+        Series operator!=(Series const &a) const;
 
-        [[nodiscard]] Scalar product() const;
+        Series operator<=(Scalar const &a) const;
+        Series operator<=(Series const &a) const;
 
-        [[nodiscard]] Scalar sum() const;
+        Series operator>=(Scalar const &a) const;
+        Series operator>=(Series const &a) const;
 
-        [[nodiscard]] DataFrame mode(int n, bool skip_nulls) const;
+        Series operator>(Scalar const &a) const;
+        Series operator>(Series const &a) const;
 
-        [[nodiscard]] Scalar quantile(double q = 0.5) const;
+        Series operator<(Scalar const &a) const;
+        Series operator<(Series const &a) const;
 
-        [[nodiscard]] Scalar tdigest(double q = 0.5) const;
+        Series operator|(Scalar const &a) const;
+        Series operator|(Series const &a) const;
 
-        [[nodiscard]] double median(bool skip_null = true) const;
+        Series operator&(Scalar const &a) const;
+        Series operator&(Series const &a) const;
 
-        [[nodiscard]] double mean(bool skip_null = true) const;
+        Series operator||(Scalar const &a) const;
+        Series operator||(Series const &a) const;
 
-        [[nodiscard]] double std(int ddof = 1, bool skip_na = true) const;
+        Series operator&&(Scalar const &a) const;
+        Series operator&&(Series const &a) const;
 
-        [[nodiscard]] double var(int ddof = 1, bool skip_na = true) const;
+        Series operator^(Scalar const &a) const;
+        Series operator^(Series const &a) const;
+
+        Series operator<<(Scalar const &s) const;
+        Series operator<<(Series const &a) const;
+
+        Series operator>>(Scalar const &s) const;
+        Series operator>>(Series const &a) const;
 
         // utility functions
-        [[nodiscard]] bool all(bool skip_null = true) const;
-
-        [[nodiscard]] bool any(bool skip_null = true) const;
-
-        [[nodiscard]] int64_t index(Scalar const &search) const;
-
-        [[nodiscard]] int64_t count() const;
-
-        [[nodiscard]] int64_t count_na() const;
-
-        [[nodiscard]] int64_t nunique() const;
 
         [[nodiscard]] bool is_unique() const;
-
-        [[nodiscard]] Series where(Series const &) const;
-
-        [[nodiscard]] Series take(Series const &) const;
 
         [[nodiscard]] class DataFrame value_counts() const;
 
@@ -493,12 +424,12 @@ namespace pd {
 
         template<typename ReturnT, typename FunctionSignature>
         Series rolling(FunctionSignature && fn, int64_t window) const{
-            return rollingT<false, ReturnT, pd::Series>(std::forward<FunctionSignature>(fn), window, m_array->length());
+            return rollingT<false, ReturnT, pd::Series, Series>(std::forward<FunctionSignature>(fn), window, m_array, m_index);
         }
 
         template<typename ReturnT, typename FunctionSignature>
         Series expandRolling(FunctionSignature && fn, int64_t minWindow) const{
-            return rollingT<true, ReturnT, pd::Series>(std::forward<FunctionSignature>(fn), minWindow, m_array->length());
+            return rollingT<true, ReturnT, pd::Series, Series>(std::forward<FunctionSignature>(fn), minWindow, m_array, m_index);
         }
 
     private:
@@ -534,12 +465,12 @@ namespace pd {
 // Template Implementation
     template<typename T>
     requires(not std::same_as<Series, T>) inline bool Series::equals(std::vector<T> const &a) const {
-        return NDFrame<Series>::equals_(Series(a));
+        return NDFrame<arrow::Array>::equals_(Series(a));
     }
 
     template<typename T>
     requires(not std::same_as<Series, T>) bool Series::approx_equals(std::vector<T> const &a) const {
-        return NDFrame<Series>::approx_equals_(Series(a));
+        return NDFrame<arrow::Array>::approx_equals_(Series(a));
     }
 
     template<typename T, typename BuilderT>
@@ -632,5 +563,4 @@ namespace pd {
         }
         throw RawArrayCastException{arrow::CTypeTraits<DataT>::type_singleton(), m_array->type()};
     }
-
 } // namespace pd

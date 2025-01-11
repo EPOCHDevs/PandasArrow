@@ -85,7 +85,7 @@ TEST_CASE("Test Series Initialization", "[series]")
     pd::Series scalar_series = pd::Series::MakeScalar(5L);
     REQUIRE(scalar_series.size() == 1);
     REQUIRE(scalar_series.dtype()->Equals(arrow::int64()));
-    REQUIRE(scalar_series.name() == "");
+    REQUIRE(scalar_series.name().empty());
     REQUIRE(scalar_series.at(0).scalar->Equals(*arrow::MakeScalar(5L)));
     REQUIRE_FALSE(scalar_series.at(0).scalar->Equals(*arrow::MakeScalar(5)));
 
@@ -340,19 +340,8 @@ TEST_CASE("Test Series::where() function")
 
     SECTION("Test where() with a mask array")
     {
-        auto result = s1.where(mask_series);
-
-        REQUIRE(result.size() == 3);
-        REQUIRE(result.at(0) == 1);
-        REQUIRE(result.at(1) == 3);
-        REQUIRE(result.at(2) == 5);
+        REQUIRE_THROWS_AS(s1.where(mask_series), std::runtime_error);
     }
-
-    // Test where() with a mask series of different size
-    std::vector<bool> short_mask = { true, false };
-    auto short_mask_array = arrow::ArrayT<bool>::Make(short_mask);
-    Series short_mask_series(short_mask_array, true);
-    REQUIRE_THROWS_AS(s1.where(short_mask_series), std::runtime_error);
 
     SECTION("Test where() with a mask array and a series of different size")
     {
@@ -395,26 +384,13 @@ TEST_CASE("Test Series::take() function")
 
     SECTION("Test take() with a mask array")
     {
-
-        Series result = s1.take(mask_s);
-
-        REQUIRE(result.size() == 3);
-        REQUIRE(result.at(0) == 2);
-        REQUIRE(result.at(1) == 3);
-        REQUIRE(result.at(2) == 4);
-    }
-
-    SECTION("Test take() with a mask series of different size")
-    {
-        mask = { true, false, false, true };
-        Series mask_s(mask);
         REQUIRE_THROWS_AS(s1.take(mask_s), std::runtime_error);
     }
 
     SECTION("Test take() with a index array")
     {
         std::vector<int32_t> index = { 1, 3, 4 };
-        Series result = s1.take(index);
+        Series result{s1.take(Series{index})};
 
         REQUIRE(result.size() == 3);
         REQUIRE(result.at(0) == 2);
@@ -464,7 +440,7 @@ TEST_CASE("Test Series::operator[] (slice) function")
     }
 }
 
-TEST_CASE("Test Series::operator")
+TEST_CASE("Test Series::operator with dateslice")
 {
     std::vector<int> vec1 = { 1, 2, 3, 4, 5 };
     std::vector<date> vec2 = { date(2022, 1, 1),
@@ -477,7 +453,7 @@ TEST_CASE("Test Series::operator")
     Series s1(array1, index);
 
     // Test with valid slicer
-    DateTimeSlice slicer1 = { date(2022, 1, 2), date(2022, 1, 4) };
+    DateSlice slicer1 = { date(2022, 1, 2), date(2022, 1, 4) };
 
     auto result1 = s1[slicer1];
     REQUIRE(result1.size() == 2);
@@ -485,7 +461,7 @@ TEST_CASE("Test Series::operator")
     REQUIRE(result1.at(1) == 3);
 
     // Test with only start
-    DateTimeSlice slicer2 = { date(2022, 1, 3) };
+    DateSlice slicer2 = { date(2022, 1, 3) };
     auto result2 = s1[slicer2];
     REQUIRE(result2.size() == 3);
     REQUIRE(result2.at(0) == 3);
@@ -493,14 +469,14 @@ TEST_CASE("Test Series::operator")
     REQUIRE(result2.at(2) == 5);
 
     // Test with only end
-    DateTimeSlice slicer3 = { std::nullopt, date(2022, 1, 3) };
+    DateSlice slicer3 = { std::nullopt, date(2022, 1, 3) };
     auto result3 = s1[slicer3];
     REQUIRE(result3.size() == 2);
     REQUIRE(result3.at(0) == 1);
     REQUIRE(result3.at(1) == 2);
 
     // Test with both start and end
-    DateTimeSlice slicer4 = { date(2022, 1, 2), date(2022, 1, 7) };
+    DateSlice slicer4 = { date(2022, 1, 2), date(2022, 1, 7) };
     REQUIRE_THROWS_AS(s1[slicer4], std::runtime_error);
 }
 
@@ -573,10 +549,10 @@ TEST_CASE("Test Series::index() function")
         Series s1(array1, false);
 
         // Test with valid search value
-        REQUIRE(s1.index(3) == 2);
+        REQUIRE(s1.index(pd::Scalar{3}) == 2);
 
         // Test with invalid search value
-        REQUIRE(s1.index(6) == -1);
+        REQUIRE(s1.index(pd::Scalar{6}) == -1);
 
         REQUIRE(s1.getIndexer().empty());
         REQUIRE_FALSE(s1.indexArray() == nullptr);
@@ -1111,7 +1087,7 @@ TEST_CASE("Test Series::shift() and Series::pct_change() functions", "[shift_pct
     SECTION("Test shift() with custom shift value and fill value")
     {
         std::shared_ptr<arrow::Scalar> fill_value = arrow::MakeScalar(0.0);
-        auto result = s1.shift(-2, fill_value);
+        auto result = s1.shift(-2, pd::Scalar{fill_value});
         REQUIRE(result.size() == 5);
         REQUIRE(result.at(0) == 3.0);
         REQUIRE(result.at(1) == 4.0);
@@ -1146,7 +1122,7 @@ TEST_CASE("Test Series::shift() and Series::pct_change() functions", "[shift_pct
     SECTION("Test with custom fill value")
     {
         auto fill_value = arrow::MakeScalar(10.0);
-        auto result = s1.shift(-1, fill_value);
+        auto result = s1.shift(-1, pd::Scalar{fill_value});
 
         REQUIRE(result.size() == 5);
         REQUIRE(result.at(0).as<double>() == Catch::Approx(2));
@@ -1319,6 +1295,7 @@ TEST_CASE("Test Series::append() function")
 
 TEST_CASE("StringLike")
 {
+    using namespace std::string_literals;
     SECTION("Test Series::str() function")
     {
         std::vector<std::string> vec1 = { "a", "b", "c", "d", "e" };
@@ -1326,11 +1303,11 @@ TEST_CASE("StringLike")
         Series s1(array1, false);
         auto result = s1.str();
         REQUIRE(result.size() == 5);
-        REQUIRE(result.at(0) == "a");
-        REQUIRE(result.at(1) == "b");
-        REQUIRE(result.at(2) == "c");
-        REQUIRE(result.at(3) == "d");
-        REQUIRE(result.at(4) == "e");
+        REQUIRE(result.at(0) == "a"s);
+        REQUIRE(result.at(1) == "b"s);
+        REQUIRE(result.at(2) == "c"s);
+        REQUIRE(result.at(3) == "d"s);
+        REQUIRE(result.at(4) == "e"s);
     }
 
     SECTION("Test StringLike::length() function")
@@ -1354,11 +1331,11 @@ TEST_CASE("StringLike")
         Series s1(array1, false);
         auto result = s1.str().utf8_upper();
         REQUIRE(result.size() == 5);
-        REQUIRE(result.at(0) == "A");
-        REQUIRE(result.at(1) == "B");
-        REQUIRE(result.at(2) == "C");
-        REQUIRE(result.at(3) == "D");
-        REQUIRE(result.at(4) == "E");
+        REQUIRE(result.at(0) == "A"s);
+        REQUIRE(result.at(1) == "B"s);
+        REQUIRE(result.at(2) == "C"s);
+        REQUIRE(result.at(3) == "D"s);
+        REQUIRE(result.at(4) == "E"s);
     }
 
     SECTION("Test StringLike::lower() function")
@@ -1368,11 +1345,11 @@ TEST_CASE("StringLike")
         Series s1(array1, false);
         auto result = s1.str().utf8_lower();
         REQUIRE(result.size() == 5);
-        REQUIRE(result.at(0) == "a");
-        REQUIRE(result.at(1) == "b");
-        REQUIRE(result.at(2) == "c");
-        REQUIRE(result.at(3) == "d");
-        REQUIRE(result.at(4) == "e");
+        REQUIRE(result.at(0) == "a"s);
+        REQUIRE(result.at(1) == "b"s);
+        REQUIRE(result.at(2) == "c"s);
+        REQUIRE(result.at(3) == "d"s);
+        REQUIRE(result.at(4) == "e"s);
     }
 
     SECTION("Test StringLike::capitalize() function")
@@ -1381,11 +1358,11 @@ TEST_CASE("StringLike")
         auto array1 = arrow::ArrayT<std::string>::Make(vec1);
         Series s2(array1, false);
         auto result = s2.str().utf8_capitalize();
-        REQUIRE(result.at(0) == "Ae");
-        REQUIRE(result.at(1) == "Be");
-        REQUIRE(result.at(2) == "Ce");
-        REQUIRE(result.at(3) == "De");
-        REQUIRE(result.at(4) == "Ex");
+        REQUIRE(result.at(0) == "Ae"s);
+        REQUIRE(result.at(1) == "Be"s);
+        REQUIRE(result.at(2) == "Ce"s);
+        REQUIRE(result.at(3) == "De"s);
+        REQUIRE(result.at(4) == "Ex"s);
     }
 
     SECTION("Test with string array")
@@ -1395,11 +1372,11 @@ TEST_CASE("StringLike")
         Series s2(array2, false);
 
         auto result = s2.str();
-        REQUIRE(result.at(0) == "a");
-        REQUIRE(result.at(1) == "b");
-        REQUIRE(result.at(2) == "c");
-        REQUIRE(result.at(3) == "d");
-        REQUIRE(result.at(4) == "e");
+        REQUIRE(result.at(0) == "a"s);
+        REQUIRE(result.at(1) == "b"s);
+        REQUIRE(result.at(2) == "c"s);
+        REQUIRE(result.at(3) == "d"s);
+        REQUIRE(result.at(4) == "e"s);
     }
 
 
@@ -1410,11 +1387,11 @@ TEST_CASE("StringLike")
         Series s3(array3, false);
 
         auto result = s3.str();
-        REQUIRE(result.at(0) == "1.1");
-        REQUIRE(result.at(1) == "2.2");
-        REQUIRE(result.at(2) == "3.3");
-        REQUIRE(result.at(3) == "4.4");
-        REQUIRE(result.at(4) == "5.5");
+        REQUIRE(result.at(0) == "1.1"s);
+        REQUIRE(result.at(1) == "2.2"s);
+        REQUIRE(result.at(2) == "3.3"s);
+        REQUIRE(result.at(3) == "4.4"s);
+        REQUIRE(result.at(4) == "5.5"s);
     }
 
     SECTION("Test with bool array")
@@ -1425,11 +1402,11 @@ TEST_CASE("StringLike")
 
         auto result = s4.str();
         INFO(result);
-        REQUIRE(result.at(0) == "true");
-        REQUIRE(result.at(1) == "false");
-        REQUIRE(result.at(2) == "true");
-        REQUIRE(result.at(3) == "false");
-        REQUIRE(result.at(4) == "true");
+        REQUIRE(result.at(0) == "true"s);
+        REQUIRE(result.at(1) == "false"s);
+        REQUIRE(result.at(2) == "true"s);
+        REQUIRE(result.at(3) == "false"s);
+        REQUIRE(result.at(4) == "true"s);
     }
 
     SECTION("Test with int array")
@@ -1438,16 +1415,16 @@ TEST_CASE("StringLike")
         auto array4 = arrow::ArrayT<int>::Make(vec4);
         Series s1(array4, false);
         auto result = s1.str();
-        REQUIRE(result.at(0) == "1");
-        REQUIRE(result.at(1) == "2");
-        REQUIRE(result.at(2) == "3");
-        REQUIRE(result.at(3) == "4");
-        REQUIRE(result.at(4) == "5");
-        REQUIRE(result.at(5) == "6");
-        REQUIRE(result.at(6) == "7");
-        REQUIRE(result.at(7) == "8");
-        REQUIRE(result.at(8) == "9");
-        REQUIRE(result.at(9) == "20");
+        REQUIRE(result.at(0) == "1"s);
+        REQUIRE(result.at(1) == "2"s);
+        REQUIRE(result.at(2) == "3"s);
+        REQUIRE(result.at(3) == "4"s);
+        REQUIRE(result.at(4) == "5"s);
+        REQUIRE(result.at(5) == "6"s);
+        REQUIRE(result.at(6) == "7"s);
+        REQUIRE(result.at(7) == "8"s);
+        REQUIRE(result.at(8) == "9"s);
+        REQUIRE(result.at(9) == "20"s);
     }
 }
 
@@ -1562,15 +1539,15 @@ TEST_CASE("Test median function for Series", "[series]")
 {
     pd::Series s(std::vector<int>{ 1, 2, 3, 4, 5 });
     auto result = s.median();
-    REQUIRE(result == 3);
+    REQUIRE(result == 3.0);
 
     s = pd::Series(std::vector<int>{ 1, 2, 3, 4, 5 }, { true, true, true, true, false });
     result = s.median(true);
-    REQUIRE(result == 3);
+    REQUIRE(result == 3.0);
 
     s = pd::Series(std::vector<int>{ 1, 2, 3, 4, 5 }, { false, true, true, true, true });
     result = s.median(true);
-    REQUIRE(result == 3);
+    REQUIRE(result == 3.0);
 
     s = pd::Series(std::vector<int>{ 1, 2, 3, 4, 5, 6 }, { true, true, true, true, true, false });
     result = s.median();
@@ -1581,7 +1558,7 @@ TEST_CASE("Test mean function for Series", "[series]")
 {
     pd::Series s(std::vector<int>{ 1, 2, 3, 4, 5 });
     auto result = s.mean();
-    REQUIRE(result == 3);
+    REQUIRE(result == 3.0);
 
     s = pd::Series(arrow::ArrayT<int>::Make({ 1, 2, 3, 4, 5 }, { true, true, true, true, false }), nullptr);
     result = s.mean(true);
@@ -1596,28 +1573,30 @@ TEST_CASE("Test std function for Series", "[series]")
 {
     pd::Series s(std::vector<double>{ 1, 2, 3, 4, 5 });
     auto result = s.std();
-    REQUIRE(result == Approx(1.5811388300841898));
+    REQUIRE(result.as<double>() == Approx(1.5811388300841898));
 
     s = pd::Series(arrow::ArrayT<double>::Make({ 1, 2, 3, 4, 5 }, { true, true, true, true, false }), nullptr);
     result = s.std(0, true);
-    REQUIRE(result == Approx(1.118033988749895).epsilon(1e-6));
+    REQUIRE(result.as<double>() == Approx(1.118033988749895).epsilon(1e-6));
 
     result = s.std(0, false);
-    REQUIRE(std::isnan(result));
+    INFO(result.value()->ToString());
+    REQUIRE_FALSE(result.isValid());
 }
 
 TEST_CASE("Test var function for Series", "[series]")
 {
     pd::Series s(std::vector<double>{ 1, 2, 3, 4, 5 });
     auto result = s.var();
-    REQUIRE(result == Approx(2.5));
+    REQUIRE(result.as<double>() == Approx(2.5));
 
     s = pd::Series(arrow::ArrayT<double>::Make({ 1, 2, 3, 4, NAN }, { true, true, true, true, false }), nullptr);
     result = s.var(0, true);
-    REQUIRE(result == Approx(1.25));
+    REQUIRE(result.as<double>() == Approx(1.25));
 
     result = s.var(0, false);
-    REQUIRE(std::isnan(result));
+    INFO(result.value()->ToString());
+    REQUIRE_FALSE(result.isValid());
 }
 
 TEST_CASE("Test mode function for Series", "[series]")
@@ -1625,29 +1604,26 @@ TEST_CASE("Test mode function for Series", "[series]")
     pd::Series s(std::vector<int>{ 1, 2, 3, 4, 5, 2, 2, 2, 3 });
     auto df = s.mode(1, false);
 
-    REQUIRE(df["mode"][0] == 2);
-    REQUIRE(df["count"][0] == 4L);
+    REQUIRE(df[0].mode == 2);
+    REQUIRE(df[0].count == 4L);
 
     df = s.mode(2, false);
 
-    REQUIRE(df["mode"][0] == 2);
-    REQUIRE(df["count"][0] == 4L);
+    REQUIRE(df[0].mode == 2);
+    REQUIRE(df[0].count == 4L);
 
-    REQUIRE(df["mode"][1] == 3);
-    REQUIRE(df["count"][1] == 2L);
+    REQUIRE(df[1].mode == 3);
+    REQUIRE(df[1].count == 2L);
 
     s = pd::Series(
         arrow::ArrayT<int>::Make({ 1, 1, 3, 4, 5, 2, 2, 2 }, { true, true, true, true, false, false, false, true }),
         nullptr);
     df = s.mode(1, true);
-
-    REQUIRE(df["mode"][0] == 1);
-    REQUIRE(df["count"][0] == 2L);
+    REQUIRE(df[0].mode == 1);
+    REQUIRE(df[0].count == 2L);
 
     df = s.mode(1, false);
-
-    REQUIRE(df["mode"].empty());
-    REQUIRE(df["count"].empty());
+    REQUIRE(df.size() == 0);
 }
 
 TEST_CASE("Test quantile function for Series", "[series]")

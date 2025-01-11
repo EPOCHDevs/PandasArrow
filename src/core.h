@@ -95,7 +95,6 @@ enum class AxisType
 {
     Index,
     Columns,
-//    All
 };
 
 struct Slice
@@ -166,11 +165,17 @@ private:
     static date add(date, const DateOffset&);
 };
 
-struct DateTimeSlice
+struct DateSlice
 {
     std::optional<date> start{};
     std::optional<date> end = {};
 };
+
+    struct DateTimeSlice
+    {
+        std::optional<ptime> start{};
+        std::optional<ptime> end = {};
+    };
 
 struct StringSlice
 {
@@ -197,16 +202,6 @@ __always_inline void ThrowOnFailure(arrow::Status&& status)
 
 class Series ReturnSeriesOrThrowOnError(arrow::Result<arrow::Datum>&& result);
 
-template<class RetT>
-inline auto ReturnScalarOrThrowOnError(auto&& result)
-{
-    if (result.ok())
-    {
-        auto res = result->template scalar_as<typename arrow::CTypeTraits<RetT>::ScalarType>();
-        return res.is_valid ? res.value : std::numeric_limits<RetT>::quiet_NaN();
-    }
-    throw std::runtime_error(result.status().ToString());
-}
 
 template<typename T> requires std::is_floating_point_v<T>
 std::vector<bool> makeValidFlags(std::vector<T> const &arr) {

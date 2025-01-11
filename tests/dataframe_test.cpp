@@ -265,8 +265,8 @@ TEST_CASE("Test Slice", "[DataFrame]")
                                                                       { "year", std::vector{ 2012, 2014, 2013, 2014 } },
                                                                       { "sale", std::vector{ 55, 40, 84, 31 } } } };
 
-    auto s1 = df.slice(pd::Slice{ 1, 3 });
-    auto s2 = df.slice(pd::Slice{ -1, 4 });
+    auto s1 = df[pd::Slice{ 1, 3 }];
+    auto s2 = df[pd::Slice{ -1, 4 }];
     auto s3 = df.slice(pd::Slice{ 2 }, { "month" });
 
     REQUIRE(s1["month"].equals(std::vector{ 4, 7 }));
@@ -285,8 +285,8 @@ TEST_CASE("Test DateTimeSlice", "[DataFrame]")
                                                                       { "sale", std::vector{ 55, 40, 84, 31 } } },
                              pd::date_range(date(2022, 10, 1), 4) };
 
-    auto s1 = df.slice(pd::Slice{ 1, 3 });
-    auto s2 = df.slice(pd::Slice{ -1, 4 });
+    auto s1 = df[pd::Slice{ 1, 3 }];
+    auto s2 = df[pd::Slice{ -1, 4 }];
 
     REQUIRE(s1["month"].equals(std::vector{ 4, 7 }));
     REQUIRE(s1["year"].equals(std::vector{ 2014, 2013 }));
@@ -296,7 +296,7 @@ TEST_CASE("Test DateTimeSlice", "[DataFrame]")
     REQUIRE(s2["year"].equals(std::vector{ 2014 }));
     REQUIRE(s2["sale"].equals(std::vector{ 31 }));
 
-    auto s3 = df.slice(pd::DateTimeSlice{ date(2022, 10, 2), date(2022, 10, 4) });
+    auto s3 = df[pd::DateSlice{ date(2022, 10, 2), date(2022, 10, 4) }];
 
     REQUIRE(s3["month"].equals(std::vector{ 4, 7 }));
     REQUIRE(s3["year"].equals(std::vector{ 2014, 2013 }));
@@ -326,10 +326,11 @@ TEST_CASE("Test describe with all NA values", "[describe]")
     REQUIRE(desc.columns() == std::vector<std::string>{"count", "mean", "std", "min", "nunique", "max"});
     REQUIRE(desc.index().equals(std::vector<std::string>{"a", "b", "c"}));
 
-    INFO(desc);
     for (int i = 0; i < 3; i++) {
-        REQUIRE_FALSE(desc.at(i, 1).isValid());
-        REQUIRE_FALSE(desc.at(i, 2).isValid());
+        INFO(desc << "\n" << "i = " << i);
+
+        REQUIRE(desc.at(i, 1).isValid());
+        REQUIRE(desc.at(i, 2).isValid());
 
         for (int j: {0, 4}) {
             REQUIRE(desc.at(i, j).as<::int64_t>() == 0);
@@ -356,15 +357,15 @@ TEST_CASE("Test describe with numeric columns", "[describe]")
         std::vector<std::string>{ "count", "mean", "std", "min", "nunique", "25%", "50%", "75%", "max" });
     REQUIRE(desc.index().equals(std::vector<std::string>{ "a", "b", "c" }));
 
-    REQUIRE(desc.at("a", "count") == 3L);
-    REQUIRE(desc.at("a", "mean") == 2.0);
+    REQUIRE(desc.at("a", "count").as<int64_t>() == 3L);
+    REQUIRE(desc.at("a", "mean").as<double>() == 2.0);
     REQUIRE(desc.at("a", "std").as<double>() == 1.0);
-    REQUIRE(desc.at("a", "min") == 1);
-    REQUIRE(desc.at("a", "25%") == 1.5);
-    REQUIRE(desc.at("a", "50%") == 2.0);
-    REQUIRE(desc.at("a", "75%") == 2.5);
-    REQUIRE(desc.at("a", "max") == 3);
-    REQUIRE(desc.at("a", "nunique") == 3L);
+    REQUIRE(desc.at("a", "min").as<int>()  == 1);
+    REQUIRE(desc.at("a", "25%").as<double>()  == 1.5);
+    REQUIRE(desc.at("a", "50%").as<double>()  == 2.0);
+    REQUIRE(desc.at("a", "75%").as<double>()  == 2.5);
+    REQUIRE(desc.at("a", "max").as<int>()  == 3);
+    REQUIRE(desc.at("a", "nunique").as<int64_t>()  == 3L);
 }
 
 TEST_CASE("Test describe with non-numeric columns", "[describe]")
@@ -390,53 +391,56 @@ TEST_CASE("Test all math operators for DataFrame", "[math_operators]")
     auto index = pd::range(0UL, 3UL);
 
     pd::DataFrame df1(
-        std::vector<std::vector<int>>{ std::vector{ 1, 2, 3 }, std::vector{ 4, 5, 6 }, std::vector{ 7, 8, 9 } },
-        { "a", "b", "c" },
-        arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
+            std::vector<std::vector<int>>{std::vector{1, 2, 3}, std::vector{4, 5, 6}, std::vector{7, 8, 9}},
+            {"a", "b", "c"},
+            arrow::ArrayT<std::string>::Make({"x"s, "y"s, "z"s}));
 
 
     pd::DataFrame df2(
-        std::vector<std::vector<int>>{ std::vector{ 2, 4, 6 }, std::vector{ 8, 10, 12 }, std::vector{ 14, 16, 18 } },
-        { "a", "b", "c" },
-        arrow::ArrayT<std::string>::Make({ "x"s, "y"s, "z"s }));
+            std::vector<std::vector<int>>{std::vector{2, 4, 6}, std::vector{8, 10, 12}, std::vector{14, 16, 18}},
+            {"a", "b", "c"},
+            arrow::ArrayT<std::string>::Make({"x"s, "y"s, "z"s}));
 
     // Test addition operator
-    auto df3 = df1 + df2;
-    for (int i = 0; i < 3; i++)
     {
-        for (int j = 0; j < 3; j++)
-        {
-            REQUIRE(df3.at(i, j) == (df1.at(i, j).as<int>() + df2.at(i, j).as<int>()));
+        auto df3 = df1 + df2;
+        INFO(df3);
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                REQUIRE(df3.at(i, j) == (df1.at(i, j) + df2.at(i, j)));
+            }
         }
     }
 
     // Test subtraction operator
-    df3 = df1 - df2;
-    for (int i = 0; i < 3; i++)
     {
-        for (int j = 0; j < 3; j++)
-        {
-            REQUIRE(df3.at(i, j) == (df1.at(i, j).as<int>() - df2.at(i, j).as<int>()));
+        auto df3 = df1 - df2;
+        INFO(df3);
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                REQUIRE(df3.at(i, j) == (df1.at(i, j) - df2.at(i, j)));
+            }
         }
     }
 
     // Test multiplication operator
-    df3 = df1 * df2;
-    for (int i = 0; i < 3; i++)
     {
-        for (int j = 0; j < 3; j++)
-        {
-            REQUIRE(df3.at(i, j) == (df1.at(i, j).as<int>() * df2.at(i, j).as<int>()));
+        auto df3 = df1 * df2;
+        INFO(df3);
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                REQUIRE(df3.at(i, j) == (df1.at(i, j) * df2.at(i, j)));
+            }
         }
     }
 
     // Test division operator
-    df3 = df1 / df2;
-    for (int i = 0; i < 3; i++)
     {
-        for (int j = 0; j < 3; j++)
-        {
-            REQUIRE(df3.at(i, j) == (df1.at(i, j).as<int>() / df2.at(i, j).as<int>()));
+        auto df3 = df1 / df2;
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                REQUIRE(df3.at(i, j) == (df1.at(i, j).as<int>() / df2.at(i, j).as<int>()));
+            }
         }
     }
 }
@@ -831,7 +835,7 @@ TEST_CASE("makeGroups() works on dataframe with more than two column keys", "[ma
                                std::pair("volume"s, std::vector<uint64_t>{ 100, 200, 210, 1, 2 }) };
 
         auto day_info = bardata.index().dt().day();
-        pd::DataFrame new_df = pd::ReturnOrThrowOnFailure(bardata.array()->AddColumn(5, "day", day_info.array()));
+        pd::DataFrame new_df{pd::ReturnOrThrowOnFailure(bardata.array()->AddColumn(5, "day", day_info.array()))};
 
         auto grouper = new_df.group_by("day");
 

@@ -39,6 +39,7 @@ find_package(Parquet CONFIG REQUIRED)
 
 add_library(pandas_arrow
         src/aws_s3_reader.cpp
+        src/ndframe.cpp
         src/series.cpp
         src/scalar.cpp
         src/dataframe.cpp
@@ -55,7 +56,7 @@ if (ENABLE_GPU)
             src/cudf/scalar.cpp
             src/cudf/series.cpp)
 
-    target_link_libraries(pandas_arrowallow
+    target_link_libraries(pandas_arrow
             PRIVATE nvcomp::nvcomp cudf::cudf)
 endif()
 

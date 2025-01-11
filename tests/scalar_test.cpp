@@ -7,7 +7,7 @@
 TEST_CASE("Scalar construction")
 {
     // Test default constructor
-    pd::Scalar defaultScalar;
+    pd::Scalar defaultScalar{arrow::float64()};
     REQUIRE_FALSE(defaultScalar.isValid());
 
     // Test constructor with shared pointer
@@ -117,7 +117,7 @@ TEST_CASE("Scalar arithmetic operator overloads", "[scalar]")
 
     SECTION("Logical")
     {
-        REQUIRE((a.cast<bool>() && b.cast<bool>()).as<bool>() == true);
-        REQUIRE((!a.cast<bool>() || b.cast<bool>()).as<bool>() == true);
+        REQUIRE((a.cast<bool>() && b.cast<bool>()));
+        REQUIRE((!a.cast<bool>() || b.cast<bool>()));
     }
 }
