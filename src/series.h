@@ -21,6 +21,8 @@ namespace pd {
 
     public:
         //<editor-fold desc="Constructors">
+        Series();
+
         Series(std::shared_ptr<arrow::Array> const &arr, bool isIndex, std::string name = "");
 
         Series(
@@ -121,6 +123,9 @@ namespace pd {
         Series filter(std::function<bool(InType const&)> const& fn) const{
             return where(map<bool, InType>(fn));
         }
+
+        template<typename DataT, typename OutputT = DataT, typename... Args>
+        [[nodiscard]] Series apply(auto &&func, Args &&... args) const;
 
         using NDFrame<arrow::Array>::setIndex;
 
@@ -348,20 +353,9 @@ namespace pd {
 
         [[nodiscard]] Series append(Series const &to_append, bool ignore_index = false) const;
 
-        template<typename DataT, typename OutputT = DataT, typename... Args>
-        [[nodiscard]] Series apply(auto &&func, Args &&... args) const;
-
         Series intersection(Series const &other) const;
 
         Series union_(Series const &other) const;
-
-        [[nodiscard]] int64_t argmax() const {
-            return index(max());
-        }
-
-        [[nodiscard]] int64_t argmin() const {
-            return index(min());
-        }
 
         [[nodiscard]] Series argsort(bool ascending = true) const;
 

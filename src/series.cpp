@@ -69,6 +69,7 @@
 
 namespace pd {
     //<editor-fold desc="Constructors">
+    Series::Series():Series(nullptr, false, "") {}
 
     Series::Series(std::shared_ptr<arrow::Array> const &arr, bool isIndex, std::string name)
             : NDFrame<arrow::Array>(arr, nullptr, true), m_name(std::move(name)) {

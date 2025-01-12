@@ -186,6 +186,14 @@ namespace pd {
         [[nodiscard]] Scalar var(int ddof = 1, bool skip_na = true) const;
 
         [[nodiscard]] Scalar agg(std::string const &func, bool skip_null = true) const;
+
+        [[nodiscard]] int64_t argmax() const {
+            return index(max());
+        }
+
+        [[nodiscard]] int64_t argmin() const {
+            return index(min());
+        }
         //</editor-fold>
 
         //<editor-fold desc="Indexing Functions">
