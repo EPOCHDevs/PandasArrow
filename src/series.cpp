@@ -19,7 +19,7 @@
 #define BINARY_OPERATOR(sign, name) \
     Series Series::operator sign(const Series& a) const \
     { \
-        return ReturnSeriesOrThrowOnError(arrow::compute::CallFunction(#name, {m_array, broadcast(a).m_array}) })); \
+        return ReturnSeriesOrThrowOnError(arrow::compute::CallFunction(#name, {m_array, broadcast(a).m_array})); \
     } \
 \
     Series Series::operator sign(const Scalar& a) const \
@@ -215,7 +215,7 @@ namespace pd {
         return other.reindex(this->m_index);
     }
 
-    BINARY_OPERATOR(/, divide)
+    BINARY_OPERATOR(/, divide);
 
     BINARY_OPERATOR(+, add)
 
