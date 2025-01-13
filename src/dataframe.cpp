@@ -37,7 +37,7 @@
 
 #define Aggregation(name) \
 pd::Series DataFrame::name(AxisType axis, bool skip_null) const { \
-    return forAxis(#name, axis, arrow::compute::ScalarAggregateOptions{skip_null}); \
+    return forAxis(#name, axis, arrow::compute::ScalarAggregateOptions{skip_null, 0}); \
 }
 
 

@@ -350,6 +350,8 @@ namespace pd {
 
         // utility functions
 
+        Series broadcast(Series const &other) const;
+
         [[nodiscard]] bool is_unique() const;
 
         [[nodiscard]] class DataFrame value_counts() const;
@@ -483,6 +485,8 @@ namespace pd {
         Series expandRolling(FunctionSignature && fn, int64_t minWindow) const{
             return rollingT<true, ReturnT, pd::Series, Series>(std::forward<FunctionSignature>(fn), minWindow, m_array, m_index);
         }
+
+        Series broadcastArrays(Series const& other) const;
 
     private:
         std::string m_name;

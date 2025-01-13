@@ -19,7 +19,7 @@
 #define BINARY_OPERATOR(sign, name) \
     Series Series::operator sign(const Series& a) const \
     { \
-        return ReturnSeriesOrThrowOnError(arrow::compute::CallFunction(#name, { m_array, a.m_array })); \
+        return ReturnSeriesOrThrowOnError(arrow::compute::CallFunction(#name, {m_array, broadcast(a).m_array}) })); \
     } \
 \
     Series Series::operator sign(const Scalar& a) const \
@@ -208,6 +208,11 @@ namespace pd {
     DataFrame Series::toFrame(std::optional<std::string> const &name) const {
         auto field = arrow::field(name.value_or(m_name), dtype());
         return {arrow::schema({field}), size(), {m_array}, m_index};
+    }
+
+    Series Series::broadcast(Series const &other) const
+    {
+        return other.reindex(this->m_index);
     }
 
     BINARY_OPERATOR(/, divide)
