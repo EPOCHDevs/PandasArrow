@@ -64,6 +64,75 @@ namespace pd {
                 bool skipIndex = false);
         //</editor-fold>
 
+        //<editor-fold desc="Aggregation Functions">
+        using NDFrame<arrow::Array>::all;
+        using NDFrame<arrow::Array>::any;
+        using NDFrame<arrow::Array>::median;
+        using NDFrame<arrow::Array>::count;
+        using NDFrame<arrow::Array>::count_na;
+        using NDFrame<arrow::Array>::nunique;
+        using NDFrame<arrow::Array>::first;
+        using NDFrame<arrow::Array>::first_last;
+        using NDFrame<arrow::Array>::index;
+        using NDFrame<arrow::Array>::last;
+        using NDFrame<arrow::Array>::max;
+        using NDFrame<arrow::Array>::mean;
+        using NDFrame<arrow::Array>::min;
+        using NDFrame<arrow::Array>::min_max;
+        using NDFrame<arrow::Array>::mode;
+        using NDFrame<arrow::Array>::product;
+        using NDFrame<arrow::Array>::quantile;
+        using NDFrame<arrow::Array>::std;
+        using NDFrame<arrow::Array>::sum;
+        using NDFrame<arrow::Array>::tdigest;
+        using NDFrame<arrow::Array>::var;
+        using NDFrame<arrow::Array>::agg;
+
+        [[nodiscard]] pd::Series forAxis(std::string const &functionName, pd::AxisType,
+                                         const arrow::compute::FunctionOptions&) const;
+
+        [[nodiscard]] pd::Series all(AxisType axis, bool skip_null = true) const;
+
+        [[nodiscard]] pd::Series any(AxisType axis, bool skip_null = true) const;
+
+        [[nodiscard]] pd::Series median(AxisType axis, bool skip_null = true) const;
+
+        [[nodiscard]] pd::Series count(AxisType axis) const;
+
+        [[nodiscard]] pd::Series count_na(AxisType axis) const;
+
+        [[nodiscard]] pd::Series nunique(AxisType axis) const;
+
+        [[nodiscard]] pd::Series first(AxisType axis, bool skip_null = true) const;
+
+        [[nodiscard]] pd::Series last(AxisType axis,bool skip_null = true) const;
+
+        // TODO: use max_element_wise
+        [[nodiscard]] pd::Series max(AxisType axis, bool skip_null = true) const;
+
+        [[nodiscard]] pd::Series mean(AxisType axis, bool skip_null = true) const;
+
+        // TODO: use min_element_wise
+        [[nodiscard]] pd::Series min(AxisType axis, bool skip_null = true) const;
+
+        [[nodiscard]] pd::Series product(AxisType axis, bool skip_nulls) const;
+
+        [[nodiscard]] pd::Series quantile(AxisType axis, double q = 0.5,
+                                          arrow::compute::QuantileOptions::Interpolation interpolation =
+                                          arrow::compute::QuantileOptions::Interpolation::LINEAR,
+                                          bool skip_nulls = true, uint32_t min_count = 0) const;
+
+        [[nodiscard]] pd::Series std(AxisType axis, int ddof = 1, bool skip_na = true) const;
+
+        [[nodiscard]] pd::Series sum(AxisType axis, bool skip_null=true) const;
+
+        [[nodiscard]] pd::Series tdigest(AxisType axis, double q = 0.5, uint32_t delta = 100,
+                                         uint32_t buffer_size = 500, bool skip_nulls = true,
+                                         uint32_t min_count = 0) const;
+
+        [[nodiscard]] pd::Series var(AxisType axis, int ddof = 1, bool skip_na = true) const;
+        //</editor-fold>
+
         //<editor-fold desc="Indexing Functions">
         Series operator[](Slice ) const final;
         using NDFrame<arrow::Array>::operator[];
