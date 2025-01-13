@@ -238,6 +238,7 @@ namespace pd {
 
         Series operator[](std::string const &column) const;
         DataFrame operator[](std::vector<std::string> const &columns) const;
+        DataFrame operator[](Scalar const& _index) const;
         DataFrame operator[](int64_t row) const;
         Scalar at(int64_t row, int64_t col) const;
         Scalar at(int64_t row, std::string const &col) const;
@@ -249,6 +250,11 @@ namespace pd {
 
         [[nodiscard]] DataFrame where(Series const &) const final;
         [[nodiscard]] DataFrame take(Series const &) const final;
+        //</editor-fold>
+
+        //<editor-fold desc="Indexing Operations">
+        DataFrame idxMin() const;
+        DataFrame idxMax() const;
         //</editor-fold>
 
         //<editor-fold desc="Iterator Functions">
@@ -432,8 +438,6 @@ namespace pd {
         }
 
         DataFrame drop_na() const;
-
-        [[nodiscard]] Series index() const;
 
         [[nodiscard]] DataFrame head(int length = 5) const;
 

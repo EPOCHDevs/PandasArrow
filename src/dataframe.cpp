@@ -321,6 +321,17 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
         }
         return DataFrame{arrow::RecordBatch::Make(arrow::schema(fieldVector), m_array->num_rows(), arrays), m_index};
     }
+
+    DataFrame DataFrame::operator[](Scalar const& _index) const {
+        auto indexArrayIndex = ReturnOrThrowOnFailure(arrow::compute::Index(m_index, arrow::compute::IndexOptions{
+                _index.value()})).scalar_as<arrow::Int64Scalar>().value;
+        if (indexArrayIndex == -1) {
+            auto error = fmt::format("Index out of bounds: {}", _index.value()->ToString());
+            throw std::runtime_error(error);;
+        }
+        return operator[](indexArrayIndex);
+    }
+
     DataFrame DataFrame::operator[](int64_t row) const {
         std::map<std::string, pd::ArrayPtr> result;
         auto columns = columnNames();
@@ -482,6 +493,19 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
     };
     //</editor-fold>
 
+    //<editor-fold desc="Indexing Operations">
+    DataFrame DataFrame::idxMin() const
+    {
+        pd::Scalar minIndex = ReturnScalarOrThrowOnError(arrow::compute::CallFunction("min", {m_index}));
+        return operator[](minIndex);
+    }
+
+    DataFrame DataFrame::idxMax() const{
+        pd::Scalar maxIndex = ReturnScalarOrThrowOnError(arrow::compute::CallFunction("max", {m_index}));
+        return operator[](maxIndex);
+    }
+    //</editor-fold>
+
     //<editor-fold desc="Selection / Multiplexing">
     DataFrame DataFrame::where(pd::DataFrame const & cond, DataFrame const& other) const {
         return JoinArrays(ReturnOrThrowOnFailure(
@@ -589,10 +613,6 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
             columns[i] = std::to_string(i);
         }
         return columns;
-    }
-
-    Series DataFrame::index() const {
-        return {m_index, true, "index"};
     }
 
     DataFrame DataFrame::setIndex(std::string const &column_name) {

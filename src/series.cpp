@@ -97,6 +97,16 @@ namespace pd {
     //</editor-fold>
 
     //<editor-fold desc="Indexing Functions">
+    Scalar Series::operator[](Scalar const& _index) const {
+        auto indexArrayIndex = ReturnOrThrowOnFailure(arrow::compute::Index(m_index, arrow::compute::IndexOptions{
+                _index.value()})).scalar_as<arrow::Int64Scalar>().value;
+        if (indexArrayIndex == -1) {
+            auto error = fmt::format("Index out of bounds: {}", _index.value()->ToString());
+            throw std::runtime_error(error);;
+        }
+        return operator[](indexArrayIndex);
+    }
+
     Scalar Series::operator[](int64_t index) const {
         auto &&result = m_array->GetScalar(index >= 0 ? index : m_array->length() + index);
 
@@ -148,6 +158,19 @@ namespace pd {
         return {arr, idx};
     }
 
+    //</editor-fold>
+
+    //<editor-fold desc="Indexing Operations">
+    std::pair<Scalar, Scalar> Series::idxMin() const
+    {
+        pd::Scalar minIndex = ReturnScalarOrThrowOnError(arrow::compute::CallFunction("min", {m_index}));
+        return {minIndex, operator[](minIndex)};
+    }
+
+    std::pair<Scalar, Scalar> Series::idxMax() const{
+        pd::Scalar maxIndex = ReturnScalarOrThrowOnError(arrow::compute::CallFunction("max", {m_index}));
+        return {maxIndex, operator[](maxIndex)};
+    }
     //</editor-fold>
 
     std::shared_ptr<arrow::DataType> Series::dtype() const {

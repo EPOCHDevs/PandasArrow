@@ -68,6 +68,7 @@ namespace pd {
         Series operator[](Slice ) const final;
         using NDFrame<arrow::Array>::operator[];
 
+        Scalar operator[](Scalar const& _index) const;
         Scalar operator[](int64_t index) const;
 
         inline Scalar at(int64_t index) const {
@@ -77,6 +78,11 @@ namespace pd {
         [[nodiscard]] Series where(Series const &) const final;
         [[nodiscard]] Series take(Series const &) const final;
 
+        //</editor-fold>
+
+        //<editor-fold desc="Indexing Operations">
+        std::pair<Scalar, Scalar> idxMin() const;
+        std::pair<Scalar, Scalar> idxMax() const;
         //</editor-fold>
 
         //<editor-fold desc="Arithmetric Operation">

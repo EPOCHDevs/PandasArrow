@@ -335,6 +335,11 @@ namespace pd {
 
     }
 
+    template<class ArrayTypeImpl>
+    Series NDFrame<ArrayTypeImpl>::index() const {
+        return {m_index, true, "index"};
+    }
+
     template
     class NDFrame<arrow::Array>;
 

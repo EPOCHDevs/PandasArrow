@@ -126,6 +126,8 @@ namespace pd {
             return m_array->ApproxEquals(*a.m_array);
         }
 
+        [[nodiscard]] Series index() const;
+
         std::shared_ptr<arrow::Array> indexArray() const noexcept {
             return m_index;
         }
@@ -214,7 +216,9 @@ namespace pd {
         ChildType setIndex(std::shared_ptr<arrow::Array> const &index) const;
         //</editor-fold>
 
+        //<editor-fold desc="Indexing Operations">
         pd::ArrayPtr normalizeIndex() const;
+        //</editor-fold>
 
         ArrayType m_array;
         inline auto array() const {
