@@ -321,6 +321,20 @@ namespace pd {
     }
     //</editor-fold>
 
+    template<class ArrayTypeImpl>
+    pd::ArrayPtr NDFrame<ArrayTypeImpl>::normalizeIndex() const {
+        if (m_index->type_id() != arrow::Type::TIMESTAMP) {
+            auto error = fmt::format("Index must be of type TIMESTAMP, but found index of type {}",
+                                     m_index->type()->ToString());
+            throw std::runtime_error(error);
+        }
+
+        return pd::ReturnOrThrowOnFailure(arrow::compute::FloorTemporal(m_index,
+                                                                        arrow::compute::RoundTemporalOptions{1,
+                                                                                                             arrow::compute::CalendarUnit::DAY})).make_array();
+
+    }
+
     template
     class NDFrame<arrow::Array>;
 

@@ -214,8 +214,9 @@ namespace pd {
         ChildType setIndex(std::shared_ptr<arrow::Array> const &index) const;
         //</editor-fold>
 
-        ArrayType m_array;
+        pd::ArrayPtr normalizeIndex() const;
 
+        ArrayType m_array;
         inline auto array() const {
             return m_array;
         }

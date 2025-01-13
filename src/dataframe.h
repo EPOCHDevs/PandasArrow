@@ -559,6 +559,7 @@ namespace pd {
                 bool ignore_index = false);
 
         [[nodiscard]] class GroupBy group_by(std::string const &) const;
+        [[nodiscard]] GroupBy group_by(const ArrayPtr& key) const;
 
         [[nodiscard]] class Resampler resample(
                 std::string const &rule,
