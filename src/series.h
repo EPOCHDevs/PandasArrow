@@ -75,8 +75,8 @@ namespace pd {
         }
 
         [[nodiscard]] Series where(Series const &) const final;
-
         [[nodiscard]] Series take(Series const &) const final;
+
         //</editor-fold>
 
         //<editor-fold desc="Arithmetric Operation">
@@ -251,6 +251,7 @@ namespace pd {
         // todo: case_when
         // todo: choose
         // todo: coalesce
+
         [[nodiscard]] Series where(Series const &cond, Series const &other) const;
 
         [[nodiscard]] Series where(Series const &cond, Scalar const &other) const;

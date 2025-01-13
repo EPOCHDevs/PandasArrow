@@ -7,6 +7,7 @@ add_executable(pandasTest
         dataframe_arithmetric_test.cpp
         dataframe_indexing_test.cpp
         dataframe_iterator_test.cpp
+        dataframe_selection_test.cpp
         dataframe_test.cpp
         scalar_test.cpp
         series_aggregation_test.cpp

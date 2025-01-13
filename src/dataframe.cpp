@@ -482,6 +482,45 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
     };
     //</editor-fold>
 
+    //<editor-fold desc="Selection / Multiplexing">
+    DataFrame DataFrame::where(pd::DataFrame const & cond, DataFrame const& other) const {
+        return JoinArrays(ReturnOrThrowOnFailure(
+                arrow::compute::IfElse(cond.GetFlatArray(), GetFlatArray(), other.GetFlatArray())).make_array());
+    }
+
+    DataFrame DataFrame::where(DataFrame const &cond, Series const &other) const {
+        return JoinArrays(ReturnOrThrowOnFailure(arrow::compute::IfElse(cond.GetFlatArray(), GetFlatArray(),
+                                                                        Broadcast(other).GetFlatArray())).make_array());
+    }
+
+    DataFrame DataFrame::where(DataFrame const &cond, Scalar const &other) const {
+        return JoinArrays(ReturnOrThrowOnFailure(
+                arrow::compute::IfElse(cond.GetFlatArray(), GetFlatArray(), other.value())).make_array());
+    }
+    //</editor-fold>
+
+    pd::DataFrame DataFrame::Broadcast(pd::Series const &arrays) const
+    {
+        if (!m_index->Equals(arrays.indexArray())) {
+            auto error = fmt::format("Broadcasting arrays with different indices is not supported");
+            throw std::runtime_error(error);
+        }
+        return DataFrame{arrow::RecordBatch::Make(m_array->schema(), num_rows(), std::vector(num_columns(), arrays.array())), m_index};
+    }
+
+    pd::DataFrame DataFrame::JoinArrays(std::shared_ptr<arrow::Array> const &arrays) const
+    {
+        if (arrays->length() != num_columns()*num_rows()) {
+            auto error = fmt::format("JoinArrays: arrays.size() != num_columns()*num_rows() ({}) != {}", arrays->length(), num_columns()*num_rows());
+            throw std::runtime_error(error);
+        }
+        std::vector<std::shared_ptr<arrow::Array>> result(num_columns());
+        for (int64_t i = 0; i < num_columns(); ++i) {
+            result[i] = arrays->Slice(i * num_rows(), num_rows());
+        }
+        return DataFrame{arrow::RecordBatch::Make(m_array->schema(), num_rows(), result), m_index};
+    }
+
     BINARY_OPERATOR_DF(|, bit_wise_or)
 
     BINARY_OPERATOR_DF(&, bit_wise_and)
@@ -718,7 +757,7 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
                 }
                 batches[0] = pd::ReturnOrThrowOnFailure(batches[0]->RemoveColumn(indexPosition));
             } else {
-                SPDLOG_ERROR("no field \"{}\" exist in JSON.", *index);
+                SPDLOG_ERROR(R"(no field "{}" exist in JSON.)", index->c_str());
             }
         }
 
@@ -744,7 +783,7 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
                 }
                 batch = pd::ReturnOrThrowOnFailure(batch->RemoveColumn(indexPosition));
             } else {
-                SPDLOG_ERROR("no field \"{}\" exist in JSON.", *index);
+                SPDLOG_ERROR(R"(no field "{}" exist in JSON.)", *index);
             }
         }
 

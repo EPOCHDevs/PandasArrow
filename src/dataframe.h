@@ -267,9 +267,25 @@ namespace pd {
         }
         //</editor-fold>
 
+        //<editor-fold desc="Selection / Multiplexing">
+        [[nodiscard]] DataFrame where(pd::DataFrame const &, DataFrame const& other) const;
+
+        [[nodiscard]] DataFrame where(DataFrame const &cond, Series const &other) const;
+
+        [[nodiscard]] DataFrame where(DataFrame const &cond, Scalar const &other=pd::Scalar{}) const;
+        //</editor-fold>
+
         std::shared_ptr<arrow::ChunkedArray> GetChunkedArray() const {
             return std::make_shared<arrow::ChunkedArray>(m_array->columns());
         }
+
+        std::shared_ptr<arrow::Array> GetFlatArray() const {
+            return pd::ReturnOrThrowOnFailure(arrow::Concatenate(m_array->columns()));
+        }
+
+        pd::DataFrame JoinArrays(std::shared_ptr<arrow::Array> const &arrays) const;
+
+        pd::DataFrame Broadcast(pd::Series const &arrays) const;
 
         inline auto shape() const {
             return (m_array == nullptr) ? std::array<int64_t, 2>{0, 0} : std::array<int64_t, 2>{num_rows(),
