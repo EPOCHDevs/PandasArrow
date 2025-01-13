@@ -1224,6 +1224,12 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
         return {key, *this};
     }
 
+    GroupBy DataFrame::group_by(const ArrayPtr& keyArray,  std::string& key) const {
+        key = "__RESERVED_GROUP_KEY__";
+        auto newRb = ReturnOrThrowOnFailure(m_array->AddColumn(static_cast<int>(num_columns()), key, keyArray));
+        return { key, DataFrame{newRb, m_index}};
+    }
+
     void DataFrame::drop(std::vector<std::string> const &columns) {
         for (const std::string &column: columns) {
             int index = m_array->schema()->GetFieldIndex(column);
