@@ -1224,7 +1224,7 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
         return {key, *this};
     }
 
-    GroupBy DataFrame::group_by(const ArrayPtr& keyArray,  std::string& key) const {
+    GroupBy DataFrame::group_by(const ArrayPtr& keyArray) const {
         key = "__RESERVED_GROUP_KEY__";
         auto newRb = ReturnOrThrowOnFailure(m_array->AddColumn(static_cast<int>(num_columns()), key, keyArray));
         return { key, DataFrame{newRb, m_index}};
