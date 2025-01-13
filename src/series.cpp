@@ -1162,13 +1162,29 @@ namespace pd {
         return ReturnSeriesOrThrowOnError(arrow::compute::IfElse(truth_values.m_array, m_array, other.scalar));
     }
 
+    Series Series::n_largest(int n) const
+    {
+        auto [values, index] =  sort(false);
+        return Series{values->Slice(0, n), index->Slice(0, n), m_name};
+    }
+
+    Series Series::n_smallest(int n) const
+    {
+        auto [values, index] =  sort(true);
+        return Series{values->Slice(0, n), index->Slice(0, n), m_name};
+    }
+
     GenericFunctionSeriesReturn(is_finite)
 
     GenericFunctionSeriesReturn(is_valid)
 
+    GenericFunctionSeriesReturn(is_nan)
+
     GenericFunctionSeriesReturn(is_null)
 
     GenericFunctionSeriesReturn(is_infinite)
+
+    GenericFunctionSeriesReturn(true_unless_null)
 
     bool Series::is_unique() const {
         return unique().size() == size();

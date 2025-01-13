@@ -106,6 +106,102 @@ namespace pd {
         PANDAS_SCALAR_OVERRIDES(-, Series)
         //</editor-fold>
 
+        //<editor-fold desc="Bit-Wise Function">
+        Series operator&(Scalar const &a) const;
+        Series operator&(Series const &a) const;
+
+        Series operator~() const;
+
+        Series operator|(Scalar const &a) const;
+        Series operator|(Series const &a) const;
+
+        Series operator^(Scalar const &a) const;
+        Series operator^(Series const &a) const;
+
+        Series operator<<(Scalar const &s) const;
+        Series operator<<(Series const &a) const;
+
+        Series operator>>(Scalar const &s) const;
+        Series operator>>(Series const &a) const;
+        //</editor-fold>
+
+        //<editor-fold desc="Rounding Functions">
+        [[nodiscard]] Series ceil() const;
+
+        [[nodiscard]] Series clip(Series const &S2, pd::Scalar const& min, pd::Scalar const& max, bool skipNull=false) const;
+
+        [[nodiscard]] Series floor() const;
+
+        [[nodiscard]] Series round() const;
+
+        [[nodiscard]] Series round_to_multiple(double multiple, arrow::compute::RoundMode roundMode) const;
+
+        [[nodiscard]] Series trunc() const;
+        //</editor-fold>
+
+        //<editor-fold desc="Logarithmic Functions">
+        [[nodiscard]] Series ln() const;
+
+        [[nodiscard]] Series log10() const;
+
+        [[nodiscard]] Series log1p() const;
+
+        [[nodiscard]] Series log2() const;
+
+        [[nodiscard]] Series logb(int base) const;
+        //</editor-fold>
+
+        //<editor-fold desc="Trigonometric Functions">
+        // TODO: acos
+        // TODO: asin
+        // TODO: atan
+        // TODO: atan2
+
+        [[nodiscard]] Series cos() const;
+
+        [[nodiscard]] Series sin() const;
+
+        [[nodiscard]] Series tan() const;
+        //</editor-fold>
+
+        //<editor-fold desc="Comparisons">
+        Series operator==(Scalar const &a) const;
+        Series operator==(Series const &a) const;
+
+        Series operator>(Scalar const &a) const;
+        Series operator>(Series const &a) const;
+
+        Series operator>=(Scalar const &a) const;
+        Series operator>=(Series const &a) const;
+
+        Series operator!=(Scalar const &a) const;
+        Series operator!=(Series const &a) const;
+
+        Series operator<(Scalar const &a) const;
+        Series operator<(Series const &a) const;
+
+        Series operator<=(Scalar const &a) const;
+        Series operator<=(Series const &a) const;
+        //</editor-fold>
+
+        //<editor-fold desc="Logical Functions">
+        Series operator&&(Scalar const &a) const;
+        Series operator&&(Series const &a) const;
+
+        // TODO: and_kleene
+        // TODO: and_not
+        // TODO: and_not_kleene
+
+        Series operator!() const;
+
+        Series operator||(Scalar const &a) const;
+        Series operator||(Series const &a) const;
+
+        // TODO: or_kleene
+        // todo: xor
+
+        //</editor-fold>
+
         //<editor-fold desc="Iterator Functions">
         template<class OutType, class InType>
         Series map(std::function<OutType(InType &&)> const& fn) const
@@ -129,6 +225,43 @@ namespace pd {
 
         using NDFrame<arrow::Array>::setIndex;
 
+        //</editor-fold>
+
+        //<editor-fold desc="String Functions">
+            [[nodiscard]] struct StringLike str() const;
+        //</editor-fold>
+
+        //<editor-fold desc="Categorizations">
+        bool is_valid(int row) const;
+
+        [[nodiscard]] Series is_null() const;
+
+        [[nodiscard]] Series is_nan() const;
+
+        [[nodiscard]] Series is_valid() const;
+
+        [[nodiscard]] Series is_finite() const;
+
+        [[nodiscard]] Series is_infinite() const;
+
+        [[nodiscard]] Series true_unless_null() const;
+        //</editor-fold>
+
+        //<editor-fold desc="Selection / Multiplexing">
+        // todo: case_when
+        // todo: choose
+        // todo: coalesce
+        [[nodiscard]] Series where(Series const &cond, Series const &other) const;
+
+        [[nodiscard]] Series where(Series const &cond, Scalar const &other) const;
+
+        [[nodiscard]] Series if_else(Series const &truth_values, Series const &other) const;
+
+        [[nodiscard]] Series if_else(Series const &truth_values, Scalar const &other) const;
+
+        [[nodiscard]] Series n_largest(int n) const;
+
+        [[nodiscard]] Series n_smallest(int n) const;
         //</editor-fold>
 
         // Check if the Series object is an index array.
@@ -196,31 +329,7 @@ namespace pd {
         template<typename T>
         requires(not std::same_as<Series, T>) bool approx_equals(std::vector<T> const &a) const;
 
-        [[nodiscard]] Series ln() const;
 
-        [[nodiscard]] Series log10() const;
-
-        [[nodiscard]] Series log1p() const;
-
-        [[nodiscard]] Series log2() const;
-
-        [[nodiscard]] Series logb(int base) const;
-
-        [[nodiscard]] Series cos() const;
-
-        [[nodiscard]] Series sin() const;
-
-        [[nodiscard]] Series tan() const;
-
-        [[nodiscard]] Series ceil() const;
-
-        [[nodiscard]] Series floor() const;
-
-        [[nodiscard]] Series round() const;
-
-        [[nodiscard]] Series round_to_multiple(double multiple, arrow::compute::RoundMode roundMode) const;
-
-        [[nodiscard]] Series trunc() const;
 
         [[nodiscard]] Series cumsum(double start = 0, bool skip_nulls = true) const;
 
@@ -230,48 +339,6 @@ namespace pd {
 
         [[nodiscard]] Series cummin(double start, bool skip_nulls = true) const;
 
-        Series operator~() const;
-
-        Series operator!() const;
-
-        Series operator==(Scalar const &a) const;
-        Series operator==(Series const &a) const;
-
-        Series operator!=(Scalar const &a) const;
-        Series operator!=(Series const &a) const;
-
-        Series operator<=(Scalar const &a) const;
-        Series operator<=(Series const &a) const;
-
-        Series operator>=(Scalar const &a) const;
-        Series operator>=(Series const &a) const;
-
-        Series operator>(Scalar const &a) const;
-        Series operator>(Series const &a) const;
-
-        Series operator<(Scalar const &a) const;
-        Series operator<(Series const &a) const;
-
-        Series operator|(Scalar const &a) const;
-        Series operator|(Series const &a) const;
-
-        Series operator&(Scalar const &a) const;
-        Series operator&(Series const &a) const;
-
-        Series operator||(Scalar const &a) const;
-        Series operator||(Series const &a) const;
-
-        Series operator&&(Scalar const &a) const;
-        Series operator&&(Series const &a) const;
-
-        Series operator^(Scalar const &a) const;
-        Series operator^(Series const &a) const;
-
-        Series operator<<(Scalar const &s) const;
-        Series operator<<(Series const &a) const;
-
-        Series operator>>(Scalar const &s) const;
-        Series operator>>(Series const &a) const;
 
         // utility functions
 
@@ -311,27 +378,9 @@ namespace pd {
 
         [[nodiscard]] Series bfill() const;
 
-        [[nodiscard]] Series where(Series const &cond, Series const &other) const;
-
-        [[nodiscard]] Series where(Series const &cond, Scalar const &other) const;
-
         [[nodiscard]] Series replace_with_mask(Series const &cond, Series const &other) const;
 
-        [[nodiscard]] Series if_else(Series const &truth_values, Series const &other) const;
 
-        [[nodiscard]] Series if_else(Series const &truth_values, Scalar const &other) const;
-
-        bool is_valid(int row) const;
-
-        [[nodiscard]] Series is_null() const;
-
-        [[nodiscard]] Series is_valid() const;
-
-        [[nodiscard]] Series is_finite() const;
-
-        [[nodiscard]] Series is_infinite() const;
-
-        [[nodiscard]] struct StringLike str() const;
 
         [[nodiscard]] struct DateTimeLike dt() const;
 
@@ -368,8 +417,6 @@ namespace pd {
         [[nodiscard]] double corr(const Series &s2, double (*method)(double)) const;
 
         [[nodiscard]] double cov(Series const &S2) const;
-
-        [[nodiscard]] Series clip(Series const &S2, pd::Scalar const& min, pd::Scalar const& max, bool skipNull=false) const;
 
         [[nodiscard]] Series ewm(
                 EWMAgg agg,

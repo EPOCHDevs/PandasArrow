@@ -176,10 +176,12 @@ namespace pd {
 
         [[nodiscard]] pd::Series last(AxisType axis,bool skip_null = true) const;
 
+        // TODO: use max_element_wise
         [[nodiscard]] pd::Series max(AxisType axis, bool skip_null = true) const;
 
         [[nodiscard]] pd::Series mean(AxisType axis, bool skip_null = true) const;
 
+        // TODO: use min_element_wise
         [[nodiscard]] pd::Series min(AxisType axis, bool skip_null = true) const;
 
         [[nodiscard]] pd::Series product(AxisType axis, bool skip_nulls) const;
