@@ -458,61 +458,30 @@ namespace pd {
         requires(not std::same_as<DataFrame, T>)
         bool approx_equals(std::vector<T> const &a) const;
 
-        friend DataFrame operator*(Series const &s, DataFrame const &df);
-
-        friend DataFrame operator/(Series const &s, DataFrame const &df);
-
-        friend DataFrame operator+(Series const &s, DataFrame const &df);
-
-        friend DataFrame operator-(Series const &s, DataFrame const &df);
 
         DataFrame operator|(DataFrame const &s) const;
 
-        friend DataFrame operator|(Series const &s, DataFrame const &df);
-
         DataFrame operator&(DataFrame const &s) const;
-
-        friend DataFrame operator&(Series const &s, DataFrame const &df);
 
         DataFrame operator^(DataFrame const &s) const;
 
-        friend DataFrame operator^(Series const &s, DataFrame const &df);
-
         DataFrame operator<<(DataFrame const &s) const;
-
-        friend DataFrame operator<<(Series const &s, DataFrame const &df);
 
         DataFrame operator>>(DataFrame const &s) const;
 
-        friend DataFrame operator>>(Series const &s, DataFrame const &df);
-
         DataFrame operator>(DataFrame const &s) const;
-
-        friend DataFrame operator>(Series const &s, DataFrame const &df);
 
         DataFrame operator>=(DataFrame const &s) const;
 
-        friend DataFrame operator>=(Series const &s, DataFrame const &df);
-
         DataFrame operator<(DataFrame const &s) const;
-
-        friend DataFrame operator<(Series const &s, DataFrame const &df);
 
         DataFrame operator<=(DataFrame const &s) const;
 
-        friend DataFrame operator<=(Series const &s, DataFrame const &df);
-
         DataFrame operator==(DataFrame const &s) const;
-
-        friend DataFrame operator==(Series const &s, DataFrame const &df);
 
         DataFrame operator!=(DataFrame const &s) const;
 
-        friend DataFrame operator!=(Series const &s, DataFrame const &df);
-
         DataFrame operator&&(DataFrame const &s) const;
-
-        friend DataFrame operator&&(Series const &s, DataFrame const &df);
 
         DataFrame operator||(DataFrame const &s) const;
 
@@ -580,40 +549,6 @@ namespace pd {
 
         DataFrame operator>>(Series const &a) const;
 
-        friend DataFrame operator+(Scalar const &a, DataFrame const &b);
-
-        friend DataFrame operator/(Scalar const &a, DataFrame const &b);
-
-        friend DataFrame operator*(Scalar const &a, DataFrame const &b);
-
-        friend DataFrame operator-(Scalar const &a, DataFrame const &b);
-
-        friend DataFrame operator|(Scalar const &a, DataFrame const &b);
-
-        friend DataFrame operator&(Scalar const &a, DataFrame const &b);
-
-        friend DataFrame operator^(Scalar const &a, DataFrame const &b);
-
-        friend DataFrame operator||(Scalar const &a, DataFrame const &b);
-
-        friend DataFrame operator&&(Scalar const &a, DataFrame const &b);
-
-        friend DataFrame operator<<(Scalar const &a, DataFrame const &b);
-
-        friend DataFrame operator>>(Scalar const &a, DataFrame const &b);
-
-        friend DataFrame operator<(Scalar const &a, DataFrame const &b);
-
-        friend DataFrame operator<=(Scalar const &a, DataFrame const &b);
-
-        friend DataFrame operator>(Scalar const &a, DataFrame const &b);
-
-        friend DataFrame operator>=(Scalar const &a, DataFrame const &b);
-
-        friend DataFrame operator==(Scalar const &a, DataFrame const &b);
-
-        friend DataFrame operator!=(Scalar const &a, DataFrame const &b);
-
         [[nodiscard]] Series argsort(std::vector<std::string> const &fields, bool ascending) const;
 
         [[nodiscard]] DataFrame sort_index(bool ascending = true, bool ignore_index = false);
@@ -643,8 +578,6 @@ namespace pd {
         [[nodiscard]] Series coalesce(std::vector<std::string> const &columns);
 
         std::vector<std::string> columnNames() const;
-
-        Series mean(AxisType axis) const;
 
         DataFrame slice(int offset, int64_t length) const;
 
