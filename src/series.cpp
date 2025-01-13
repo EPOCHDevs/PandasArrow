@@ -221,6 +221,8 @@ namespace pd {
 
     BINARY_OPERATOR(||, or)
 
+    GenericFunctionSeriesReturn(abs)
+
     Series Series::operator-() const {
         return ReturnSeriesOrThrowOnError(arrow::compute::Negate(m_array, arrow::compute::ArithmeticOptions{false}));
     }
