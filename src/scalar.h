@@ -172,12 +172,12 @@ namespace pd {
 
         template<ScalarComplyable T>
         inline bool operator==(T const &s) const {
-            return this->as<T>() == s;
+            return Scalar{s} == *this;
         }
 
         template<ScalarComplyable T>
         friend bool operator==(T const &s, Scalar const &rhs) {
-            return s == rhs.as<T>();
+            return pd::Scalar{s} == rhs;
         }
 
         friend std::ostream& operator<<(std::ostream & os, Scalar const& s)
