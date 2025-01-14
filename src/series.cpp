@@ -18,8 +18,8 @@
 
 #define BINARY_OPERATOR(sign, name) \
     Series Series::operator sign(const Series& a) const \
-    { \
-        return ReturnSeriesOrThrowOnError(arrow::compute::CallFunction(#name, {m_array, broadcast(a).m_array})); \
+    { auto [x, y] = broadcast(a); \
+        return ReturnSeriesOrThrowOnError(arrow::compute::CallFunction(#name, {x.m_array, y.m_array})); \
     } \
 \
     Series Series::operator sign(const Scalar& a) const \
@@ -210,9 +210,18 @@ namespace pd {
         return {arrow::schema({field}), size(), {m_array}, m_index};
     }
 
-    Series Series::broadcast(Series const &other) const
-    {
-        return other.reindex(this->m_index);
+    std::array<Series, 2> Series::broadcast(Series const &other) const {
+        auto otherIndex = other.indexArray();
+        if (otherIndex->Equals(m_index)) {
+            return {*this, other};
+        }
+        auto mixedIndex = pd::ReturnOrThrowOnFailure(arrow::Concatenate({m_index, otherIndex}));
+        auto newIndex = pd::ReturnOrThrowOnFailure(arrow::compute::Unique(mixedIndex));
+
+        return {
+                reindex(newIndex),
+                other.reindex(newIndex)
+        };
     }
 
     BINARY_OPERATOR(/, divide);

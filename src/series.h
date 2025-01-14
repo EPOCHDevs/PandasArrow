@@ -350,7 +350,7 @@ namespace pd {
 
         // utility functions
 
-        Series broadcast(Series const &other) const;
+        std::array<Series, 2> broadcast(Series const &other) const;
 
         [[nodiscard]] bool is_unique() const;
 
