@@ -200,14 +200,14 @@ namespace pd {
 
         //<editor-fold desc="Indexing Functions">
         virtual ChildType operator[](Slice) const = 0;
-
+        ChildType operator[](Series const &) const;
         ChildType operator[](DateTimeSlice const &) const;
-
         ChildType operator[](DateSlice const &s) const;
-
         ChildType operator[](StringSlice const &) const;
 
-        ChildType operator[](Series const &index) const;
+        ChildType loc(DateTimeSlice const &) const;
+        ChildType loc(DateSlice const &s) const;
+        ChildType loc(StringSlice const &) const;
 
         virtual ChildType where(Series const &) const = 0;
 

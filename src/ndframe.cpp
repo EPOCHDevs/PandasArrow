@@ -242,34 +242,45 @@ namespace pd {
     //</editor-fold>
 
     //<editor-fold desc="Indexing Functions">
-    template<class ArrayTypeImpl>
-    NDFrame<ArrayTypeImpl>::ChildType NDFrame<ArrayTypeImpl>::operator[](DateTimeSlice const & slicer) const
+    auto Slice(DateTimeSlice const & slicer, auto const& arr, auto const& index, bool labelIndexing)
     {
-        if (m_index->type_id() == arrow::Type::TIMESTAMP) {
-            int64_t start = 0, end = m_index->length();
+        if (index->type_id() == arrow::Type::TIMESTAMP) {
+            int64_t start = 0, end = index->length();
 
             if (slicer.start) {
                 start = ReturnScalarOrThrowOnError(
-                        arrow::compute::Index(m_index,
-                                              arrow::compute::IndexOptions{fromDateTime(slicer.start.value())})).as<int64_t>();
+                        arrow::compute::Index(index,
+                                              arrow::compute::IndexOptions{fromDateTime(slicer.start.value())})).template as<int64_t>();
                 if (start == -1) {
                     throw std::runtime_error("invalid start index");
                 }
             }
             if (slicer.end) {
                 end = ReturnScalarOrThrowOnError(
-                        arrow::compute::Index(m_index, arrow::compute::IndexOptions{fromDateTime(slicer.end.value())})).as<int64_t>();
+                        arrow::compute::Index(index, arrow::compute::IndexOptions{fromDateTime(slicer.end.value())})).template as<int64_t>();
                 if (end == -1) {
                     throw std::runtime_error("invalid end index");
                 }
             }
-            return operator[]({start, end});
+            return arr[{start, end + static_cast<int>(labelIndexing)}];
         } else {
             std::stringstream ss;
             ss << "Type Error: DateTime slicing is only allowed on TimeStamp DataType, but found index of type "
-               << m_index->type()->ToString() << "\n";
+               << index->type()->ToString() << "\n";
             throw std::runtime_error(ss.str());
         }
+    }
+
+    template<class ArrayTypeImpl>
+    NDFrame<ArrayTypeImpl>::ChildType NDFrame<ArrayTypeImpl>::operator[](DateTimeSlice const & slicer) const
+    {
+        return Slice(slicer, *this, m_index, false);
+    }
+
+    template<class ArrayTypeImpl>
+    NDFrame<ArrayTypeImpl>::ChildType NDFrame<ArrayTypeImpl>::loc(DateTimeSlice const & slicer) const
+    {
+        return Slice(slicer, *this, m_index, true);
     }
 
     template<class ArrayTypeImpl>
@@ -279,33 +290,51 @@ namespace pd {
     }
 
     template<class ArrayTypeImpl>
-    NDFrame<ArrayTypeImpl>::ChildType NDFrame<ArrayTypeImpl>::operator[](StringSlice const & slicer) const
+    NDFrame<ArrayTypeImpl>::ChildType NDFrame<ArrayTypeImpl>::loc(DateSlice const &s) const
     {
-        if (m_index->type_id() == arrow::Type::STRING) {
-            int64_t start = 0, end = m_index->length();
+        return loc({s.start ? std::optional{ptime(*s.start)} : std::nullopt,
+                    s.end  ? std::optional{ptime(*s.end)} : std::nullopt});
+    }
+
+    auto Slice(StringSlice const & slicer, auto const& arr, auto const& index, bool labelIndexing)
+    {
+        if (index->type_id() == arrow::Type::STRING) {
+            int64_t start = 0, end = index->length();
             if (slicer.start) {
                 start = ReturnScalarOrThrowOnError(arrow::compute::Index(
-                        m_index,
-                        arrow::compute::IndexOptions{arrow::MakeScalar(slicer.start.value())})).as<int64_t>();
+                        index,
+                        arrow::compute::IndexOptions{arrow::MakeScalar(slicer.start.value())})).template as<int64_t>();
                 if (start == -1) {
                     throw std::runtime_error("invalid start index");
                 }
             }
             if (slicer.end) {
                 end = ReturnScalarOrThrowOnError(
-                        arrow::compute::Index(m_index,
-                                              arrow::compute::IndexOptions{arrow::MakeScalar(slicer.end.value())})).as<int64_t>();
+                        arrow::compute::Index(index,
+                                              arrow::compute::IndexOptions{arrow::MakeScalar(slicer.end.value())})).template as<int64_t>();
                 if (end == -1) {
                     throw std::runtime_error("invalid end index");
                 }
             }
-            return operator[]({start, end});
+            return arr[{start, end + int(labelIndexing)}];
         } else {
             std::stringstream ss;
             ss << "Type Error: String slicing is only allowed on STRING DataType, but found index of type "
-               << m_index->type()->ToString() << "\n";
+               << index->type()->ToString() << "\n";
             throw std::runtime_error(ss.str());
         }
+    }
+
+    template<class ArrayTypeImpl>
+    NDFrame<ArrayTypeImpl>::ChildType NDFrame<ArrayTypeImpl>::operator[](StringSlice const & slicer) const
+    {
+        return Slice(slicer, *this, m_index, false);
+    }
+
+    template<class ArrayTypeImpl>
+    NDFrame<ArrayTypeImpl>::ChildType NDFrame<ArrayTypeImpl>::loc(StringSlice const & slicer) const
+    {
+        return Slice(slicer, *this, m_index, true);
     }
 
     template<class ArrayTypeImpl>
