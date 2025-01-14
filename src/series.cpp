@@ -19,7 +19,7 @@
 #define BINARY_OPERATOR(sign, name) \
     Series Series::operator sign(const Series& a) const \
     { auto [x, y] = broadcast(a); \
-        return ReturnSeriesOrThrowOnError(arrow::compute::CallFunction(#name, {x.m_array, y.m_array})); \
+        return ReturnSeriesOrThrowOnError(arrow::compute::CallFunction(#name, {x.m_array, y.m_array}), x.indexArray()); \
     } \
 \
     Series Series::operator sign(const Scalar& a) const \
@@ -217,10 +217,13 @@ namespace pd {
         }
         auto mixedIndex = pd::ReturnOrThrowOnFailure(arrow::Concatenate({m_index, otherIndex}));
         auto newIndex = pd::ReturnOrThrowOnFailure(arrow::compute::Unique(mixedIndex));
+        auto opt = arrow::compute::ArraySortOptions{arrow::compute::SortOrder::Ascending};
+        auto sortedIndices = ReturnOrThrowOnFailure(arrow::compute::CallFunction("array_sort_indices", {newIndex}, &opt)).make_array();
+        auto result = arrow::compute::Take(newIndex, sortedIndices)->make_array();
 
         return {
-                reindex(newIndex),
-                other.reindex(newIndex)
+                reindex(result),
+                other.reindex(result)
         };
     }
 
@@ -1346,17 +1349,18 @@ namespace pd {
         return {newValues, newIndex, m_name};
     }
 
-    Series Series::ReturnSeriesOrThrowOnError(arrow::Result<arrow::Datum> &&result) const {
+    Series Series::ReturnSeriesOrThrowOnError(arrow::Result<arrow::Datum> &&result, pd::ArrayPtr const& indexPtr) const {
         if (result.ok()) {
+            auto idx = indexPtr ? indexPtr : m_index;
             auto arr = result->make_array();
             const int64_t arrayLength = arr->length();
-            const int64_t indexLength = m_index ? m_index->length() : 0;
+            const int64_t indexLength = idx ? idx->length() : 0;
             if (indexLength == 0 || arrayLength == 0) {
                 return pd::Series{arr, false, ""};
             } else if (arrayLength == indexLength) {
-                return pd::Series{arr, m_index, ""};
+                return pd::Series{arr, idx, ""};
             } else if (arrayLength < indexLength) {
-                return pd::Series{arr, m_index->Slice(indexLength - arrayLength, arrayLength), ""};
+                return pd::Series{arr, idx->Slice(indexLength - arrayLength, arrayLength), ""};
             }
             throw std::runtime_error(
                     (boost::format(

@@ -442,7 +442,7 @@ namespace pd {
         [[nodiscard]] Series strptime(std::string const &format, arrow::TimeUnit::type unit, bool error_is_null = false)
         const;
 
-        Series ReturnSeriesOrThrowOnError(arrow::Result<arrow::Datum> &&result) const;
+        Series ReturnSeriesOrThrowOnError(arrow::Result<arrow::Datum> &&result, pd::ArrayPtr const& indexPtr=nullptr) const;
 
         bool approx_equals_(pd::Series const &a, double eps) const {
             return m_array->ApproxEquals(*a.m_array, arrow::EqualOptions::Defaults().atol(eps));
