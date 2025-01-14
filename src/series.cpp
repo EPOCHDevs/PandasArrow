@@ -161,15 +161,14 @@ namespace pd {
     //</editor-fold>
 
     //<editor-fold desc="Indexing Operations">
-    std::pair<Scalar, Scalar> Series::idxMin() const
-    {
-        pd::Scalar minIndex = ReturnScalarOrThrowOnError(arrow::compute::CallFunction("min", {m_index}));
-        return {minIndex, operator[](minIndex)};
+    Scalar Series::idxMin() const {
+        pd::Scalar minValue = ReturnScalarOrThrowOnError(arrow::compute::CallFunction("min", {m_array}));
+        return Scalar{m_index->GetScalar(index(minValue))};
     }
 
-    std::pair<Scalar, Scalar> Series::idxMax() const{
-        pd::Scalar maxIndex = ReturnScalarOrThrowOnError(arrow::compute::CallFunction("max", {m_index}));
-        return {maxIndex, operator[](maxIndex)};
+    Scalar Series::idxMax() const{
+        pd::Scalar maxIndex = ReturnScalarOrThrowOnError(arrow::compute::CallFunction("max", {m_array}));
+        return Scalar{m_index->GetScalar(index(maxIndex))};
     }
     //</editor-fold>
 

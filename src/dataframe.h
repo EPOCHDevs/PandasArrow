@@ -253,8 +253,8 @@ namespace pd {
         //</editor-fold>
 
         //<editor-fold desc="Indexing Operations">
-        DataFrame idxMin() const;
-        DataFrame idxMax() const;
+        std::unordered_map<std::string, pd::Scalar> idxMin() const;
+        std::unordered_map<std::string, pd::Scalar> idxMax() const;
         //</editor-fold>
 
         //<editor-fold desc="Iterator Functions">

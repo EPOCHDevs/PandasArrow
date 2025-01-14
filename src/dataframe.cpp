@@ -494,15 +494,21 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
     //</editor-fold>
 
     //<editor-fold desc="Indexing Operations">
-    DataFrame DataFrame::idxMin() const
+    std::unordered_map<std::string, pd::Scalar> DataFrame::idxMin() const
     {
-        pd::Scalar minIndex = ReturnScalarOrThrowOnError(arrow::compute::CallFunction("min", {m_index}));
-        return operator[](minIndex);
+        std::unordered_map<std::string, pd::Scalar> result;
+        for (auto const& column: columnNames()) {
+            result[column] = operator[](column).idxMin();
+        }
+        return result;
     }
 
-    DataFrame DataFrame::idxMax() const{
-        pd::Scalar maxIndex = ReturnScalarOrThrowOnError(arrow::compute::CallFunction("max", {m_index}));
-        return operator[](maxIndex);
+    std::unordered_map<std::string, pd::Scalar> DataFrame::idxMax() const{
+        std::unordered_map<std::string, pd::Scalar> result;
+        for (auto const& column: columnNames()) {
+            result[column] = operator[](column).idxMax();
+        }
+        return result;
     }
     //</editor-fold>
 

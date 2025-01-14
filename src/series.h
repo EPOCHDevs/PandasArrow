@@ -81,8 +81,8 @@ namespace pd {
         //</editor-fold>
 
         //<editor-fold desc="Indexing Operations">
-        std::pair<Scalar, Scalar> idxMin() const;
-        std::pair<Scalar, Scalar> idxMax() const;
+        Scalar idxMin() const;
+        Scalar idxMax() const;
         //</editor-fold>
 
         //<editor-fold desc="Arithmetric Operation">
@@ -389,8 +389,6 @@ namespace pd {
         [[nodiscard]] Series bfill() const;
 
         [[nodiscard]] Series replace_with_mask(Series const &cond, Series const &other) const;
-
-
 
         [[nodiscard]] struct DateTimeLike dt() const;
 
