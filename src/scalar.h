@@ -96,6 +96,11 @@ namespace pd {
         explicit Scalar(T const &x) : scalar(arrow::MakeScalar(x)) {
         }
 
+        explicit Scalar(ptime const &x) : scalar(ReturnOrThrowOnFailure(arrow::MakeScalar(arrow::timestamp(arrow::TimeUnit::NANO), pd::fromPTime(x)))) {
+        }
+
+        explicit Scalar(date const &x) : Scalar(ptime(x)) {}
+
         /// template function "as()" that allows the user to cast the Scalar object to a specified type.
         template<class T>
         T as() const {
