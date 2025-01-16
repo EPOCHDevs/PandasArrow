@@ -243,8 +243,8 @@ TEST_CASE("Test describe with all NA values", "[describe]")
     for (int i = 0; i < 3; i++) {
         INFO(desc << "\n" << "i = " << i);
 
-        REQUIRE(desc.at(i, 1).isValid());
-        REQUIRE(desc.at(i, 2).isValid());
+        REQUIRE_FALSE(desc.at(i, 1).isValid());
+        REQUIRE_FALSE(desc.at(i, 2).isValid());
 
         for (int j: {0, 4}) {
             REQUIRE(desc.at(i, j).as<::int64_t>() == 0);

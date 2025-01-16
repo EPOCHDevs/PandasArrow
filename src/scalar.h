@@ -96,7 +96,7 @@ namespace pd {
         explicit Scalar(T const &x) : scalar(arrow::MakeScalar(x)) {
         }
 
-        explicit Scalar(ptime const &x) : scalar(ReturnOrThrowOnFailure(arrow::MakeScalar(arrow::timestamp(arrow::TimeUnit::NANO), pd::fromPTime(x)))) {
+        explicit Scalar(ptime const &x) : scalar(x.is_not_a_date_time() ? arrow::MakeNullScalar(arrow::timestamp(arrow::TimeUnit::NANO)) : ReturnOrThrowOnFailure(arrow::MakeScalar(arrow::timestamp(arrow::TimeUnit::NANO), pd::fromPTime(x)))) {
         }
 
         explicit Scalar(date const &x) : Scalar(ptime(x)) {}
@@ -104,19 +104,48 @@ namespace pd {
         /// template function "as()" that allows the user to cast the Scalar object to a specified type.
         template<class T>
         T as() const {
-            using ArrowType = arrow::CTypeTraits<T>::ScalarType;
-            auto res = std::dynamic_pointer_cast<ArrowType>(scalar);
-            if (res) {
-                if constexpr (std::same_as<T, std::string>) {
-                    return res->value->ToString();
-                } else {
-                    return res->value;
+
+            if (!scalar->is_valid) {
+                if constexpr (std::is_floating_point_v<T>) {
+                    return std::numeric_limits<T>::quiet_NaN();
                 }
-            } else {
-                std::stringstream ss;
-                ss << "Invalid Scalar Cast to " << typeid(T).name() << ", current type " << scalar->type->name()
-                   << "\n";
-                throw std::runtime_error(ss.str());
+                else if constexpr (std::is_same_v<T, date> || std::is_same_v<T, ptime>) {
+                    return T(not_a_date_time);
+                }
+
+                throw std::runtime_error("as<>() requires a valid Scalar");
+            }
+
+            if constexpr (std::same_as<T, std::string>) {
+                return scalar->ToString();
+            }
+            if constexpr (std::is_same_v<T, date> || std::is_same_v<T, ptime>) {
+                if (scalar->type->id() != arrow::Type::TIMESTAMP){
+                    throw std::runtime_error("as<date|ptime>() requires a TimestampScalar");
+                }
+                auto ptimeValue = time_from_string(scalar->ToString());
+                if constexpr (std::is_same_v<T, date>) {
+                    return ptimeValue.date();
+                }
+                else {
+                    return ptimeValue;
+                }
+            }
+            else {
+                using ArrowType = arrow::CTypeTraits<T>::ScalarType;
+                auto res = std::dynamic_pointer_cast<ArrowType>(scalar);
+                if (res) {
+                    if constexpr (std::same_as<T, std::string>) {
+                        return res->value->ToString();
+                    } else {
+                        return res->value;
+                    }
+                } else {
+                    std::stringstream ss;
+                    ss << "Invalid Scalar Cast to " << typeid(T).name() << ", current type " << scalar->type->name()
+                       << "\n";
+                    throw std::runtime_error(ss.str());
+                }
             }
         }
 

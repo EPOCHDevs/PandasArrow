@@ -35,6 +35,23 @@ TEST_CASE("Scalar construction")
     pd::Scalar stringScalar("hello");
     REQUIRE(stringScalar.isValid());
     REQUIRE(stringScalar.as<std::string>() == "hello");
+
+    SECTION("Test constructor with date and time") {
+        date s1(2023, Jan, 1);
+        pd::Scalar dateScalar(s1);
+        REQUIRE(dateScalar.isValid());
+        REQUIRE(dateScalar.as<date>() == s1);
+
+        dateScalar = pd::Scalar(ptime(s1));
+        REQUIRE(dateScalar.isValid());
+        REQUIRE(dateScalar.as<ptime>() == ptime(s1));
+
+        dateScalar = pd::Scalar(date(not_a_date_time));
+        REQUIRE_FALSE(dateScalar.isValid());
+        REQUIRE_FALSE(pd::Scalar(ptime(not_a_date_time)).isValid());
+        REQUIRE(dateScalar.as<date>().is_not_a_date());
+        REQUIRE(dateScalar.as<ptime>().is_not_a_date_time());
+    }
 }
 
 TEST_CASE("Scalar as() function")
@@ -53,7 +70,8 @@ TEST_CASE("Scalar as() function")
 
     // Test as() function with invalid cast
     pd::Scalar intScalar2(5);
-    REQUIRE_THROWS_AS(intScalar2.as<std::string>(), std::runtime_error);
+    REQUIRE_THROWS_AS(intScalar2.as<bool>(), std::runtime_error);
+    REQUIRE(intScalar2.as<std::string>() == "5");
 }
 
 TEST_CASE("Scalar MinMax struct")
