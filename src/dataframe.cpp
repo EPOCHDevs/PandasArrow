@@ -236,8 +236,7 @@ namespace pd {
         if constexpr (std::same_as<T, pd::Scalar>) {
             input = other.value();
         } else if constexpr (std::same_as<T, pd::Series>) {
-            input = other.array();
-
+            input = std::make_shared<arrow::ChunkedArray>(std::vector(self.num_columns(), other.array()));
         } else if constexpr (std::same_as<T, pd::DataFrame>) {
             input = other.GetChunkedArray();
         }
@@ -267,7 +266,7 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
 
     DataFrame DataFrame::pow(double v) const {
         return Make(pd::ReturnOrThrowOnFailure(
-                arrow::compute::CallFunction("pow", {this->GetChunkedArray(), arrow::Datum{v}})).chunks());
+                arrow::compute::CallFunction("power", {this->GetChunkedArray(), arrow::Datum{v}})).chunks());
     }
 
     UNARY_FUNCTION(sign)
