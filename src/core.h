@@ -221,11 +221,10 @@ struct DateRangeSpec
 /**
  * Converts unix timestamp (nanoseconds) to ptime.
  */
-inline auto toTimeNanoSecPtime(uint64_t nanoseconds_since_epoch)
+inline auto toTimeNanoSecPtime(int64_t nanoseconds_since_epoch)
 {
-    long long seconds_since_epoch = nanoseconds_since_epoch / 1000000000LL;
-    long nanoseconds_remainder = nanoseconds_since_epoch % 1000000000LL;
-    return from_time_t(seconds_since_epoch) + nanoseconds(nanoseconds_remainder);
+    auto div = std::div(nanoseconds_since_epoch, 1000000000L);
+    return from_time_t(div.quot) + nanoseconds(div.rem);
 }
 
  inline auto toTimeNanoSecPtime(ScalarPtr const& timeStampNanoSec)
