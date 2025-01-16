@@ -242,75 +242,41 @@ namespace pd {
     //</editor-fold>
 
     //<editor-fold desc="Indexing Functions">
-    auto Slice(DateTimeSlice const & slicer, auto const& arr, auto const& index, bool labelIndexing)
-    {
-        // Check that index is a TimestampArray
-        if (index->type_id() != arrow::Type::TIMESTAMP) {
-            std::stringstream ss;
-            ss << "Type Error: DateTime slicing is only allowed on TimeStamp DataType, but found index of type "
-               << index->type()->ToString() << "\n";
-            throw std::runtime_error(ss.str());
-        }
+    auto Slice(DateTimeSlice const & slicer, auto const& arr, auto const& index, bool labelIndexing) {
+        if (index->type_id() == arrow::Type::TIMESTAMP) {
 
-        // Cast to TimestampArray
-        auto indexArray = std::static_pointer_cast<arrow::TimestampArray>(index);
-
-        // Grab raw pointer to the timestamp data
-        const int64_t* raw_values = indexArray->raw_values();
-        auto arrayLength = indexArray->length();
-
-        // Default to full range
-        int64_t startOffset = 0;
-        int64_t endOffset   = arrayLength;
-
-        // Find the start offset (inclusive of slicer.start, if it exists)
-        if (slicer.start.has_value()) {
-            auto startValue = fromPTime(slicer.start.value());
-            // lower_bound => first element >= startValue
-            auto begin = raw_values;
-            auto end   = raw_values + arrayLength;
-
-            auto it = std::lower_bound(begin, end, startValue);
-            startOffset = static_cast<int64_t>(std::distance(begin, it));
-
-            if (startOffset == arrayLength) {
-                // All values are < startValue => empty slice or throw
-                throw std::runtime_error("Invalid start index: all timestamps are less than requested start.");
-            }
-        }
-
-        // Find the end offset
-        if (slicer.end.has_value()) {
-            auto endValue = fromPTime(slicer.end.value());
-            auto begin = raw_values;
-            auto end   = raw_values + arrayLength;
-
-            if (labelIndexing) {
-                // labelIndexing=true => inclusive end => use upper_bound
-                // (first element > endValue)
-                auto it = std::upper_bound(begin, end, endValue);
-                endOffset = static_cast<int64_t>(std::distance(begin, it));
-            } else {
-                // labelIndexing=false => exclusive end => use lower_bound
-                // (first element >= endValue)
-                auto it = std::lower_bound(begin, end, endValue);
-                endOffset = static_cast<int64_t>(std::distance(begin, it));
+            pd::ArrayPtr result{nullptr};
+            if (!slicer.start && !slicer.end) {
+                throw std::runtime_error("cannot have empty start and end index");
             }
 
-            if (endOffset == 0) {
-                // All values are > endValue => empty slice or throw
-                throw std::runtime_error("Invalid end index: all timestamps are greater than requested end.");
+            if (slicer.start) {
+                auto startT = fromDateTime(slicer.start.value());
+                result = ReturnOrThrowOnFailure(
+                                 arrow::compute::CallFunction("greater_equal", {index, startT}))
+                                 .make_array();
             }
-        }
+            if (slicer.end) {
+                auto kernel = labelIndexing ? "less_equal" : "less";
+                auto endT = fromDateTime(slicer.end.value());
 
-        // Final check: if startOffset >= endOffset => empty slice
-        if (startOffset >= endOffset) {
-            // Return an empty array or throw, depending on your desired behavior
-            // For demonstration, let's just throw:
-            throw std::runtime_error("Slice is empty because start >= end.");
-        }
+                if (result) {
+                    result = ReturnOrThrowOnFailure(arrow::compute::CallFunction("and", {ReturnOrThrowOnFailure(
+                                                                                                 arrow::compute::CallFunction(kernel, {index, endT}))
+                                                                                                 .make_array(),
+                                                                                         result}))
+                                     .make_array();
+                } else {
+                    result = ReturnOrThrowOnFailure(arrow::compute::CallFunction(kernel, {index, endT})).make_array();
+                }
+            }
 
-        return arr[{startOffset, endOffset}];
+            return arr.where(pd::Series(result, index));
+        }
+        std::stringstream ss;
+        ss << "Type Error: DateTime slicing is only allowed on TimeStamp DataType, but found index of type "
+           << index->type()->ToString() << "\n";
+        throw std::runtime_error(ss.str());
     }
 
     template<class ArrayTypeImpl>

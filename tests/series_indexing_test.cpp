@@ -149,7 +149,7 @@ TEST_CASE("Test Series::operator with dateslice") {
     REQUIRE(result4.size() == 4);
 
     DateSlice slicer5 = {date(2022, 1, 6), date(2022, 1, 7)};
-    REQUIRE_THROWS_AS(s1[slicer5], std::runtime_error);
+    REQUIRE(s1[slicer5].size() == 0);
 }
 
 TEST_CASE("Test Series::operator with DateTimeSlice") {
@@ -203,7 +203,7 @@ TEST_CASE("Test Series::operator with DateTimeSlice") {
 
     SECTION("Test with invalid range") {
         DateTimeSlice slicer4 = {ptime(date(2022, 1, 2), hours(14)), ptime(date(2022, 1, 1), hours(10))};
-        REQUIRE_THROWS_AS(s1[slicer4], std::runtime_error);
+        REQUIRE(s1[slicer4].size() == 0);
     }
 }
 
