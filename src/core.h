@@ -167,14 +167,14 @@ private:
 
 struct DateSlice
 {
-    std::optional<date> start{};
-    std::optional<date> end = {};
+    date start{not_a_date_time};
+    date end{not_a_date_time};
 };
 
     struct DateTimeSlice
     {
-        std::optional<ptime> start{};
-        std::optional<ptime> end = {};
+        ptime start{not_a_date_time};
+        ptime end{not_a_date_time};
     };
 
 struct StringSlice

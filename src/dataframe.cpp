@@ -386,16 +386,16 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
         if (m_index->type_id() == arrow::Type::TIMESTAMP) {
             int64_t start = 0, end = m_index->length() - 1;
 
-            if (slicer.start) {
+            if (!slicer.start.is_not_a_date_time()) {
                 start = ReturnScalarOrThrowOnError(
                         arrow::compute::Index(m_index,
                                               arrow::compute::IndexOptions{
-                                                      fromDateTime(slicer.start.value())})).as<int64_t>();
+                                                      fromDateTime(slicer.start)})).as<int64_t>();
             }
-            if (slicer.end) {
+            if (!slicer.end.is_not_a_date_time()) {
                 end = ReturnScalarOrThrowOnError(
                         arrow::compute::Index(m_index, arrow::compute::IndexOptions{
-                                fromDateTime(slicer.end.value())})).as<int64_t>();
+                                fromDateTime(slicer.end)})).as<int64_t>();
             }
 
             return slice(Slice{start, end}, columns);

@@ -246,19 +246,19 @@ namespace pd {
         if (index->type_id() == arrow::Type::TIMESTAMP) {
 
             pd::ArrayPtr result{nullptr};
-            if (!slicer.start && !slicer.end) {
+            if (slicer.start.is_not_a_date_time() && slicer.end.is_not_a_date_time()) {
                 throw std::runtime_error("cannot have empty start and end index");
             }
 
-            if (slicer.start) {
-                auto startT = fromDateTime(slicer.start.value());
+            if (!slicer.start.is_not_a_date_time()) {
+                auto startT = fromDateTime(slicer.start);
                 result = ReturnOrThrowOnFailure(
                                  arrow::compute::CallFunction("greater_equal", {index, startT}))
                                  .make_array();
             }
-            if (slicer.end) {
+            if (!slicer.end.is_not_a_date_time()) {
                 auto kernel = labelIndexing ? "less_equal" : "less";
-                auto endT = fromDateTime(slicer.end.value());
+                auto endT = fromDateTime(slicer.end);
 
                 if (result) {
                     result = ReturnOrThrowOnFailure(arrow::compute::CallFunction("and", {ReturnOrThrowOnFailure(
@@ -293,15 +293,14 @@ namespace pd {
 
     template<class ArrayTypeImpl>
     NDFrame<ArrayTypeImpl>::ChildType NDFrame<ArrayTypeImpl>::operator[](DateSlice const & s) const{
-        return operator[]({s.start ? std::optional{ptime(*s.start)} : std::nullopt,
-                           s.end  ? std::optional{ptime(*s.end)} : std::nullopt});
+        return operator[]({ptime(s.start), ptime(s.end)});
     }
 
     template<class ArrayTypeImpl>
     NDFrame<ArrayTypeImpl>::ChildType NDFrame<ArrayTypeImpl>::loc(DateSlice const &s) const
     {
-        return loc({s.start ? std::optional{ptime(*s.start)} : std::nullopt,
-                    s.end  ? std::optional{ptime(*s.end)} : std::nullopt});
+        return loc({ptime(s.start), ptime(s.end)});
+
     }
 
     auto Slice(StringSlice const & slicer, auto const& arr, auto const& index, bool labelIndexing)

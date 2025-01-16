@@ -137,7 +137,7 @@ TEST_CASE("Test Series::operator with dateslice") {
     REQUIRE(result2.at(2) == 5);
 
     // Test with only end
-    DateSlice slicer3 = {std::nullopt, date(2022, 1, 3)};
+    DateSlice slicer3 = {.end=date(2022, 1, 3)};
     auto result3 = s1[slicer3];
     REQUIRE(result3.size() == 2);
     REQUIRE(result3.at(0) == 1);
@@ -176,7 +176,7 @@ TEST_CASE("Test Series::operator with DateTimeSlice") {
     }
 
     SECTION("Test with only start time") {
-        DateTimeSlice slicer2 = {ptime(date(2022, 1, 1), hours(14)), std::nullopt};
+        DateTimeSlice slicer2 = {ptime(date(2022, 1, 1), hours(14))};
         auto result2 = s1[slicer2];
         REQUIRE(result2.size() == 3);
         REQUIRE(result2.at(0) == 30);
@@ -185,7 +185,7 @@ TEST_CASE("Test Series::operator with DateTimeSlice") {
     }
 
     SECTION("Test with only end time") {
-        DateTimeSlice slicer3 = {std::nullopt, ptime(date(2022, 1, 1), hours(14))};
+        DateTimeSlice slicer3 = {.end=ptime(date(2022, 1, 1), hours(14))};
         auto result3 = s1[slicer3];
         REQUIRE(result3.size() == 2);
         REQUIRE(result3.at(0) == 10);
@@ -193,7 +193,7 @@ TEST_CASE("Test Series::operator with DateTimeSlice") {
     }
 
     SECTION("Test with only end time , LOC") {
-        DateTimeSlice slicer3 = {std::nullopt, ptime(date(2022, 1, 1), hours(14))};
+        DateTimeSlice slicer3 = {.end=ptime(date(2022, 1, 1), hours(14))};
         auto result3 = s1.loc(slicer3);
         REQUIRE(result3.size() == 3);
         REQUIRE(result3.at(0) == 10);
