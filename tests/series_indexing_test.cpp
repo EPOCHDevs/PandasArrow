@@ -145,7 +145,11 @@ TEST_CASE("Test Series::operator with dateslice") {
 
     // Test with both start and end
     DateSlice slicer4 = {date(2022, 1, 2), date(2022, 1, 7)};
-    REQUIRE_THROWS_AS(s1[slicer4], std::runtime_error);
+    auto result4= s1[slicer4];
+    REQUIRE(result4.size() == 4);
+
+    DateSlice slicer5 = {date(2022, 1, 6), date(2022, 1, 7)};
+    REQUIRE_THROWS_AS(s1[slicer5], std::runtime_error);
 }
 
 TEST_CASE("Test Series::operator with DateTimeSlice") {

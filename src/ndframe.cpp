@@ -244,31 +244,73 @@ namespace pd {
     //<editor-fold desc="Indexing Functions">
     auto Slice(DateTimeSlice const & slicer, auto const& arr, auto const& index, bool labelIndexing)
     {
-        if (index->type_id() == arrow::Type::TIMESTAMP) {
-            int64_t start = 0, end = index->length();
-
-            if (slicer.start) {
-                start = ReturnScalarOrThrowOnError(
-                        arrow::compute::Index(index,
-                                              arrow::compute::IndexOptions{fromDateTime(slicer.start.value())})).template as<int64_t>();
-                if (start == -1) {
-                    throw std::runtime_error("invalid start index");
-                }
-            }
-            if (slicer.end) {
-                end = ReturnScalarOrThrowOnError(
-                        arrow::compute::Index(index, arrow::compute::IndexOptions{fromDateTime(slicer.end.value())})).template as<int64_t>();
-                if (end == -1) {
-                    throw std::runtime_error("invalid end index");
-                }
-            }
-            return arr[{start, end + static_cast<int>(labelIndexing)}];
-        } else {
+        // Check that index is a TimestampArray
+        if (index->type_id() != arrow::Type::TIMESTAMP) {
             std::stringstream ss;
             ss << "Type Error: DateTime slicing is only allowed on TimeStamp DataType, but found index of type "
                << index->type()->ToString() << "\n";
             throw std::runtime_error(ss.str());
         }
+
+        // Cast to TimestampArray
+        auto indexArray = std::static_pointer_cast<arrow::TimestampArray>(index);
+
+        // Grab raw pointer to the timestamp data
+        const int64_t* raw_values = indexArray->raw_values();
+        auto arrayLength = indexArray->length();
+
+        // Default to full range
+        int64_t startOffset = 0;
+        int64_t endOffset   = arrayLength;
+
+        // Find the start offset (inclusive of slicer.start, if it exists)
+        if (slicer.start.has_value()) {
+            auto startValue = fromPTime(slicer.start.value());
+            // lower_bound => first element >= startValue
+            auto begin = raw_values;
+            auto end   = raw_values + arrayLength;
+
+            auto it = std::lower_bound(begin, end, startValue);
+            startOffset = static_cast<int64_t>(std::distance(begin, it));
+
+            if (startOffset == arrayLength) {
+                // All values are < startValue => empty slice or throw
+                throw std::runtime_error("Invalid start index: all timestamps are less than requested start.");
+            }
+        }
+
+        // Find the end offset
+        if (slicer.end.has_value()) {
+            auto endValue = fromPTime(slicer.end.value());
+            auto begin = raw_values;
+            auto end   = raw_values + arrayLength;
+
+            if (labelIndexing) {
+                // labelIndexing=true => inclusive end => use upper_bound
+                // (first element > endValue)
+                auto it = std::upper_bound(begin, end, endValue);
+                endOffset = static_cast<int64_t>(std::distance(begin, it));
+            } else {
+                // labelIndexing=false => exclusive end => use lower_bound
+                // (first element >= endValue)
+                auto it = std::lower_bound(begin, end, endValue);
+                endOffset = static_cast<int64_t>(std::distance(begin, it));
+            }
+
+            if (endOffset == 0) {
+                // All values are > endValue => empty slice or throw
+                throw std::runtime_error("Invalid end index: all timestamps are greater than requested end.");
+            }
+        }
+
+        // Final check: if startOffset >= endOffset => empty slice
+        if (startOffset >= endOffset) {
+            // Return an empty array or throw, depending on your desired behavior
+            // For demonstration, let's just throw:
+            throw std::runtime_error("Slice is empty because start >= end.");
+        }
+
+        return arr[{startOffset, endOffset}];
     }
 
     template<class ArrayTypeImpl>
