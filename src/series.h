@@ -215,9 +215,9 @@ namespace pd {
         {
             typename arrow::CTypeTraits<OutType>::BuilderType builder;
             ThrowOnFailure(builder.Reserve(size()));
-            for (auto const& element: getSpan<InType>())
+            for (auto const& element: view<InType>())
             {
-                builder.UnsafeAppend(fn(element));
+                builder.UnsafeAppend(fn(*element));
             }
             return {ReturnOrThrowOnFailure(builder.Finish()), m_index};
         }
@@ -283,16 +283,6 @@ namespace pd {
         }
 
         template<typename T>
-        auto const_ptr() const {
-            static_assert(arrow::is_fixed_width_type<typename arrow::CTypeTraits<T>::ArrowType>::value, "Type must be fixed width");
-            if (arrow::CTypeTraits<T>::type_singleton()->id() != m_array->type()->id())
-            {
-                throw std::runtime_error(fmt::format("Type mismatch: expected {}, got {}", m_array->type()->ToString(), arrow::CTypeTraits<T>::type_singleton()->ToString()));
-            }
-            return reinterpret_cast<const T *>(m_array->data()->buffers[1]->data()) + m_array->offset();
-        }
-
-        template<typename T>
         std::vector<T> values() const;
 
         template<typename T>
@@ -320,7 +310,12 @@ namespace pd {
 
         template<typename T>
         std::span<const T> getSpan() const {
-            return {this->const_ptr<T>(), size_t(size())};
+            return this->getSpanInternal<T>(m_array);
+        }
+
+        template<typename T>
+        auto const_ptr() const {
+            return getConstPtr<T>(m_array);
         }
 
         using Shape = std::array<::int64_t, 1>;
@@ -568,40 +563,12 @@ namespace pd {
 
     template<typename T>
     std::vector<T> Series::values() const {
-        static_assert(not std::is_same_v<T, bool>);
-
-        auto requested_type = arrow::CTypeTraits<T>::type_singleton();
-        if (requested_type == m_array->type()) {
-            std::vector<T> result;
-            result.resize(m_array->length());
-
-            if constexpr (std::same_as<T, std::string>) {
-                auto stringSpan = values<std::string_view>();
-                std::ranges::copy(stringSpan, result.begin());
-            } else {
-                auto realArray = std::static_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(m_array);
-
-                auto N = realArray->length();
-                auto ptr = realArray->raw_values();
-
-                memcpy(result.data(), ptr, sizeof(T) * N);
-            }
-            return result;
-        } else {
-            throw RawArrayCastException(requested_type, m_array->type());
-        }
+        return getValues<T>(m_array);
     }
 
     template<typename T>
     std::shared_ptr<typename arrow::CTypeTraits<T>::ArrayType> Series::view() const {
-        static_assert(not std::is_same_v<T, bool>);
-
-        auto requested_type = arrow::CTypeTraits<T>::type_singleton();
-        if (requested_type == m_array->type()) {
-            return std::static_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(m_array);
-        } else {
-            throw RawArrayCastException(requested_type, m_array->type());
-        }
+        return getViewInternal<T>(m_array);
     }
 
     template<typename DataT, typename OutputT, typename... Args>

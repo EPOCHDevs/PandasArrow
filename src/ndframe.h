@@ -133,24 +133,84 @@ namespace pd {
         }
 
         template<typename T>
-        std::span<const T> getIndexSpan() const {
+        static auto getConstPtr(pd::ArrayPtr const& array) {
             static_assert(arrow::is_fixed_width_type<typename arrow::CTypeTraits<T>::ArrowType>::value, "Type must be fixed width");
-            if (arrow::CTypeTraits<T>::type_singleton()->id() != m_index->type()->id())
+            if (arrow::CTypeTraits<T>::type_singleton()->id() != array->type()->id())
             {
-                throw std::runtime_error(fmt::format("Type mismatch: expected {}, got {}", m_index->type()->ToString(), arrow::CTypeTraits<T>::type_singleton()->ToString()));
+                throw std::runtime_error(fmt::format("Type mismatch: expected {}, got {}", array->type()->ToString(), arrow::CTypeTraits<T>::type_singleton()->ToString()));
             }
-            return {reinterpret_cast<const T *>(m_index->data()->buffers[1]->data()) + m_index->offset(),
-                    size_t(m_index->length())};
+            return reinterpret_cast<const T *>(array->data()->buffers[1]->data()) + array->offset();
+        }
+
+        template<typename T>
+        static std::span<const T> getSpanInternal(pd::ArrayPtr const& array) {
+            return {getConstPtr<T>(array), static_cast<size_t>(array->length())};
+        }
+
+        template<typename T>
+        std::span<const T> getIndexSpan() const {
+            return this->getSpanInternal<T>(m_index);
+        }
+
+        template<typename T>
+        static std::shared_ptr<typename arrow::CTypeTraits<T>::ArrayType> getViewInternal(pd::ArrayPtr const& array)  {
+            if (arrow::CTypeTraits<T>::type_singleton()->id() != array->type()->id())
+            {
+                throw std::runtime_error(fmt::format("Type mismatch: expected {}, got {}", array->type()->ToString(), arrow::CTypeTraits<T>::type_singleton()->ToString()));
+            }
+            return std::static_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(array);
         }
 
         template<typename T>
         std::shared_ptr<typename arrow::CTypeTraits<T>::ArrayType> getIndexView() const {
-            if (arrow::CTypeTraits<T>::type_singleton()->id() != m_index->type()->id())
-            {
-                throw std::runtime_error(fmt::format("Type mismatch: expected {}, got {}", m_index->type()->ToString(), arrow::CTypeTraits<T>::type_singleton()->ToString()));
-            }
-            return std::static_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(m_index);
+            return this->getViewInternal<T>(m_index);
         }
+
+        template<typename T>
+        static std::vector<T> getValues(ArrayPtr const& array)  {
+            if (array->null_count() != 0) {
+                throw std::runtime_error("values() called on null array");
+            }
+
+            auto requested_type = arrow::CTypeTraits<T>::type_singleton();
+            if (requested_type == array->type()) {
+                std::vector<T> result;
+
+
+                if constexpr (!arrow::is_fixed_width_type<typename arrow::CTypeTraits<T>::ArrowType>::value) {
+                    result.resize(array->length());
+                    auto viewArray = getViewInternal<T>(array);
+                    std::ranges::transform(*viewArray, result.begin(), [](auto const& s){
+                        return (*s);
+                    });
+                }
+                else if constexpr (std::same_as<T, bool>) {
+                    result.reserve(array->length());
+                    std::shared_ptr<arrow::BooleanArray> viewArray = getViewInternal<bool>(array);
+                    std::transform(viewArray->begin(),  viewArray->end(), std::back_inserter(result), [](auto const& s){
+                        return *s;
+                    });
+                }
+                else {
+                    result.resize(array->length());
+                    auto realArray = std::static_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(array);
+
+                    auto N = realArray->length();
+                    auto ptr = realArray->raw_values();
+
+                    memcpy(result.data(), ptr, sizeof(T) * N);
+                }
+                return result;
+            } else {
+                throw RawArrayCastException(requested_type, array->type());
+            }
+        }
+
+        template<typename T>
+        std::vector<T> getIndexValues() const {
+            return getValues<T>(m_index);
+        }
+
         //</editor-fold>
 
         //<editor-fold desc="Aggregation Functions">

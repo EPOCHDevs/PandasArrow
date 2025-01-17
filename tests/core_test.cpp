@@ -72,3 +72,19 @@ TEST_CASE("PromoteTypes: timestamp and int32", "[promoteTypes]")
     std::vector<std::shared_ptr<arrow::DataType>> types = { arrow::timestamp(arrow::TimeUnit::SECOND), arrow::int32() };
     REQUIRE(promoteTypes(types)->id() == arrow::Type::TIMESTAMP);
 }
+
+TEST_CASE("Test GetIndexValues") {
+    std::vector<int64_t> v{ 1, 2, 3, 4, 5 };
+
+    auto series = pd::Series{v, "vals" };
+    REQUIRE(series.getIndexValues<uint64_t>() == std::vector<uint64_t>{ 0, 1, 2, 3, 4});
+    REQUIRE_THROWS(series.getIndexValues<int64_t>());
+
+    std::vector<std::string> indexV{"jane", "hello", "hi"};
+    series = pd::Series{ std::vector<std::string>{ "1", "2", "3" }, "vals", arrow::ArrayT<std::string>::Make(indexV) };
+    REQUIRE(series.getIndexValues<std::string>() == indexV);
+
+    std::vector<bool> indexB{true, false};
+    series = pd::Series{ std::vector<std::string>{ "1", "2"}, "vals", arrow::ArrayT<bool>::Make(indexB) };
+    REQUIRE(series.getIndexValues<bool>() == indexB);
+}
