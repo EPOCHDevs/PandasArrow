@@ -576,7 +576,7 @@ namespace pd {
             result.resize(m_array->length());
 
             if constexpr (std::same_as<T, std::string>) {
-                auto stringSpan = getSpan<std::string_view>();
+                auto stringSpan = values<std::string_view>();
                 std::ranges::copy(stringSpan, result.begin());
             } else {
                 auto realArray = std::static_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(m_array);

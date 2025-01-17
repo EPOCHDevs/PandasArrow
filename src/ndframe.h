@@ -142,6 +142,16 @@ namespace pd {
             return {reinterpret_cast<const T *>(m_index->data()->buffers[1]->data()) + m_index->offset(),
                     size_t(m_index->length())};
         }
+
+        template<typename T>
+        std::shared_ptr<typename arrow::CTypeTraits<T>::ArrayType> getIndexView() const {
+            static_assert(arrow::is_fixed_width_type<typename arrow::CTypeTraits<T>::ArrowType>::value, "Type must be fixed width");
+            if (arrow::CTypeTraits<T>::type_singleton()->id() != m_index->type()->id())
+            {
+                throw std::runtime_error(fmt::format("Type mismatch: expected {}, got {}", m_index->type()->ToString(), arrow::CTypeTraits<T>::type_singleton()->ToString()));
+            }
+            return std::static_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(m_index);
+        }
         //</editor-fold>
 
         //<editor-fold desc="Aggregation Functions">
