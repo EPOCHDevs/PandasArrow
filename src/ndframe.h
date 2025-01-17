@@ -133,11 +133,20 @@ namespace pd {
         }
 
         template<typename T>
+        static bool CanCastToInt64FromTimestamp(pd::ArrayPtr const& array) {
+            return (arrow::CTypeTraits<T>::type_singleton()->id() == arrow::Type::INT64 && array->type()->id() == arrow::Type::TIMESTAMP);
+        }
+
+        template<typename T>
         static auto getConstPtr(pd::ArrayPtr const& array) {
             static_assert(arrow::is_fixed_width_type<typename arrow::CTypeTraits<T>::ArrowType>::value, "Type must be fixed width");
-            if (arrow::CTypeTraits<T>::type_singleton()->id() != array->type()->id())
+            auto expectedType = arrow::CTypeTraits<T>::type_singleton()->id();
+            if (expectedType != array->type()->id())
             {
-                throw std::runtime_error(fmt::format("Type mismatch: expected {}, got {}", array->type()->ToString(), arrow::CTypeTraits<T>::type_singleton()->ToString()));
+                if (! CanCastToInt64FromTimestamp<T>(array))
+                {
+                    throw std::runtime_error(fmt::format("Type mismatch: expected {}, got {}", array->type()->ToString(), arrow::CTypeTraits<T>::type_singleton()->ToString()));
+                }
             }
             return reinterpret_cast<const T *>(array->data()->buffers[1]->data()) + array->offset();
         }
@@ -156,7 +165,10 @@ namespace pd {
         static std::shared_ptr<typename arrow::CTypeTraits<T>::ArrayType> getViewInternal(pd::ArrayPtr const& array)  {
             if (arrow::CTypeTraits<T>::type_singleton()->id() != array->type()->id())
             {
-                throw std::runtime_error(fmt::format("Type mismatch: expected {}, got {}", array->type()->ToString(), arrow::CTypeTraits<T>::type_singleton()->ToString()));
+                if (! CanCastToInt64FromTimestamp<T>(array))
+                {
+                    throw std::runtime_error(fmt::format("Type mismatch: expected {}, got {}", array->type()->ToString(), arrow::CTypeTraits<T>::type_singleton()->ToString()));
+                }
             }
             return std::static_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(array);
         }
@@ -167,43 +179,41 @@ namespace pd {
         }
 
         template<typename T>
-        static std::vector<T> getValues(ArrayPtr const& array)  {
+        static std::vector<T> getValues(ArrayPtr const& array) {
             if (array->null_count() != 0) {
                 throw std::runtime_error("values() called on null array");
             }
 
             auto requested_type = arrow::CTypeTraits<T>::type_singleton();
-            if (requested_type == array->type()) {
-                std::vector<T> result;
-
-
-                if constexpr (!arrow::is_fixed_width_type<typename arrow::CTypeTraits<T>::ArrowType>::value) {
-                    result.resize(array->length());
-                    auto viewArray = getViewInternal<T>(array);
-                    std::ranges::transform(*viewArray, result.begin(), [](auto const& s){
-                        return (*s);
-                    });
+            if (requested_type != array->type()) {
+                if (!CanCastToInt64FromTimestamp<T>(array)) {
+                    throw RawArrayCastException(requested_type, array->type());
                 }
-                else if constexpr (std::same_as<T, bool>) {
-                    result.reserve(array->length());
-                    std::shared_ptr<arrow::BooleanArray> viewArray = getViewInternal<bool>(array);
-                    std::transform(viewArray->begin(),  viewArray->end(), std::back_inserter(result), [](auto const& s){
-                        return *s;
-                    });
-                }
-                else {
-                    result.resize(array->length());
-                    auto realArray = std::static_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(array);
-
-                    auto N = realArray->length();
-                    auto ptr = realArray->raw_values();
-
-                    memcpy(result.data(), ptr, sizeof(T) * N);
-                }
-                return result;
-            } else {
-                throw RawArrayCastException(requested_type, array->type());
             }
+
+            std::vector<T> result;
+            if constexpr (!arrow::is_fixed_width_type<typename arrow::CTypeTraits<T>::ArrowType>::value) {
+                result.resize(array->length());
+                auto viewArray = getViewInternal<T>(array);
+                std::ranges::transform(*viewArray, result.begin(), [](auto const &s) {
+                    return (*s);
+                });
+            } else if constexpr (std::same_as<T, bool>) {
+                result.reserve(array->length());
+                std::shared_ptr<arrow::BooleanArray> viewArray = getViewInternal<bool>(array);
+                std::transform(viewArray->begin(), viewArray->end(), std::back_inserter(result), [](auto const &s) {
+                    return *s;
+                });
+            } else {
+                result.resize(array->length());
+                auto realArray = std::static_pointer_cast<typename arrow::CTypeTraits<T>::ArrayType>(array);
+
+                auto N = realArray->length();
+                auto ptr = realArray->raw_values();
+
+                memcpy(result.data(), ptr, sizeof(T) * N);
+            }
+            return result;
         }
 
         template<typename T>
