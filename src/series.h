@@ -415,7 +415,7 @@ namespace pd {
 
         [[nodiscard]] Series argsort(bool ascending = true) const;
 
-        [[nodiscard]] std::array<std::shared_ptr<arrow::Array>, 2> sort(bool ascending = true) const;
+        [[nodiscard]] pd::Series sort(bool ascending = true) const;
 
         [[nodiscard]] Series nth_element(int n = 0) const;
 

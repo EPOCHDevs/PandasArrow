@@ -1061,12 +1061,12 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
     }
 
     DataFrame DataFrame::sort_index(bool ascending, bool ignore_index) {
-        Series index(m_index, nullptr, "", true);
+        Series index(m_index, nullptr);
 
-        auto [sorted_values, sorted_indices] = index.sort(ascending);
-        auto result = arrow::compute::CallFunction("take", {m_array, sorted_indices});
+        auto sorted = index.sort(ascending);
+        auto result = arrow::compute::CallFunction("take", {m_array, sorted.indexArray()});
         if (result.ok()) {
-            return DataFrame{result.MoveValueUnsafe().record_batch(), ignore_index ? nullptr : sorted_values};
+            return DataFrame{result.MoveValueUnsafe().record_batch(), ignore_index ? nullptr : sorted.array()};
         }
         throw std::runtime_error(result.status().ToString());
     }
@@ -1186,7 +1186,7 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
         return {m_array->schema(), newIndex->length(), reindexedSeries, newIndex};
     }
 
-    DataFrame DataFrame::sort_values(const std::vector<std::string> &by, bool ascending, bool /*ignore_index*/) {
+    DataFrame DataFrame::sort_values(const std::vector<std::string> &by, bool ascending) {
 
         auto array = m_array;
         auto fields = m_array->schema()->field_names();
@@ -1202,7 +1202,7 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
 
             array = ReturnOrThrowOnFailure(
                     array->SetColumn(i, arrow::field(field, col->type()),
-                                     Series(col, nullptr, "", true).sort(ascending)[0]));
+                                     Series(col, m_index).sort(ascending).array()));
         }
 
         return pd::DataFrame{array};

@@ -1065,15 +1065,11 @@ TEST_CASE("Union of two index series")
     REQUIRE_THROWS(s1.union_(s1.shift()));
 }
 
-
-
-
-
 TEST_CASE("Test Series::argsort() and Series::sort() functions")
 {
     std::vector<int> vec = { 5, 3, 2, 4, 1 };
     auto array = arrow::ArrayT<int>::Make(vec);
-    Series s(array, true);
+    Series s(array, nullptr);
 
     SECTION("Test sort with ascending order")
     {
@@ -1101,7 +1097,7 @@ TEST_CASE("Test Series::argsort() and Series::sort() functions")
 
     SECTION("Test sort with ascending order")
     {
-        auto result3 = Series(s.sort()[0], true);
+        auto result3 = s.sort();
         INFO(result3);
         REQUIRE(result3.size() == 5);
         REQUIRE(result3.at(0) == 1);
@@ -1113,7 +1109,7 @@ TEST_CASE("Test Series::argsort() and Series::sort() functions")
 
     SECTION("Test sort with descending order")
     {
-        auto result4 = Series(s.sort(false)[0], true);
+        auto result4 = s.sort(false);
         INFO(result4);
         REQUIRE(result4.size() == 5);
         REQUIRE(result4.at(0) == 5);

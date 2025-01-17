@@ -975,13 +975,18 @@ namespace pd {
         return ReturnSeriesOrThrowOnError(arrow::compute::CallFunction("partition_nth_indices", {m_array}, &opt));
     }
 
-    std::array<std::shared_ptr<arrow::Array>, 2> Series::sort(bool ascending) const {
+    pd::Series Series::sort(bool ascending) const {
+        if (!m_index)
+        {
+            throw std::runtime_error("Cannot sort a Series without an index");
+        }
+
         auto opt = arrow::compute::ArraySortOptions{ascending ? arrow::compute::SortOrder::Ascending :
                                                               arrow::compute::SortOrder::Descending};
         auto result = arrow::compute::CallFunction("array_sort_indices", {m_array}, &opt);
         if (result.ok()) {
             auto indices = result.MoveValueUnsafe();
-            return {arrow::compute::Take(m_array, indices)->make_array(), arrow::compute::Take(m_index, indices)->make_array()};
+            return pd::Series{arrow::compute::Take(m_array, indices)->make_array(), arrow::compute::Take(m_index, indices)->make_array(), m_name};
         }
         throw std::runtime_error(result.status().ToString());
     }
@@ -1205,14 +1210,22 @@ namespace pd {
 
     Series Series::n_largest(int n) const
     {
-        auto [values, index] =  sort(false);
-        return Series{values->Slice(0, n), index->Slice(0, n), m_name};
+        auto sorted=  sort(false);
+        if (sorted.size() < n)
+        {
+            return sorted;
+        }
+        return Series{sorted.array()->Slice(0, n), sorted.indexArray()->Slice(0, n), m_name};
     }
 
     Series Series::n_smallest(int n) const
     {
-        auto [values, index] =  sort(true);
-        return Series{values->Slice(0, n), index->Slice(0, n), m_name};
+        auto sorted=  sort(true);
+        if (sorted.size() < n)
+        {
+            return sorted;
+        }
+        return Series{sorted.array()->Slice(0, n), sorted.indexArray()->Slice(0, n), m_name};
     }
 
     GenericFunctionSeriesReturn(is_finite)

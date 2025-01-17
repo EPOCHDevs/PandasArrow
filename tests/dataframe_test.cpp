@@ -387,13 +387,13 @@ TEST_CASE("Test sort_index with ascending=false and ignore_index=false", "[sort_
     REQUIRE(sorted.at(0, 2) == 9);
 }
 
-TEST_CASE("Test sort_values with by and ascending=false and ignore_index=true", "[sort_values]")
+TEST_CASE("Test sort_values with by and ascending=false", "[sort_values]")
 {
     pd::DataFrame df(std::vector<std::vector<int>>{ { 1, 2, 3 }, { 4, 5, 6 }, { 7, 8, 9 } },
                      { "a", "b", "c" });
     df = df.setIndex(arrow::ArrayT<std::string>::Make({ "x", "y", "z" }));
 
-    auto sorted = df.sort_values({ "a", "b" }, false, true);
+    auto sorted = df.sort_values({ "a", "b" }, false);
 
     REQUIRE(sorted.shape() == pd::DataFrame::Shape{ 3, 3 });
     REQUIRE(sorted.columns() == std::vector<std::string>{ "a", "b", "c" });

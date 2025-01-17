@@ -559,8 +559,7 @@ namespace pd {
 
         [[nodiscard]] DataFrame sort_values(
                 std::vector<std::string> const &by,
-                bool ascending = true,
-                bool ignore_index = false);
+                bool ascending = true);
 
         [[nodiscard]] class GroupBy group_by(std::string const &) const;
         [[nodiscard]] GroupBy group_by(const ArrayPtr& key) const;
