@@ -977,11 +977,11 @@ namespace pd {
 
     std::array<std::shared_ptr<arrow::Array>, 2> Series::sort(bool ascending) const {
         auto opt = arrow::compute::ArraySortOptions{ascending ? arrow::compute::SortOrder::Ascending :
-                                                    arrow::compute::SortOrder::Descending};
+                                                              arrow::compute::SortOrder::Descending};
         auto result = arrow::compute::CallFunction("array_sort_indices", {m_array}, &opt);
         if (result.ok()) {
             auto indices = result.MoveValueUnsafe();
-            return {arrow::compute::Take(m_array, indices)->make_array(), indices.make_array()};
+            return {arrow::compute::Take(m_array, indices)->make_array(), arrow::compute::Take(m_index, indices)->make_array()};
         }
         throw std::runtime_error(result.status().ToString());
     }
