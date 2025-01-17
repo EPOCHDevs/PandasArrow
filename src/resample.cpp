@@ -221,11 +221,11 @@ GroupInfo makeGroupInfo(
     }
 
     const auto datum = pd::ReturnOrThrowOnFailure(arrow::compute::MinMax(timestamps_ax));
-    auto datum_struct = datum.scalar_as<arrow::StructScalar>();
+    const auto& datum_struct = datum.scalar_as<arrow::StructScalar>();
     auto [min, max] = MinMax{ Scalar{datum_struct.value[0]}, Scalar{datum_struct.value[1]} };
 
-    ptime minValue = toTimeNanoSecPtime(min.scalar);
-    ptime maxValue = toTimeNanoSecPtime(max.scalar);
+    const auto minValue = min.as<ptime>();
+    const auto maxValue = max.as<ptime>();
 
     std::shared_ptr<arrow::TimestampArray> binner, labels;
     std::shared_ptr<arrow::Int64Array> binEdges;
