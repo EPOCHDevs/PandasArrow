@@ -123,7 +123,8 @@ namespace pd {
                 if (scalar->type->id() != arrow::Type::TIMESTAMP){
                     throw std::runtime_error("as<date|ptime>() requires a TimestampScalar");
                 }
-                auto ptimeValue = time_from_string(scalar->ToString());
+                auto ns = std::dynamic_pointer_cast<arrow::TimestampScalar>(scalar)->value;
+                auto ptimeValue = toTimeNanoSecPtime(ns);
                 if constexpr (std::is_same_v<T, date>) {
                     return ptimeValue.date();
                 }
