@@ -145,7 +145,6 @@ namespace pd {
 
         template<typename T>
         std::shared_ptr<typename arrow::CTypeTraits<T>::ArrayType> getIndexView() const {
-            static_assert(arrow::is_fixed_width_type<typename arrow::CTypeTraits<T>::ArrowType>::value, "Type must be fixed width");
             if (arrow::CTypeTraits<T>::type_singleton()->id() != m_index->type()->id())
             {
                 throw std::runtime_error(fmt::format("Type mismatch: expected {}, got {}", m_index->type()->ToString(), arrow::CTypeTraits<T>::type_singleton()->ToString()));
