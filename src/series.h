@@ -284,6 +284,11 @@ namespace pd {
 
         template<typename T>
         auto const_ptr() const {
+            static_assert(arrow::is_fixed_width_type<typename arrow::CTypeTraits<T>::ArrowType>::value, "Type must be fixed width");
+            if (arrow::CTypeTraits<T>::type_singleton()->id() != m_array->type()->id())
+            {
+                throw std::runtime_error(fmt::format("Type mismatch: expected {}, got {}", m_array->type()->ToString(), arrow::CTypeTraits<T>::type_singleton()->ToString()));
+            }
             return reinterpret_cast<const T *>(m_array->data()->buffers[1]->data()) + m_array->offset();
         }
 
@@ -315,7 +320,6 @@ namespace pd {
 
         template<typename T>
         std::span<const T> getSpan() const {
-            static_assert(not std::is_same_v<T, bool>);
             return {this->const_ptr<T>(), size_t(size())};
         }
 

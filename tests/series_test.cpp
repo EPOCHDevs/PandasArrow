@@ -1390,8 +1390,6 @@ TEST_CASE("Test reindex function", "[reindex]")
     REQUIRE(outputSeries.array()->Equals(expectedValues));
 }
 
-using int64 = int64_t;
-
 TEST_CASE("Test toFrame", "[to_frame]")
 {
     auto series = pd::Series{ std::vector<std::string>{ "a", "b", "c" }, "vals" };
@@ -1407,4 +1405,16 @@ TEST_CASE("Test toFrame", "[to_frame]")
     expected = pd::DataFrame{ pd::ArrayPtr{ nullptr }, std::pair{ "val"s, std::vector{ "a"s, "b"s, "c"s } } };
 
     REQUIRE(df.equals_(expected));
+}
+
+TEST_CASE("Test GetSpan") {
+    auto series = pd::Series{ std::vector<int64_t>{ 1, 2, 3, 4, 5 }, "vals" };
+    REQUIRE(series.getSpan<int64_t>().front() == 1);
+    REQUIRE(series.getSpan<int64_t>().back() == 5);
+    REQUIRE(series.getIndexSpan<uint64_t>().front() == 0);
+    REQUIRE(series.getIndexSpan<uint64_t>().back() == 4);
+
+    series = pd::Series{ std::vector<std::string>{ "1", "2", "3" }, "vals", arrow::ArrayT<std::string>::Make(std::vector<std::string>{"jane", "hello", "hi"}) };
+    REQUIRE_THROWS_AS(series.getSpan<int64_t>(), std::runtime_error);
+    REQUIRE_THROWS_AS(series.getIndexSpan<int64_t>(), std::runtime_error);
 }

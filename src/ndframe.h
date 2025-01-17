@@ -133,7 +133,12 @@ namespace pd {
         }
 
         template<typename T>
-        std::span<const T> getIndexSpan() const noexcept {
+        std::span<const T> getIndexSpan() const {
+            static_assert(arrow::is_fixed_width_type<typename arrow::CTypeTraits<T>::ArrowType>::value, "Type must be fixed width");
+            if (arrow::CTypeTraits<T>::type_singleton()->id() != m_index->type()->id())
+            {
+                throw std::runtime_error(fmt::format("Type mismatch: expected {}, got {}", m_index->type()->ToString(), arrow::CTypeTraits<T>::type_singleton()->ToString()));
+            }
             return {reinterpret_cast<const T *>(m_index->data()->buffers[1]->data()) + m_index->offset(),
                     size_t(m_index->length())};
         }
