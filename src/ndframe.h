@@ -180,15 +180,15 @@ namespace pd {
 
         template<typename T>
         static std::vector<T> getValues(ArrayPtr const& array) {
-            if (array->null_count() != 0) {
-                throw std::runtime_error("values() called on null array");
-            }
-
             auto requested_type = arrow::CTypeTraits<T>::type_singleton();
             if (requested_type != array->type()) {
                 if (!CanCastToInt64FromTimestamp<T>(array)) {
                     throw RawArrayCastException(requested_type, array->type());
                 }
+            }
+
+            if (array->null_count() != 0 && (array->type_id() != arrow::Type::DOUBLE) ) {
+                throw std::runtime_error("values() called on null array");
             }
 
             std::vector<T> result;
