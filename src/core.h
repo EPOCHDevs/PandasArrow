@@ -120,10 +120,8 @@ struct Slice
     }
 };
 
-struct DateOffset
-{
-    enum Type
-    {
+struct DateOffset {
+    enum Type {
         Day,
         MonthEnd,
         QuarterStart,
@@ -135,34 +133,30 @@ struct DateOffset
         YearStart
     } type;
 
-    int multiplier{ 1 };
+    int multiplier{1};
     greg_weekday startDay{Sunday};
 
-    inline friend date operator+(const date& x, const DateOffset& dateOffset)
-    {
+    friend date operator+(const date &x, const DateOffset &dateOffset) {
         return add(x, dateOffset);
     }
 
-    inline DateOffset operator*(int x) const
-    {
-        return { type, multiplier * x };
+    DateOffset operator*(int x) const {
+        return {type, multiplier * x};
     }
 
-    friend inline DateOffset operator*(DateOffset::Type _type, int x)
-    {
-        return { _type, x };
+    friend DateOffset operator*(DateOffset::Type _type, int x) {
+        return {_type, x};
     }
 
-    inline friend date operator-(const date& x, DateOffset dateOffset)
-    {
+    friend date operator-(const date &x, DateOffset dateOffset) {
         dateOffset.multiplier *= -1;
         return add(x, dateOffset);
     }
 
-    static std::optional<DateOffset> FromString(const std::string& code);
+    static std::optional<DateOffset> FromString(const std::string &code);
 
 private:
-    static date add(date, const DateOffset&);
+    static date add(date, const DateOffset &);
 };
 
 struct DateSlice
