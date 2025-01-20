@@ -2,11 +2,10 @@ cmake_minimum_required(VERSION 3.27 FATAL_ERROR)
 
 set(CMAKE_CUDA_COMPILER "/usr/local/cuda/bin/nvcc"  CACHE PATH "CUDA COMPILER")
 
-option(BUILD_MAIN OFF)
 option(BUILD_TEST OFF)
 option(ENABLE_GPU OFF)
 
-set(EPOCH_LAB "$ENV{HOME}/EpochLab"  CACHE PATH "SAM RESEARCH FOLDER")
+set(EPOCH_LAB "$ENV{HOME}/EpochLab"  CACHE PATH "Main Epoch Lab Folder")
 include(${EPOCH_LAB}/shared_header.cmake)
 
 if (ENABLE_GPU)
@@ -67,27 +66,19 @@ find_package(fmt CONFIG REQUIRED)
 target_link_libraries(pandas_arrow
         PRIVATE TBB::tbb parquet_static spdlog::spdlog_header_only fmt::fmt-header-only
         PUBLIC arrow_static curl ssl crypto DataFrame)
-target_compile_options(pandas_arrow PRIVATE -Wall -Wextra -Werror PUBLIC -Wno-strict-aliasing)
+
+target_compile_options(pandas_arrow PRIVATE -Wall -Wextra -Werror
+        # https://linear.app/epoch-inc/issue/STR-45/remove-wno-strict-aliasing-check
+        PUBLIC -Wno-strict-aliasing)
+
+# https://linear.app/epoch-inc/issue/STR-44/remove-rapidjson-dependence-in-pandas-arrow
 target_compile_definitions(pandas_arrow PUBLIC -DRAPIDJSON_HAS_STDSTRING=1)
+
 target_include_directories(pandas_arrow
-        PRIVATE ${Boost_INCLUDE_DIRS}
+        PRIVATE ${Boost_INCLUDE_DIRS} ${EPOCH_LAB_COMMON_HEADERS}
         PUBLIC src)
 
 add_library(pd::pandas_arrow ALIAS pandas_arrow)
-
-IF (BUILD_MAIN)
-    add_executable(benchmark benchmark.cpp)
-    target_link_libraries(benchmark PRIVATE pandas_arrow spdlog::spdlog )
-
-    add_executable(generate_stream_file generate_stream_file.cpp)
-    target_link_libraries(generate_stream_file PRIVATE pandas_arrow spdlog::spdlog )
-
-    add_executable(scan_s3 scan_s3.cpp)
-    target_link_libraries(scan_s3 PRIVATE pandas_arrow spdlog::spdlog )
-
-    add_executable(dataframe_playground dataframe_playground.cpp)
-    target_link_libraries(dataframe_playground PRIVATE pandas_arrow spdlog::spdlog DataFrame)
-ENDIF()
 
 IF( BUILD_TEST )
     add_subdirectory(tests)
