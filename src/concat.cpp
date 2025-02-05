@@ -243,30 +243,31 @@ pd::DataFrame Concatenator::concatenateColumns()
     return { arrow::schema(fieldVector), static_cast<int64_t>(numRows), arrayVectors, newIndexes };
 }
 
-pd::DataFrame concatColumnsUnsafe(std::vector<pd::DataFrame> const& objs)
-{
-    auto df = objs.at(0).array();
-    auto N = df->num_columns();
+pd::DataFrame concatColumnsUnsafe(std::vector<pd::DataFrame> const& objs) {
+  if (objs.empty()) {
+    return pd::DataFrame{};
+  }
 
-    for (size_t i = 1; i < objs.size(); i++)
-    {
-        for (auto const& field : objs[i].array()->schema()->fields())
-        {
-            auto result = df->AddColumn(N++, field, objs[i][field->name()].m_array);
-            if (result.ok())
-            {
-                df = result.MoveValueUnsafe();
-            }else
-            {
-                std::cerr << df->ToString()
-                          << "\nLength: " << df->num_rows() << "\nNewColumn: " << objs[i][field->name()].m_array->ToString()
-                          << "\nNew Column Length: " << objs[i][field->name()].m_array->length()
-                          << "\nField: " << field->name() << "\n";
-                throw std::runtime_error(result.status().ToString());
-            }
-        }
+  auto df = objs.at(0).array();
+  auto N = df->num_columns();
+
+  for (size_t i = 1; i < objs.size(); i++) {
+    for (auto const &field : objs[i].array()->schema()->fields()) {
+      auto result = df->AddColumn(N++, field, objs[i][field->name()].m_array);
+      if (result.ok()) {
+        df = result.MoveValueUnsafe();
+      } else {
+        std::cerr << df->ToString() << "\nLength: " << df->num_rows()
+                  << "\nNewColumn: "
+                  << objs[i][field->name()].m_array->ToString()
+                  << "\nNew Column Length: "
+                  << objs[i][field->name()].m_array->length()
+                  << "\nField: " << field->name() << "\n";
+        throw std::runtime_error(result.status().ToString());
+      }
     }
-    return pd::DataFrame{ df, objs.at(0).indexArray() };
+  }
+  return pd::DataFrame{df, objs.at(0).indexArray()};
 }
 
 } // namespace pd
