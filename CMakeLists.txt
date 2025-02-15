@@ -45,7 +45,7 @@ add_library(pandas_arrow
         src/core.cpp
         src/resample.cpp
         src/concat.cpp
-        src/json_utils.cpp
+#        src/json_utils.cpp
         src/list_s3_files.cpp)
 
 if (ENABLE_GPU)
@@ -72,7 +72,7 @@ target_compile_options(pandas_arrow PRIVATE -Wall -Wextra -Werror
         PUBLIC -Wno-strict-aliasing)
 
 # https://linear.app/epoch-inc/issue/STR-44/remove-rapidjson-dependence-in-pandas-arrow
-target_compile_definitions(pandas_arrow PUBLIC -DRAPIDJSON_HAS_STDSTRING=1)
+#target_compile_definitions(pandas_arrow PUBLIC -DRAPIDJSON_HAS_STDSTRING=1)
 
 target_include_directories(pandas_arrow
         PRIVATE ${Boost_INCLUDE_DIRS} ${EPOCH_LAB_COMMON_HEADERS}

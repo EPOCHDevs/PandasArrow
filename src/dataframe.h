@@ -372,20 +372,20 @@ namespace pd {
         static DataFrame
         readBinary(const std::basic_string_view<uint8_t> &blob, std::optional<std::string> const &index = std::nullopt);
 
-        static DataFrame readJSON(const rapidjson::Document &doc, std::shared_ptr<arrow::Schema> const &schema,
-                                  std::optional<std::string> const &index = std::nullopt);
-
-        static DataFrame readJSON(const std::string &doc, std::shared_ptr<arrow::Schema> const &schema,
-                                  std::optional<std::string> const &index = std::nullopt);
+//        static DataFrame readJSON(const rapidjson::Document &doc, std::shared_ptr<arrow::Schema> const &schema,
+//                                  std::optional<std::string> const &index = std::nullopt);
+//
+//        static DataFrame readJSON(const std::string &doc, std::shared_ptr<arrow::Schema> const &schema,
+//                                  std::optional<std::string> const &index = std::nullopt);
 
         arrow::Status toParquet(std::filesystem::path const &filepath, const std::string &indexField = "index") const;
 
         arrow::Status toCSV(std::filesystem::path const &filepath, const std::string &indexField = "index") const;
-
-        arrow::Result<rapidjson::Value> toJSON(rapidjson::Document::AllocatorType &allocator,
-                                               std::vector<std::string> columns = {},
-                                               std::optional<std::string> const &index = {},
-                                               bool toRecords = true) const;
+//
+//        arrow::Result<rapidjson::Value> toJSON(rapidjson::Document::AllocatorType &allocator,
+//                                               std::vector<std::string> columns = {},
+//                                               std::optional<std::string> const &index = {},
+//                                               bool toRecords = true) const;
 
         arrow::Result<std::shared_ptr<arrow::Buffer>>
         toBinary(std::vector<std::string> columns = {}, std::optional<std::string> const &index = {},

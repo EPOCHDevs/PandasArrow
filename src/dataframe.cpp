@@ -31,8 +31,8 @@
 #include <arrow/ipc/writer.h>
 #include "data_variant.h"
 #include "tabulate/table.hpp"
-#include "json_utils.h"
-#include "rapidjson/error/error.h"
+//#include "json_utils.h"
+//#include "rapidjson/error/error.h"
 
 
 #define Aggregation(name) \
@@ -652,9 +652,8 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
         if (infileStatus.ok()) {
             auto infile = std::move(infileStatus).ValueUnsafe();
 
-            std::unique_ptr<parquet::arrow::FileReader> reader;
-            // Open up the file with the IPC features of the library, gives us a reader object.
-            PARQUET_THROW_NOT_OK(parquet::arrow::OpenFile(infile, arrow::default_memory_pool(), &reader));
+            auto result = parquet::arrow::OpenFile(infile, arrow::default_memory_pool());
+            auto reader = pd::ReturnOrThrowOnFailure(std::move(result));
 
             std::shared_ptr<arrow::Table> parquet_table;
             PARQUET_THROW_NOT_OK(reader->ReadTable(&parquet_table));
@@ -707,22 +706,22 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
         return arrow::csv::WriteCSV(*concatenated, arrow::csv::WriteOptions::Defaults(), fileOutputStream.get());
     }
 
-    arrow::Result<rapidjson::Value> DataFrame::toJSON(rapidjson::Document::AllocatorType &allocator,
-                                                      std::vector<std::string> columns,
-                                                      std::optional<std::string> const &index,
-                                                      bool toRecords) const {
-        columns = columns.empty() ? this->columnNames() : columns;
-
-        auto array = m_array;
-        if (index) {
-            auto indexPtr = pd::ReturnOrThrowOnFailure(arrow::compute::Cast(m_index, arrow::int64())).make_array();
-            array = array->AddColumn(array->num_columns(), arrow::field(*index, indexPtr->type()),
-                                     indexPtr)
-                    .MoveValueUnsafe();
-        }
-
-        return ConvertToVector(array, toRecords, allocator);
-    }
+//    arrow::Result<rapidjson::Value> DataFrame::toJSON(rapidjson::Document::AllocatorType &allocator,
+//                                                      std::vector<std::string> columns,
+//                                                      std::optional<std::string> const &index,
+//                                                      bool toRecords) const {
+//        columns = columns.empty() ? this->columnNames() : columns;
+//
+//        auto array = m_array;
+//        if (index) {
+//            auto indexPtr = pd::ReturnOrThrowOnFailure(arrow::compute::Cast(m_index, arrow::int64())).make_array();
+//            array = array->AddColumn(array->num_columns(), arrow::field(*index, indexPtr->type()),
+//                                     indexPtr)
+//                    .MoveValueUnsafe();
+//        }
+//
+//        return ConvertToVector(array, toRecords, allocator);
+//    }
 
     arrow::Result<std::shared_ptr<arrow::Buffer>> DataFrame::toBinary(std::vector<std::string> columns,
                                                                       std::optional<std::string> const &index,
@@ -791,48 +790,48 @@ DataFrame DataFrame:: op() const { return Make(pd::ReturnOrThrowOnFailure(arrow:
                 indexPtr};
     }
 
-    DataFrame DataFrame::readJSON(const rapidjson::Document &doc, std::shared_ptr<arrow::Schema> const &schema,
-                                  std::optional<std::string> const &index) {
-
-        std::shared_ptr<arrow::RecordBatch> batch =
-                pd::ReturnOrThrowOnFailure(ConvertToRecordBatch(doc, schema));
-
-        pd::ArrayPtr indexPtr{nullptr};
-        if (index) {
-            auto indexPosition = batch->schema()->GetFieldIndex(*index);
-            if (indexPosition != -1) {
-                indexPtr = batch->column(indexPosition);
-                if (indexPtr->type_id() == arrow::Type::INT64) {
-                    indexPtr = pd::ReturnOrThrowOnFailure(
-                            arrow::compute::Cast(indexPtr, arrow::timestamp(arrow::TimeUnit::NANO))).make_array();
-                }
-                batch = pd::ReturnOrThrowOnFailure(batch->RemoveColumn(indexPosition));
-            } else {
-                SPDLOG_ERROR(R"(no field "{}" exist in JSON.)", *index);
-            }
-        }
-
-        return DataFrame{
-                batch,
-                indexPtr};
-    }
-
-    DataFrame DataFrame::readJSON(const std::string &jsonString, std::shared_ptr<arrow::Schema> const &schema,
-                                  std::optional<std::string> const &index) {
-        rapidjson::Document doc;
-
-        // Parse the JSON string
-        rapidjson::ParseResult result = doc.Parse(jsonString.c_str());
-
-        // Check for parsing errors
-        if (!result) {
-            throw std::invalid_argument(
-                    fmt::format("JSON parse error: {}, ({}).", rapidjson::GetParseErrorFunc()(result.Code()),
-                                result.Offset()));
-        }
-
-        return readJSON(doc, schema, index);
-    }
+//    DataFrame DataFrame::readJSON(const rapidjson::Document &doc, std::shared_ptr<arrow::Schema> const &schema,
+//                                  std::optional<std::string> const &index) {
+//
+//        std::shared_ptr<arrow::RecordBatch> batch =
+//                pd::ReturnOrThrowOnFailure(ConvertToRecordBatch(doc, schema));
+//
+//        pd::ArrayPtr indexPtr{nullptr};
+//        if (index) {
+//            auto indexPosition = batch->schema()->GetFieldIndex(*index);
+//            if (indexPosition != -1) {
+//                indexPtr = batch->column(indexPosition);
+//                if (indexPtr->type_id() == arrow::Type::INT64) {
+//                    indexPtr = pd::ReturnOrThrowOnFailure(
+//                            arrow::compute::Cast(indexPtr, arrow::timestamp(arrow::TimeUnit::NANO))).make_array();
+//                }
+//                batch = pd::ReturnOrThrowOnFailure(batch->RemoveColumn(indexPosition));
+//            } else {
+//                SPDLOG_ERROR(R"(no field "{}" exist in JSON.)", *index);
+//            }
+//        }
+//
+//        return DataFrame{
+//                batch,
+//                indexPtr};
+//    }
+//
+//    DataFrame DataFrame::readJSON(const std::string &jsonString, std::shared_ptr<arrow::Schema> const &schema,
+//                                  std::optional<std::string> const &index) {
+//        rapidjson::Document doc;
+//
+//        // Parse the JSON string
+//        rapidjson::ParseResult result = doc.Parse(jsonString.c_str());
+//
+//        // Check for parsing errors
+//        if (!result) {
+//            throw std::invalid_argument(
+//                    fmt::format("JSON parse error: {}, ({}).", rapidjson::GetParseErrorFunc()(result.Code()),
+//                                result.Offset()));
+//        }
+//
+//        return readJSON(doc, schema, index);
+//    }
 
     DataFrame DataFrame::readCSV(std::filesystem::path const &path) {
         arrow::io::IOContext io_context = arrow::io::default_io_context();
