@@ -12,7 +12,6 @@
 #include <arrow/api.h>
 #include <arrow/compute/api_scalar.h>
 #include <cmath>
-#include <rapidjson/document.h>
 #include <range/v3/to_container.hpp>
 
 
@@ -493,62 +492,62 @@ namespace arrow {
         }
     };
 
-    template<class T>
-    std::shared_ptr<arrow::Array> ArrayFromJSON(std::string_view json) {
-        rapidjson::Document doc;
-        doc.Parse(json.data());
-        if (!doc.IsArray()) {
-            throw std::runtime_error("Input JSON is not an array");
-        }
-
-        typename arrow::CTypeTraits<T>::BuilderType builder;
-
-        for (const auto &val: doc.GetArray()) {
-            if (val.IsNull()) {
-                pd::ThrowOnFailure(builder.AppendNull());
-            } else if (val.IsInt()) {
-                if constexpr (std::is_integral_v<T>)
-                    pd::ThrowOnFailure(builder.Append(val.GetInt()));
-                else
-                    throw std::runtime_error("Unsupported data type");
-            } else if (val.IsBool()) {
-                pd::ThrowOnFailure(builder.Append(val.GetBool()));
-            } else if (val.IsInt64()) {
-                if constexpr (std::is_integral_v<T>)
-                    pd::ThrowOnFailure(builder.Append(val.GetInt64()));
-                else
-                    throw std::runtime_error("Unsupported data type");
-            } else if (val.IsUint64()) {
-                if constexpr (std::is_integral_v<T>)
-                    pd::ThrowOnFailure(builder.Append(val.GetUint64()));
-                else
-                    throw std::runtime_error("Unsupported data type");
-            } else if (val.IsUint()) {
-                if constexpr (std::is_integral_v<T>)
-                    pd::ThrowOnFailure(builder.Append(val.GetUint()));
-                else
-                    throw std::runtime_error("Unsupported data type");
-            } else if (val.IsFloat()) {
-                if constexpr (std::is_floating_point_v<T>)
-                    pd::ThrowOnFailure(builder.Append(val.GetFloat()));
-                else
-                    throw std::runtime_error("Unsupported data type");
-            } else if (val.IsDouble()) {
-                if constexpr (std::is_floating_point_v<T>)
-                    pd::ThrowOnFailure(builder.Append(val.GetDouble()));
-                else
-                    throw std::runtime_error("Unsupported data type");
-            } else if (val.IsString()) {
-                if constexpr (std::is_same<T, std::string>::value)
-                    pd::ThrowOnFailure(builder.Append(val.GetString()));
-                else
-                    throw std::runtime_error("Unsupported data type");
-            } else {
-                throw std::runtime_error("Unsupported data type in JSON array");
-            }
-        }
-
-        return pd::ReturnOrThrowOnFailure(builder.Finish());
-    }
+//    template<class T>
+//    std::shared_ptr<arrow::Array> ArrayFromJSON(std::string_view json) {
+//        rapidjson::Document doc;
+//        doc.Parse(json.data());
+//        if (!doc.IsArray()) {
+//            throw std::runtime_error("Input JSON is not an array");
+//        }
+//
+//        typename arrow::CTypeTraits<T>::BuilderType builder;
+//
+//        for (const auto &val: doc.GetArray()) {
+//            if (val.IsNull()) {
+//                pd::ThrowOnFailure(builder.AppendNull());
+//            } else if (val.IsInt()) {
+//                if constexpr (std::is_integral_v<T>)
+//                    pd::ThrowOnFailure(builder.Append(val.GetInt()));
+//                else
+//                    throw std::runtime_error("Unsupported data type");
+//            } else if (val.IsBool()) {
+//                pd::ThrowOnFailure(builder.Append(val.GetBool()));
+//            } else if (val.IsInt64()) {
+//                if constexpr (std::is_integral_v<T>)
+//                    pd::ThrowOnFailure(builder.Append(val.GetInt64()));
+//                else
+//                    throw std::runtime_error("Unsupported data type");
+//            } else if (val.IsUint64()) {
+//                if constexpr (std::is_integral_v<T>)
+//                    pd::ThrowOnFailure(builder.Append(val.GetUint64()));
+//                else
+//                    throw std::runtime_error("Unsupported data type");
+//            } else if (val.IsUint()) {
+//                if constexpr (std::is_integral_v<T>)
+//                    pd::ThrowOnFailure(builder.Append(val.GetUint()));
+//                else
+//                    throw std::runtime_error("Unsupported data type");
+//            } else if (val.IsFloat()) {
+//                if constexpr (std::is_floating_point_v<T>)
+//                    pd::ThrowOnFailure(builder.Append(val.GetFloat()));
+//                else
+//                    throw std::runtime_error("Unsupported data type");
+//            } else if (val.IsDouble()) {
+//                if constexpr (std::is_floating_point_v<T>)
+//                    pd::ThrowOnFailure(builder.Append(val.GetDouble()));
+//                else
+//                    throw std::runtime_error("Unsupported data type");
+//            } else if (val.IsString()) {
+//                if constexpr (std::is_same<T, std::string>::value)
+//                    pd::ThrowOnFailure(builder.Append(val.GetString()));
+//                else
+//                    throw std::runtime_error("Unsupported data type");
+//            } else {
+//                throw std::runtime_error("Unsupported data type in JSON array");
+//            }
+//        }
+//
+//        return pd::ReturnOrThrowOnFailure(builder.Finish());
+//    }
 
 } // namespace arrow

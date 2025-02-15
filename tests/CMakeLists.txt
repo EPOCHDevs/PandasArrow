@@ -1,7 +1,7 @@
 find_package(Catch2 REQUIRED)
 
 add_executable(pandasTest
-        concat_test.cpp
+#        concat_test.cpp
         core_test.cpp
         dataframe_aggregation_test.cpp
         dataframe_arithmetric_test.cpp

@@ -2,7 +2,6 @@
 // Created by dewe on 1/15/23.
 //
 #include <catch.hpp>
-#include <rapidjson/document.h>
 #include "pandas_arrow.h"
 #include "stdexcept"
 
@@ -17,7 +16,7 @@ using namespace pd;
 TEST_CASE("Test Series constructor with arrow array and boolean input")
 {
     // Create an Arrow array to pass as input
-    auto arr = arrow::ArrayFromJSON<int>("[1, 2, 3, 4, 5]");
+    auto arr = arrow::ArrayT<int>::Make({1, 2, 3, 4, 5});
 
     // Test with isIndex = true
     Series s1(arr, true);
@@ -100,7 +99,7 @@ TEST_CASE("Test Series Initialization", "[series]")
 TEST_CASE("Test Series values() and const_ptr() functions")
 {
     // Create an Arrow array to pass as input
-    auto arr = arrow::ArrayFromJSON<int>("[1, 2, 3, 4, 5]");
+    auto arr = arrow::ArrayT<int>::Make({1, 2, 3, 4, 5});
     // Create a Series object with the array
     Series s(arr, false);
 
@@ -116,7 +115,7 @@ TEST_CASE("Test Series values() and const_ptr() functions")
 TEST_CASE("Test Series view() function")
 {
     // Create an Arrow array to pass as input
-    auto arr = arrow::ArrayFromJSON<float>("[1.1, 2.2, 3.3, 4.4, 5.5]");
+    auto arr = arrow::ArrayT<float>::Make({1.1, 2.2, 3.3, 4.4, 5.5});
     // Create a Series object with the array
     Series s(arr, false);
 
